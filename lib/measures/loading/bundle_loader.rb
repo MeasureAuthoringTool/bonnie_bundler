@@ -43,7 +43,9 @@ module Measures
         end
 
         results = extract_results(zip_file, tmp_dir)
-        set_expected_values(results)
+        unless results.nil?
+          set_expected_values(results)
+        end
       end
     end
 
@@ -108,31 +110,28 @@ module Measures
           result_index = result['value']['sub_id'] ||= 'a'
           expectedValues = { measure_id: mid, population_index: sub_ids.find_index(result_index) }
 
-          measure.populations.each_with_index do |populations, index|
-            # if we are at the correct population index
-            if result_index and sub_ids[index] == result_index
+          populations = measure.populations[expectedValues[:population_index]]
 
-              validPopulations = populations.keys & Measure.or({ measure_id: mid }, { hqmf_id: mid }, { hqmf_set_id: mid }).first.population_criteria.keys
+          validPopulations = populations.keys & measure.population_criteria.keys
 
-              # set the values for each population in the result
-              validPopulations.each do |population|
-                if population == 'OBSERV' 
-                  result_value = result['value']['values'].first 
-                else 
-                  result_value = result['value'][population].to_i
-                end
+          # set the values for each population in the result
+          validPopulations.each do |population|
+            if population == 'OBSERV' 
+              result_value = result['value']['values'].first 
+            else 
+              result_value = result['value'][population].to_i
+            end
 
-                # if we dont have a result value (e.g., for OBSERV), then don't store it
-                unless result_value.blank? 
-                  expectedValues[population] = result_value
-                end
-              end
-
-              # save changes to the patient
-              patient.expected_values << expectedValues
-              patient.save
+            # if we dont have a result value (e.g., for OBSERV), then don't store it
+            unless result_value.blank? 
+              expectedValues[population] = result_value
             end
           end
+
+          # save changes to the patient
+          patient.expected_values << expectedValues
+          patient.save
+
           print "\rLoading: Expected Values from results/by_patient.json #{(index*100/results.length)}% complete"
           STDOUT.flush
         end
@@ -163,9 +162,11 @@ module Measures
     def self.extract_results(zip_file, tmp_dir)
       result_root_entry = zip_file.glob(File.join('results','by_patient.json')).first
       r_path = File.join(tmp_dir, 'by_patient.json')
-      result_root_entry.extract(r_path)
-      results_json = JSON.parse(File.read(r_path))
-      results_json
+      unless result_root_entry.nil? or r_path.nil?
+        result_root_entry.extract(r_path)
+        results_json = JSON.parse(File.read(r_path))
+        results_json
+      end
     end
 
   end
