@@ -1,12 +1,7 @@
 module HQMF
   module ValueSet
-    class Parser
 
-      attr_accessor :child_oids
-      attr_accessor :parent_oids
-  
-      GROUP_CODE_SET = "GROUPING"
-  
+    class Version1
       ORGANIZATION_INDEX = 0
       OID_INDEX = 1
       CONCEPT_INDEX = 3
@@ -19,18 +14,71 @@ module HQMF
       DEFAULT_SHEET = 1
       SUPPLEMENTAL_SHEET = 2
 
+      def self.get_display_name(row)
+        display_name = normalize_names(row[CATEGORY_INDEX],row[CONCEPT_INDEX]).titleize
+      end
+      # Break all the supplied strings into separate words and return the resulting list as a
+      # new string with each word separated with '_'
+      def self.normalize_names(*components)
+        name = []
+        components.each do |component|
+          component ||= ''
+          name.concat component.gsub(/\W/,' ').split.collect { |word| word.strip.downcase }
+        end
+        name.join '_'
+      end
+
+    end
+
+    class Version2
+      ORGANIZATION_INDEX = 0
+      OID_INDEX = 1
+      CONCEPT_INDEX = 3
+      CODE_SET_INDEX =4
+      VERSION_INDEX = 5
+      CODE_INDEX = 6
+      DESCRIPTION_INDEX = 7
+ 
+      DEFAULT_SHEET = 0
+      SUPPLEMENTAL_SHEET = 1
+
+      def self.get_display_name(row)
+        display_name = row[CONCEPT_INDEX].titleize
+      end
+
+    end
+
+    class Parser
+
+      attr_accessor :child_oids
+      attr_accessor :parent_oids
+  
+      GROUP_CODE_SET = "GROUPING"
+  
       CODE_SYSTEM_NORMALIZER = {
         'ICD-9'=>'ICD-9-CM',
+        'ICD9CM'=>'ICD-9-CM',
+        'ICD9PCS'=>'ICD-9-PCS',
         'ICD-10'=>'ICD-10-CM',
-        'HL7 (2.16.840.1.113883.5.1)'=>'HL7'
+        'ICD10CM'=>'ICD-10-CM',
+        'ICD10PCS'=>'ICD-10-PCS',
+        'HL7 (2.16.840.1.113883.5.1)'=>'HL7',
+        'SNOMEDCT'=>'SNOMED-CT',
+        'CDCREC'=>'CDC Race',
+        'RXNORM'=>'RxNorm'
       }
       IGNORED_CODE_SYSTEM_NAMES = ['Grouping', 'GROUPING' ,'HL7', "Administrative Sex", 'CDC']
   
       # import an excel matrix array into mongo
       def parse(file)
         @value_set_models = {}
-        extract_value_sets(file, DEFAULT_SHEET)
-        extract_value_sets(file, SUPPLEMENTAL_SHEET)
+
+        book = HQMF::ValueSet::Parser.book_by_format(file)
+        @constants = (book.sheets.count < 3) ? Version2.new.class : Version1.new.class 
+
+        extract_value_sets(book, @constants::DEFAULT_SHEET)
+        book = HQMF::ValueSet::Parser.book_by_format(file)
+        extract_value_sets(book, @constants::SUPPLEMENTAL_SHEET)
         @value_set_models.values
       end
 
@@ -45,18 +93,7 @@ module HQMF
       end
 
       private
-  
-      # Break all the supplied strings into separate words and return the resulting list as a
-      # new string with each word separated with '_'
-      def normalize_names(*components)
-        name = []
-        components.each do |component|
-          component ||= ''
-          name.concat component.gsub(/\W/,' ').split.collect { |word| word.strip.downcase }
-        end
-        name.join '_'
-      end
-      
+
       def normalize_code_system(code_system_name)
         code_system_name = CODE_SYSTEM_NORMALIZER[code_system_name] if CODE_SYSTEM_NORMALIZER[code_system_name]
         return code_system_name if IGNORED_CODE_SYSTEM_NAMES.include? code_system_name
@@ -76,13 +113,13 @@ module HQMF
       end
   
       # pull all the value sets and fill out the parents
-      def extract_value_sets(file_path, sheet_index)
+      def extract_value_sets(book, sheet_index)
+
+        book.default_sheet=book.sheets[sheet_index]
+        return if book.last_row.nil? || book.last_row < 2
 
         @child_oids = Set.new
         @parent_oids = Set.new
-
-        book = HQMF::ValueSet::Parser.book_by_format(file_path)
-        book.default_sheet=book.sheets[sheet_index]
 
         (2..book.last_row).each do |row_index|
           extract_row(book.row(row_index))
@@ -96,23 +133,24 @@ module HQMF
       # parents still need to be filled out after the fact
       def extract_row(row)
 
-        oid = row[OID_INDEX].strip.gsub(/[^0-9\.]/i, '')
+        oid = row[@constants::OID_INDEX].strip.gsub(/[^0-9\.]/i, '')
 
         # skip rows with no oid
         return if oid.nil? || oid.empty?
 
         existing_vs = @value_set_models[oid]
 
-        version = row[VERSION_INDEX]
+        version = row[@constants::VERSION_INDEX]
         if existing_vs.nil?
-          display_name = normalize_names(row[CATEGORY_INDEX],row[CONCEPT_INDEX]).titleize
+          # display_name = normalize_names(row[CATEGORY_INDEX],row[CONCEPT_INDEX]).titleize
+          display_name = row[@constants::CONCEPT_INDEX].titleize
           existing_vs = HealthDataStandards::SVS::ValueSet.new({oid: oid, display_name: display_name, version: version ,concepts: []})
           @value_set_models[oid] = existing_vs
         end
 
-        codes = extract_code(row[CODE_INDEX].to_s, row[CODE_SET_INDEX])
-        code_system_name = normalize_code_system(row[CODE_SET_INDEX])
-        description = row[DESCRIPTION_INDEX]
+        codes = extract_code(row[@constants::CODE_INDEX].to_s, row[@constants::CODE_SET_INDEX])
+        code_system_name = normalize_code_system(row[@constants::CODE_SET_INDEX])
+        description = row[@constants::DESCRIPTION_INDEX]
 
         codes.each do |code|
           concept = HealthDataStandards::SVS::Concept.new({code: code, code_system_name: code_system_name, code_system_version: version, display_name: description})
