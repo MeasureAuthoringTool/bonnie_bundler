@@ -4,7 +4,7 @@ module Measures
   class SourcesLoader 
 
     def self.load(sources_dir, user, measures_yml, vsac_user, vsac_password)
-
+      Measures::Loader.clear_sources
       measure_details_hash = Measures::Loader.parse_measures_yml(measures_yml)
 
       sources_dirs = Dir.glob(File.join(sources_dir,'*'))
@@ -18,7 +18,6 @@ module Measures
     end
 
     def self.load_measure(measure_dir, user, vsac_user, vsac_password, measure_details_hash)
-
       hqmf_path = Dir.glob(File.join(measure_dir, '*.xml')).first
       html_path = Dir.glob(File.join(measure_dir, '*.html')).first
 
@@ -26,14 +25,14 @@ module Measures
       measure_details = measure_details_hash[hqmf_set_id]
 
       value_set_oids = Measures::ValueSetLoader.get_value_set_oids_from_hqmf(hqmf_path)
-      Measures::ValueSetLoader.load_value_sets_from_vsac(value_set_oids, vsac_user, vsac_password)
+      Measures::ValueSetLoader.load_value_sets_from_vsac(value_set_oids, vsac_user, vsac_password, user)
 
-      value_set_models = Measures::ValueSetLoader.get_value_set_models(value_set_oids)
+      value_set_models = Measures::ValueSetLoader.get_value_set_models(value_set_oids,user)
       measure = Measures::Loader.load(user, hqmf_path, value_set_models, measure_details)
       Measures::Loader.save_sources(measure, hqmf_path, html_path)
 
       measure.populations.each_with_index do |population, population_index|
-        measure.map_fns[population_index] = HQMF2JS::Generator::Execution.logic(measure, population_index, true, false)
+        measure.map_fns[population_index] = measure.as_javascript(population_index)
       end
 
       measure.save!

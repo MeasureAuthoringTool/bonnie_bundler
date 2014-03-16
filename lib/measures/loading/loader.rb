@@ -4,9 +4,9 @@ module Measures
 
     SOURCE_PATH = File.join(".", "db", "measures")
     VALUE_SET_PATH = File.join(".", "db", "value_sets")
+    HQMF_VS_OID_CACHE = File.join(".", "db", "hqmf_vs_oid_cache")
     
     def self.load(user, hqmf_path, value_set_models, measure_details=nil)
-      
       hqmf_contents = Nokogiri::XML(File.new hqmf_path).to_s
       measure_id = HQMF::Parser.parse_fields(hqmf_contents, HQMF::Parser::HQMF_VERSION_1)['id']
 
@@ -31,9 +31,9 @@ module Measures
     def self.load_hqmf_json(json, user, measure_oids, measure_details=nil)
 
       measure = Measure.new
-      measure.user = user
-
-      measure.id = json["hqmf_id"]
+      measure.user = user if user
+      measure.bundle = user.bundle if (user && user.respond_to?(:bundle) )
+      # measure.id = json["hqmf_id"]
       measure.measure_id = json["id"]
       measure.hqmf_id = json["hqmf_id"]
       measure.hqmf_set_id = json["hqmf_set_id"]
@@ -97,6 +97,13 @@ module Measures
       hqmf_out_path = File.join(SOURCE_PATH, "hqmf")
       FileUtils.mkdir_p hqmf_out_path
       FileUtils.cp(hqmf_path, File.join(hqmf_out_path, "#{measure.hqmf_id}.xml"))
+    end
+
+    
+    def self.clear_sources
+      FileUtils.rm_r File.join(SOURCE_PATH, "html") if File.exist?(File.join(SOURCE_PATH, "html"))
+      FileUtils.rm_r File.join(SOURCE_PATH, "value_sets") if File.exist?(File.join(SOURCE_PATH, "value_sets"))
+      FileUtils.rm_r File.join(SOURCE_PATH, "hqmf") if File.exist?(File.join(SOURCE_PATH, "hqmf"))
     end
 
     def self.parse_measures_yml(measures_yml)

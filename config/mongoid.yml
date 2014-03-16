@@ -1,10 +1,13 @@
-development:
+test:
   sessions:
     default:
-      database: bonnie_development
+      database: bonnie_test
       hosts:
         - localhost:27017
-    test:
-      database: bonnie_bundler_test
+
+test2:
+  sessions:
+    default:
+      database: bonnie_develop
       hosts:
         - localhost:27017
