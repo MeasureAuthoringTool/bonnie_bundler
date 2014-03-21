@@ -3,7 +3,7 @@ gemspec
 gem 'health-data-standards', :git => 'https://github.com/projectcypress/health-data-standards.git', :branch => 'master'
 #gem 'health-data-standards', :path => '../health-data-standards'
 
-gem 'hqmf2js', :git => 'https://github.com/pophealth/hqmf2js.git', :branch => 'optional_underscore'
+gem 'hqmf2js', :git => 'https://github.com/pophealth/hqmf2js.git', :branch => 'develop'
 
 gem 'hquery-patient-api', :git => 'https://github.com/pophealth/patientapi.git', :branch => 'develop'
 
