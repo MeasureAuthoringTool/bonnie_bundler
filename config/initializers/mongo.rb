@@ -1,4 +1,4 @@
-Mongoid.load!("config/mongoid.yml", :development)
+Mongoid.load!("config/mongoid.yml", :test) unless Mongoid.configured?
 MONGO_DB = Mongoid.default_session
 require 'quality-measure-engine'
 

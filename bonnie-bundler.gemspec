@@ -9,7 +9,8 @@ Gem::Specification.new do |s|
   s.authors = ["Andre Quina"]
   s.version = '1.0.0'
 
-  s.add_dependency 'quality-measure-engine', '~>2'
+  # Fixme: this dependency should be added back once QME version 3 is released
+  # s.add_dependency 'quality-measure-engine', '~>3'
   
   s.files = s.files = `git ls-files`.split("\n")
 end

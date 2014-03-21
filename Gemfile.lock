@@ -1,16 +1,23 @@
 GIT
   remote: https://github.com/pophealth/hqmf2js.git
-  revision: ab2bf380eda00ef13aeba5a8140242ceb062173e
-  branch: perf
+  revision: 7b6c7680e01d06b723e3c21d553f98524dc61afa
+  branch: develop
   specs:
     hqmf2js (1.2.1)
 
 GIT
-  remote: https://github.com/pophealth/quality-measure-engine.git
-  revision: d9884765147acc7ffff49896ed2078b8b6464d59
-  branch: perf
+  remote: https://github.com/pophealth/patientapi.git
+  revision: 6e5e231a6078409a4f5a7d0bafdacb0a63c2d54a
+  branch: develop
   specs:
-    quality-measure-engine (2.5.1)
+    hquery-patient-api (1.0.2)
+
+GIT
+  remote: https://github.com/pophealth/quality-measure-engine.git
+  revision: df69b2944d8d5daa991c9a963b76c08de199b3ee
+  branch: mongoid_refactor
+  specs:
+    quality-measure-engine (3.0.0)
       delayed_job_mongoid (~> 2.0.0)
       mongoid (~> 3.1.4)
       moped (~> 1.5.1)
@@ -20,10 +27,10 @@ GIT
 
 GIT
   remote: https://github.com/projectcypress/health-data-standards.git
-  revision: 762a255bb86fdc3fe4727593e832d11926bf8143
+  revision: 18babd3901d45e6175a1087e1f20125263c804cd
   branch: master
   specs:
-    health-data-standards (3.2.12)
+    health-data-standards (3.3.1)
       activesupport (~> 3.2.14)
       builder (~> 3.0.0)
       erubis (~> 2.7.0)
@@ -34,6 +41,11 @@ GIT
       rest-client (~> 1.6.7)
       rubyzip (= 0.9.9)
       uuid (~> 2.3.7)
+
+PATH
+  remote: .
+  specs:
+    bonnie_bundler (1.0.0)
 
 GEM
   remote: http://rubygems.org/
@@ -65,9 +77,11 @@ GEM
     activesupport (3.2.14)
       i18n (~> 0.6, >= 0.6.4)
       multi_json (~> 1.0)
-    arel (3.0.2)
+    ansi (1.4.3)
+    arel (3.0.3)
+    awesome_print (1.2.0)
     builder (3.0.4)
-    coderay (1.0.9)
+    coderay (1.1.0)
     coffee-script (2.2.0)
       coffee-script-source
       execjs
@@ -77,14 +91,14 @@ GEM
     delayed_job_mongoid (2.0.0)
       delayed_job (~> 3.0)
       mongoid (~> 3.0)
+    docile (1.1.1)
     erubis (2.7.0)
-    execjs (1.4.0)
-      multi_json (~> 1.0)
+    execjs (2.0.2)
     hike (1.2.3)
-    i18n (0.6.5)
+    i18n (0.6.9)
     journey (1.0.4)
-    json (1.8.0)
-    libv8 (3.11.8.17)
+    json (1.8.1)
+    libv8 (3.16.14.3)
     log4r (1.1.10)
     macaddr (1.6.1)
       systemu (~> 2.5.0)
@@ -93,21 +107,22 @@ GEM
       treetop (~> 1.4.8)
     memoist (0.9.1)
     method_source (0.8.2)
-    mime-types (1.25)
-    mini_portile (0.5.1)
-    mongoid (3.1.4)
+    mime-types (1.25.1)
+    mini_portile (0.5.2)
+    minitest (4.7.5)
+    mongoid (3.1.6)
       activemodel (~> 3.2)
       moped (~> 1.4)
       origin (~> 1.0)
-      tzinfo (~> 0.3.22)
+      tzinfo (~> 0.3.29)
     moped (1.5.1)
-    multi_json (1.7.9)
+    multi_json (1.8.2)
     nokogiri (1.6.0)
       mini_portile (~> 0.5.0)
     origin (1.1.0)
     polyglot (0.3.3)
-    pry (0.9.12.2)
-      coderay (~> 1.0.5)
+    pry (0.9.12.4)
+      coderay (~> 1.0)
       method_source (~> 0.8)
       slop (~> 3.4)
     rack (1.4.5)
@@ -138,15 +153,20 @@ GEM
     ref (1.0.5)
     rest-client (1.6.7)
       mime-types (>= 1.16)
-    roo (1.10.3)
-      nokogiri (>= 1.5.6)
-      rubyzip (>= 0.9.9)
+    roo (1.12.2)
+      nokogiri
+      rubyzip
       spreadsheet (> 0.6.4)
-    ruby-ole (1.2.11.6)
+    ruby-ole (1.2.11.7)
     rubyXL (1.2.10)
     rubyzip (0.9.9)
-    slop (3.4.6)
-    spreadsheet (0.8.3)
+    simplecov (0.8.2)
+      docile (~> 1.1.0)
+      multi_json
+      simplecov-html (~> 0.8.0)
+    simplecov-html (0.8.0)
+    slop (3.4.7)
+    spreadsheet (0.9.6)
       ruby-ole (>= 1.0)
     sprockets (2.2.2)
       hike (~> 1.2)
@@ -154,15 +174,17 @@ GEM
       rack (~> 1.0)
       tilt (~> 1.1, != 1.3.0)
     systemu (2.5.2)
-    therubyracer (0.11.4)
-      libv8 (~> 3.11.8.12)
+    therubyracer (0.12.0)
+      libv8 (~> 3.16.14.0)
       ref
     thor (0.18.1)
     tilt (1.4.1)
     treetop (1.4.15)
       polyglot
       polyglot (>= 0.3.1)
-    tzinfo (0.3.37)
+    turn (0.9.6)
+      ansi
+    tzinfo (0.3.38)
     uuid (2.3.7)
       macaddr (~> 1.0)
 
@@ -170,15 +192,21 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  awesome_print
+  bonnie_bundler!
   coffee-script
   health-data-standards!
   hqmf2js!
+  hquery-patient-api!
+  minitest (~> 4.0)
   mongoid
   pry
   quality-measure-engine!
   rails (= 3.2.14)
   rake
   roo
+  simplecov
   sprockets
   therubyracer
   tilt
+  turn
