@@ -1,6 +1,6 @@
 module Measures
   # Utility class for loading measure definitions into the database from the MAT export zip
-  class MATLoader 
+  class MATLoader
 
     def self.load(file, user, measure_details)
       measure = nil
@@ -46,8 +46,7 @@ module Measures
             end
           end
 
-          Measures::ValueSetLoader.save_value_sets(value_set_models,user)
-
+          Measures::ValueSetLoader.save_value_sets(value_set_models)
           begin
             model = Measures::Loader.parse_hqmf_model(hqmf_path)
           rescue Exception => e
@@ -60,6 +59,7 @@ module Measures
           json.convert_keys_to_strings
           measure = Measures::Loader.load_hqmf_model_json(json, user,value_set_models.collect{|vs| vs.oid})
           measure.update_attributes(measure_details)
+          measure.oid_to_version = value_set_models.collect{|vs| vs.versioned_oid}
 
         rescue Exception => e
           if e.is_a? Measures::ValueSetException
@@ -74,7 +74,7 @@ module Measures
       measure
     end
 
-    def self.extract(zip_file, entry, out_dir) 
+    def self.extract(zip_file, entry, out_dir)
       out_file = File.join(out_dir,Pathname.new(entry.name).basename.to_s)
       zip_file.extract(entry, out_file)
       out_file
