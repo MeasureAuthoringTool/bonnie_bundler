@@ -18,7 +18,7 @@ GIT
 
 GIT
   remote: https://github.com/projectcypress/health-data-standards.git
-  revision: 663e10f0bfe7631d7d5024309eddfd530e2a342b
+  revision: bcdc234b9a64f3180d330f6d7926d8cd23a11527
   branch: master
   specs:
     health-data-standards (3.6.1)
@@ -129,7 +129,7 @@ GEM
       optionable (~> 0.2.0)
     multi_json (1.11.2)
     netrc (0.11.0)
-    nokogiri (1.6.7.1)
+    nokogiri (1.6.7.2)
       mini_portile2 (~> 2.0.0.rc2)
     optionable (0.2.0)
     origin (2.1.1)
