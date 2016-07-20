@@ -13,7 +13,7 @@ class Measure
   field :measure_id, type: String
   field :hqmf_id, type: String # should be using this one as primary id!!
   field :hqmf_set_id, type: String
-  field :hqmf_version_number, type: Integer
+  field :hqmf_version_number, type: String
   field :cms_id, type: String
   field :title, type: String
   field :description, type: String
