@@ -18,8 +18,8 @@ GIT
 
 GIT
   remote: https://github.com/projectcypress/health-data-standards.git
-  revision: 3c29ef7eee515f38d58e006ee8f5d149924e77b7
-  branch: master
+  revision: 1020d64610199088e45df3560786c51b09b4a666
+  branch: hqmf_version_number_tweak
   specs:
     health-data-standards (3.6.1)
       activesupport (~> 4.1.1)
