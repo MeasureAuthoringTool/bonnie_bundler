@@ -7,7 +7,7 @@ module Measures
         # Check for CQL and ELM
         cql_entry = zip_file.glob(File.join('**','**.cql')).select {|x| x.name.match(/.*CQL.cql/) && !x.name.starts_with?('__MACOSX') }.first
         hqmf_entry = zip_file.glob(File.join('**','**.xml')).select {|x| x.name.match(/.*eMeasure.xml/) && !x.name.starts_with?('__MACOSX') }.first
-        !(cql_entry.nil? && hqmf_entry.nil?)
+        !cql_entry.nil? && !hqmf_entry.nil?
       end
     end
 
