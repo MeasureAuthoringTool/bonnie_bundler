@@ -27,6 +27,7 @@ require_relative 'measures/blacklist_parser.rb'
 require_relative 'measures/logic_extractor.rb'
 require_relative 'ext/hash.rb'
 require_relative 'ext/valueset.rb'
+require_relative 'measures/elm_parser.rb'
 require_relative '../config/initializers/mongo.rb'
 
 module BonnieBundler
