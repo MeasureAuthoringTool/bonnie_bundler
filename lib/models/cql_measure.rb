@@ -19,6 +19,9 @@ class CqlMeasure
   field :populations, type: Array
   field :populations_cql_map, type: Hash
 
+  field :episode_of_care, type: Boolean
+  field :needs_finalize, type: Boolean, default: false # if true it indicates that the measure needs to have its episodes or submeasure titles defined
+
   # Store the original CQL as a string
   field :cql, type: String
 

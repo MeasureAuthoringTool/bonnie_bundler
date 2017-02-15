@@ -38,8 +38,7 @@ module Measures
       json = model.to_json
       json.convert_keys_to_strings
       measure = Measures::Loader.load_hqmf_cql_model_json(json, user, value_set_models.collect{|vs| vs.oid}, JSON.parse(elm), cql)
-
-      puts "measure #{measure.cms_id || measure.measure_id} successfully loaded."
+      measure['episode_of_care'] = measure_details['episode_of_care']
       measure
     end
 
