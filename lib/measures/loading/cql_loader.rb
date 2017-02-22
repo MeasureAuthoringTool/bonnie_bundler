@@ -116,6 +116,7 @@ module Measures
           }
         )
         elm_xml = request.execute
+        elm_xml.gsub!(/\n/, '')
         elm_xml = CQL_ELM::Parser.parse(elm_xml)
         return parse_elm_response(elm_json), elm_xml
       rescue RestClient::BadRequest => e
