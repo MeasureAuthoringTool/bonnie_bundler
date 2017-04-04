@@ -120,6 +120,7 @@ module Measures
       measure.measure_period = json["measure_period"]
       measure.population_criteria = json["population_criteria"]
       measure.populations_cql_map = json["populations_cql_map"]
+      measure.observations = json["observations"]
 
       measure
     end

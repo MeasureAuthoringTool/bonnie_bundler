@@ -38,6 +38,7 @@ class CqlMeasure
   field :measure_attributes, type: Array
   field :populations, type: Array
   field :populations_cql_map, type: Hash
+  field :observations, type: Array
 
   field :value_set_oids, type: Array, default: []
 
