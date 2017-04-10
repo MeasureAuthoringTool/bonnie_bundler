@@ -1,24 +1,36 @@
 module Measures
   # Utility class for loading CQL measure definitions into the database from the MAT export zip
-  class CqlLoader < BaseLoaderDefinition
+  class CQLLoader < BaseLoaderDefinition
 
     def self.mat_cql_export?(zip_file)
+      # Open the zip file and iterate over each of the files.
       Zip::ZipFile.open(zip_file.path) do |zip_file|
-        # Check for CQL and ELM
-        cql_entry = zip_file.glob(File.join('**','**.cql')).select {|x| x.name.match(/.*CQL.cql/) && !x.name.starts_with?('__MACOSX') }.first
-        hqmf_entry = zip_file.glob(File.join('**','**.xml')).select {|x| x.name.match(/.*eMeasure.xml/) && !x.name.starts_with?('__MACOSX') }.first
-        !cql_entry.nil? && !hqmf_entry.nil?
+        # Check for CQL, HQMF, ELM and Human Readable
+        cql_entry = zip_file.glob(File.join('**','**.cql')).select {|x| !x.name.starts_with?('__MACOSX') }.first
+        human_readable_entry = zip_file.glob(File.join('**','**.html')).select { |x| !x.name.starts_with?('__MACOSX') }.first
+        
+        # Grab all xml files in the zip.
+        zip_xml_files = zip_file.glob(File.join('**','**.xml')).select {|x| !x.name.starts_with?('__MACOSX') }
+        
+        if zip_xml_files.count > 0 
+          xml_files_hash = extract_xml_files(zip_file, zip_xml_files)
+          !cql_entry.nil? && !human_readable_entry.nil? && !xml_files_hash[:HQMF_XML].nil? && !xml_files_hash[:ELM_XML].nil?
+        else
+          false
+        end
       end
     end
-
-    def self.load_mat_cql_exports(user, file, out_dir, measure_details, vsac_user, vsac_password, overwrite_valuesets=true, cache=false, effectiveDate=nil, includeDraft=false, ticket_granting_ticket=nil)
+     
+    def self.load_mat_cql_exports(user, zip_file, out_dir, measure_details, vsac_user, vsac_password, overwrite_valuesets=true, cache=false, effectiveDate=nil, includeDraft=false, ticket_granting_ticket=nil)
       measure = nil
       cql = nil
       hqmf_path = nil
       elm = ''
 
       # Grabs the cql file contents and the hqmf file path
-      cql, hqmf_path = get_files_from_zip(file, out_dir)
+      # zip_file is a valid MAT export, checked using mat_cql_export? earlier.
+      cql_path, hqmf_path = get_files_from_zip(zip_file, out_dir)
+      cql = open(cql_path).read
 
       # Translate the cql to elm
       elm = translate_cql_to_elm(cql)
@@ -27,7 +39,7 @@ module Measures
       parsed_elm = JSON.parse(elm)
 
       # Load hqmf into HQMF Parser
-      model = Measures::Loader.parse_hqmf_model(hqmf_path)
+      hqmf_model = Measures::Loader.parse_hqmf_model(hqmf_path)
 
       # Grab the value sets from the elm
       elm_value_sets = []
@@ -43,26 +55,25 @@ module Measures
       end
 
       # Create CQL Measure
-      model.backfill_patient_characteristics_with_codes(HQMF2JS::Generator::CodesToJson.from_value_sets(value_set_models))
-      json = model.to_json
+      hqmf_model.backfill_patient_characteristics_with_codes(HQMF2JS::Generator::CodesToJson.from_value_sets(value_set_models))
+      json = hqmf_model.to_json
       json.convert_keys_to_strings
       measure = Measures::Loader.load_hqmf_cql_model_json(json, user, value_set_models.collect{|vs| vs.oid}, parsed_elm, cql)
       measure['episode_of_care'] = measure_details['episode_of_care']
       measure
     end
 
-    # Opens the zip and grabs the cql file contents and hqmf_path. Returns both items.
-    def self.get_files_from_zip(file, out_dir)
-      Zip::ZipFile.open(file.path) do |zip_file|
-        cql_entry = zip_file.glob(File.join('**','**.cql')).select {|x| x.name.match(/.*CQL.cql/) && !x.name.starts_with?('__MACOSX') }.first
-        hqmf_entry = zip_file.glob(File.join('**','**.xml')).select {|x| x.name.match(/.*eMeasure.xml/) && !x.name.starts_with?('__MACOSX') }.first
-
+    # Opens the zip and grabs the cql path and hqmf_path. Returns both items.
+    # Does not check if zip_file contains the correct contents. 
+    # Use mat_cql_export? function prior to calling this function.
+    def self.get_files_from_zip(zip_file, out_dir)
+      Zip::ZipFile.open(zip_file.path) do |file|
+        cql_entry = file.glob(File.join('**','**.cql')).select {|x| !x.name.starts_with?('__MACOSX') }.first
+        zip_xml_files = file.glob(File.join('**','**.xml')).select {|x| !x.name.starts_with?('__MACOSX') }
         begin
-          cql_path = extract(zip_file, cql_entry, out_dir) if cql_entry && cql_entry.size > 0
-          hqmf_path = extract(zip_file, hqmf_entry, out_dir) if hqmf_entry && hqmf_entry.size > 0
-
-          cql = open(cql_path).read
-          return cql, hqmf_path
+          cql_path = extract(file, cql_entry, out_dir) if cql_entry && cql_entry.size > 0
+          xml_file_paths = extract_xml_files(file, zip_xml_files, out_dir)
+          return cql_path, xml_file_paths[:HQMF_XML]
         rescue Exception => e
           raise MeasureLoadingException.new "Error Parsing Measure Logic: #{e.message}"
         end
@@ -71,7 +82,6 @@ module Measures
 
     # Translates the cql to elm json using a post request to CQLTranslation Jar.
     def self.translate_cql_to_elm(cql)
-      elm = ''
       begin
         elm = RestClient.post('http://localhost:8080/cql/translator', cql, content_type: 'application/cql', accept: 'application/elm+json', timeout: 10)
         elm.gsub! 'urn:oid:', '' # Removes 'urn:oid:' from ELM for Bonnie
@@ -80,6 +90,5 @@ module Measures
         raise MeasureLoadingException.new "Error Translating CQL to ELM: #{e.message}"
       end
     end
-
   end
 end
