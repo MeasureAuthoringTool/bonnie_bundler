@@ -3,7 +3,7 @@ gemspec
 
 #gem 'health-data-standards', '3.4.4'
 
-gem 'health-data-standards', :git => 'https://github.com/projectcypress/health-data-standards.git', :branch => 'staging_experimental_cql'
+gem 'health-data-standards', :git => 'https://github.com/projectcypress/health-data-standards.git', :branch => 'cql4bonnie'
 gem 'quality-measure-engine', :git => 'https://github.com/pophealth/quality-measure-engine.git', :branch => 'master'
 gem 'hqmf2js', :git => 'https://github.com/pophealth/hqmf2js.git', :branch => 'master'
 gem 'hquery-patient-api', '1.0.4'
@@ -26,6 +26,7 @@ gem "therubyracer", :require => 'v8'
 gem 'mongoid'
 gem 'rubyzip', '< 1.0.0'
 gem 'diffy'
+gem 'nokogiri', '~> 1.6.8'
 
 # needed for parsing value sets (we need to use roo rather than rubyxl because the value sets are in xls rather than xlsx)
 gem 'roo'
