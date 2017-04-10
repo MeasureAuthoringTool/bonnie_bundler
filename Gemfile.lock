@@ -18,8 +18,8 @@ GIT
 
 GIT
   remote: https://github.com/projectcypress/health-data-standards.git
-  revision: ec763b50bed0f9107b5687e40073af6ef147816a
-  branch: staging_experimental_cql
+  revision: bd878ef302cf6046064950646aad54ad0ae84021
+  branch: cql4bonnie
   specs:
     health-data-standards (3.6.1)
       activesupport (~> 4.1.1)
@@ -98,7 +98,7 @@ GEM
       mongoid (>= 3.0, < 5)
     diffy (3.1.0)
     docile (1.1.5)
-    domain_name (0.5.20161021)
+    domain_name (0.5.20170404)
       unf (>= 0.0.5, < 1.0.0)
     erubis (2.7.0)
     execjs (2.7.0)
@@ -223,6 +223,7 @@ DEPENDENCIES
   hquery-patient-api (= 1.0.4)
   minitest (~> 5.0)
   mongoid
+  nokogiri (~> 1.6.8)
   pry
   pry-nav
   quality-measure-engine!
@@ -239,4 +240,4 @@ DEPENDENCIES
   webmock
 
 BUNDLED WITH
-   1.12.5
+   1.13.6
