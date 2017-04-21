@@ -13,7 +13,9 @@ BonnieBundler.logger = Log4r::Logger.new("Bonnie Bundler")
 BonnieBundler.logger.outputters = Log4r::Outputter.stdout
 
 def dump_db
-  Mongoid.default_session.drop()
+  Mongoid.default_client.collections.each do |c|
+    c.drop()
+  end
   FileUtils.rm_r 'db' if File.exists? 'db'
 end
 dump_db

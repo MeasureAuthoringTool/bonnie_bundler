@@ -117,7 +117,7 @@ class BundleExportTest < ActiveSupport::TestCase
     zip_data = StringIO.new(@exporter.export_zip)
     def zip_data.path ; end # Work around ZipInputStream need for path (?) for IO buffer
     file_names = []
-    Zip::ZipInputStream.open_buffer(zip_data) do |io|
+    Zip::InputStream.open(zip_data) do |io|
       while entry = io.get_next_entry
         file_names << entry.name
       end
