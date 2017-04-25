@@ -130,10 +130,54 @@ module Measures
       def export_results
         BonnieBundler.logger.info("Exporting results")
         results_by_patient = Mongoid.default_session['patient_cache'].find({}).to_a
-        results_by_patient = JSON.pretty_generate(JSON.parse(results_by_patient.as_json(:except => [ '_id', 'user_id' ]).to_json))
         results_by_measure = Mongoid.default_session['query_cache'].find({}).to_a
+
+        # Calculate coverages for each measure (by each measure population)
+        if results_by_measure.length > 0 && defined? BonnieBackendCalculator
+          BonnieBundler.logger.info("Calculating Bonnie coverages")
+          coverages_by_measure = {}
+
+          # Loop over each sub measure (e.g. CMS61v5 sub_id=a, CMS61v5 sub_id=b)
+          HealthDataStandards::CQM::Measure.where({:hqmf_id => {"$in" => @measures.pluck(:hqmf_id).uniq}}).each do |result|
+            # Grab the related measure from the database
+            query = {}
+            query[:hqmf_id] = result.hqmf_id
+            measures = Measure.where(query)
+            measures.each do |measure|
+
+              # Calculate each measure patient against the measure
+              patient_results = []
+              calculator = BonnieBackendCalculator.new
+              for index in 0..measure.populations.length-1
+                calculator.set_measure_and_population(measure, index, rationale: true, clear_db_cache: true)
+                patients = Record.where(user_id: measure.user_id, measure_ids: measure.hqmf_set_id)
+                patients.each do |patient|
+                  patient_result = calculator.calculate(patient)
+                  # Only keep record patients relevant to this specific sub_id
+                  patient_results.push(patient_result) if patient_result['sub_id'] == result['sub_id']
+                end
+              end
+
+              # Calculate coverages
+              coverages_by_measure[measure['hqmf_id'].to_s] = [] unless coverages_by_measure[measure['hqmf_id'].to_s]
+              calculated_measure = @measures.detect{ |m| m['hqmf_id'] == measure.hqmf_id }
+              coverage = BonnieMeasureCoverage.new(result, calculated_measure, result['sub_id'], patient_results)
+              coverages_by_measure[measure['hqmf_id'].to_s].push(coverage.calculate_coverage())
+            end
+          end
+
+          # Save bonnie coverages to measure results
+          coverages_by_measure.each do |key, value|
+            value.each do |sub_result|
+              measure_result = results_by_measure.detect{ |r| r['measure_id'] == key && r['sub_id'] == sub_result[:sub_id]}
+              measure_result['bonnie_coverage'] = sub_result[:coverage]
+            end
+          end
+        end
+
+        results_by_patient = JSON.pretty_generate(JSON.parse(results_by_patient.as_json(:except => [ '_id', 'user_id' ]).to_json))
         results_by_measure = JSON.pretty_generate(JSON.parse(results_by_measure.as_json(:except => [ '_id', 'user_id' ]).to_json))
-        
+
         export_file File.join(results_path,"by_patient.json"), results_by_patient
         export_file File.join(results_path,"by_measure.json") ,results_by_measure
       end
@@ -328,6 +372,110 @@ module Measures
           extensions: BundleExporter.refresh_js_libraries.keys
         }
       end
-    end   
+    end
+
+
+    # Class representing the coverage percentage for a measure in Bonnie.
+    class BonnieMeasureCoverage
+
+      def initialize(original_measure, calculated_measure, sub_id, patient_results)
+        @original_measure = original_measure
+        @calculated_measure = calculated_measure
+        @sub_id = sub_id
+        @patient_results = patient_results
+      end
+
+      # Calculate coverage percentage, return a hash describing the coverage
+      # for this measure/sub measure.
+      def calculate_coverage()
+        coverages = []
+
+        # Gather population keys for this measure
+        population_keys = []
+        @original_measure.hqmf_document['population_criteria'].each do |key, value|
+          if @original_measure.population_ids.values.include?(value['hqmf_id'])
+            population_keys.push(key)
+          end
+        end
+
+        # Gather all possible coverable data criteria for this measure
+        all_dc = Set.new
+        population_keys.each do |population|
+          if @calculated_measure.population_criteria[population]['preconditions']
+            @calculated_measure.population_criteria[population]['preconditions'].each do |root|
+              all_dc.merge(get_all_dc_keys(root, false))
+            end
+          end
+        end
+
+        # Gather data criteria covered by each patient against this measure
+        covered_dc = get_patient_dc_keys(all_dc)
+
+        # Calculate coverage; check if valid (if not return -1) and return
+        #
+        # NOTE: The actual coverage ratio is a duplication of the calculation
+        # found in bonnie/app/assets/javascripts/models/coverage.js.coffee -
+        # as of Bonnie commit 776e389db56e263db540d9b6f5eb5c3a52d6255b.
+        coverage = ((covered_dc.length.to_f / all_dc.length.to_f) * 100)
+        coverage = -1 if coverage.nan?
+        return { sub_id: @sub_id, coverage: coverage.round }
+      end
+
+      # Returns the set of all data criteria that are covered by patients
+      # that calculated against this measure.
+      def get_patient_dc_keys(all_dc)
+        covered_dc = Set.new
+        @patient_results.each do |patient|
+          patient['rationale'].each do |dc_key, value|
+            covered_dc.add(dc_key) if value && ![true, false].include?(value) && all_dc.include?(dc_key)
+          end
+        end
+        return covered_dc
+      end
+
+      # This method returns the set of coverable data criteria keys
+      # that correspond to the given measure/population root criteria.
+      #
+      # NOTE: This method is a duplication of 'getDataCriteriaKeys' found in
+      # bonnie/app/assets/javascripts/models/population.js.coffee - as of
+      # Bonnie commit 1592634fdac78d7cee66b0e5ecc452b2a9527603.
+      def get_all_dc_keys(child, specifics_only=true)
+        occurrences = Set.new
+        return occurrences unless child
+        if child['preconditions'] && child['preconditions'].length > 0
+          child['preconditions'].each do |precondition|
+            occurrences.merge(get_all_dc_keys(precondition, specifics_only))
+          end
+        elsif child['reference']
+          occurrences.merge(get_all_dc_keys(@calculated_measure.data_criteria[child['reference']], specifics_only))
+        else
+          if child['type'] && child['type'].to_s == 'derived' && child['children_criteria']
+            occurrences.add(child['key']) if (child['key'] && (child['specific_occurrence'] || !specifics_only) && (child['definition'].to_s.include?('satisfies') || child['variable']))
+            child['children_criteria'].each do |dc_key|
+              dc = @calculated_measure.data_criteria[dc_key]
+              occurrences.merge(get_all_dc_keys(dc, specifics_only))
+            end
+          else
+            if child['specific_occurrence'] || !specifics_only
+              occurrences.add(child['key']) if child['key']
+            end
+          end
+          if child['temporal_references'] && child['temporal_references'].length > 0
+            child['temporal_references'].each do |temporal_reference|
+              dc = @calculated_measure.data_criteria[temporal_reference['reference']]
+              occurrences.merge(get_all_dc_keys(dc, specifics_only))
+            end
+          end
+          if child['references']
+            child['references'].each do |type, reference|
+              dc = @calculated_measure.data_criteria[reference['reference']]
+              occurrences.merge(get_all_dc_keys(dc, specifics_only))
+            end
+          end
+        end
+        return occurrences
+      end
+
+    end
   end
 end
