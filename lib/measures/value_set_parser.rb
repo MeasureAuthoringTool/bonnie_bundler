@@ -129,6 +129,9 @@ module HQMF
         extract_value_sets(book, @constants::DEFAULT_SHEET)
         book = HQMF::ValueSet::Parser.book_by_format(file)
         extract_value_sets(book, @constants::SUPPLEMENTAL_SHEET)
+        @value_set_models.values.each do |vs|
+          vs.bonnie_version_hash = HealthDataStandards::SVS::ValueSet.generate_bonnie_hash(vs)
+        end
         @value_set_models.values
       end
 

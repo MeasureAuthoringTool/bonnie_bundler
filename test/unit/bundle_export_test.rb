@@ -15,8 +15,7 @@ class BundleExportTest < ActiveSupport::TestCase
     end
     @user = User.new('123456789')
     Measure.each { |m| m.update_attributes user_id: @user.id }
-    HealthDataStandards::SVS::ValueSet.each { |vs| vs.update_attributes user_id: @user.id ; vs.save }
-
+    HealthDataStandards::SVS::ValueSet.each { |vs| vs.update_attributes; vs.save }
 
     measure_config = APP_CONFIG.merge! YAML.load_file(File.join('config','measures', 'measures_2_4_0.yml'))["measures"]
     config = APP_CONFIG.merge(measure_config)

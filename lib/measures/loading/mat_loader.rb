@@ -46,7 +46,7 @@ module Measures
             end
           end
 
-          Measures::ValueSetLoader.save_value_sets(value_set_models,user)
+          Measures::ValueSetLoader.save_value_sets(value_set_models)
 
           # Try loading the HQMF first; fallback to SimpleXML only if the HQMF is not present, not if the HQMF fails
           if hqmf_path
@@ -63,6 +63,7 @@ module Measures
           json.convert_keys_to_strings
           measure = Measures::Loader.load_hqmf_model_json(json, user,value_set_models.collect{|vs| vs.oid})
           measure.update_attributes(measure_details)
+          measure.update_attributes(bonnie_hashes: value_set_models.collect{|vs| vs.bonnie_version_hash})
 
         rescue Exception => e
           if e.is_a? Measures::ValueSetException
@@ -76,8 +77,8 @@ module Measures
       end
       measure
     end
-
-    def self.extract(zip_file, entry, out_dir) 
+    
+    def self.extract(zip_file, entry, out_dir)
       out_file = File.join(out_dir,Pathname.new(entry.name).basename.to_s)
       zip_file.extract(entry, out_file)
       out_file

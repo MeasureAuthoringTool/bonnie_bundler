@@ -25,22 +25,14 @@ class LoadMATExportTest < ActiveSupport::TestCase
     measure = Measures::MATLoader.load(@mat_export, u, {})
     assert_equal 1, Measure.by_user(u).count
     vs_count = HealthDataStandards::SVS::ValueSet.count()
-    assert_equal vs_count, HealthDataStandards::SVS::ValueSet.by_user(u).count()
-    vs = HealthDataStandards::SVS::ValueSet.by_user(u).first
-    vsets = HealthDataStandards::SVS::ValueSet.by_user(u).to_a
+    vs = measure.value_sets
    
     # Add the same measure not associated with a user, there should be 2 measures and 
-    # and twice as many value sets in the db after loading 
+    # and the same number of value sets in the db after loading 
     Measures::MATLoader.load(@mat_export, nil, {})
     assert_equal 1, Measure.by_user(u).count
     assert_equal 2, Measure.count
-    assert_equal vs_count, HealthDataStandards::SVS::ValueSet.by_user(u).count()
-    assert_equal vs_count * 2, HealthDataStandards::SVS::ValueSet.count
-    
-    u_count = Measures::ValueSetLoader.get_value_set_models(measure.value_set_oids,u).count()
-    assert_equal u_count, Measures::ValueSetLoader.get_value_set_models(measure.value_set_oids,nil).count
-    
-
+    assert_equal vs_count, HealthDataStandards::SVS::ValueSet.count
   end
 
 
