@@ -18,6 +18,9 @@ def dump_db
   end
   FileUtils.rm_r 'db' if File.exists? 'db'
 end
+
+Mongoid.logger.level = Logger::INFO
+Mongo::Logger.logger.level = Logger::INFO
 dump_db
 
 # Supplied from bonnie, needed for expected_values testing
