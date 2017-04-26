@@ -25,12 +25,12 @@ module CQL_ELM
             ref_node = nil
             node_type = nil
             @fields.each do |field|
-              ref_node ||= @doc.at_css(field + '[localId="'+child['r']+'"]')
+              ref_node ||= @doc.at_css(field + '[localId="'+child['r']+'"]') unless child['r'].nil?
             end
             node_type = ref_node['xsi:type'] unless ref_node.nil?
             child_html = '<span'
-            child_html = child_html + ' ref_id="' +child['r']+ '"'
-            child_html = child_html + ' data-type="' + node_type + '"' unless node_type.nil?
+            child_html = child_html + ' data-ref-id="' +child['r']+ '"' unless child['r'].nil?
+            child_html = child_html + ' data-clause-type="' + node_type + '"' unless node_type.nil?
             child_html = child_html + '>'
             child_html = child_html + parse_node(child, node_type)
             child_html = child_html + '</span>'
