@@ -1,6 +1,6 @@
 language: ruby
 rvm:
-  - "2.2.7"
+  - "2.3.4"
 services: mongodb
 script:
   - bundle exec bundle-audit check --update
