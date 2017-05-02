@@ -65,14 +65,15 @@ module Measures
       measure
     end
 
-    def self.load_hqmf_cql_model_json(json, user, measure_oids, main_cql_library, cql_definition_dependency_structure, elm, elm_xml, cql, measure_details=nil)
+    def self.load_hqmf_cql_model_json(json, user, measure_oids, main_cql_library, cql_definition_dependency_structure, elm, elm_annotations, cql, measure_details=nil)
       measure = CqlMeasure.new
       measure.user = user if user
       measure.bundle = user.bundle if (user && user.respond_to?(:bundle))
       measure.measure_id = json["id"]
       measure.cql = cql
       measure.elm = elm
-      measure.elm_xml = elm_xml
+debugger
+      measure.elm_annotations = elm_annotations.to_json
       # Add metadata
       measure.hqmf_id = json["hqmf_id"]
       measure.hqmf_set_id = json["hqmf_set_id"]
