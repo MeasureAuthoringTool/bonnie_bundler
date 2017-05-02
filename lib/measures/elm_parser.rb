@@ -34,7 +34,9 @@ module CQL_ELM
             ret[:node_type] = node_type  unless node_type.nil?
             ret[:children] << parse_node(child, node_type)
           else
-            ret[:children] << child.to_html
+            if (!(/^\n/ =~ child.to_html))
+              ret[:children] << {text: child.to_html}
+            end
           end
           first_child = false
         rescue Exception => e

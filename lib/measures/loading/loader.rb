@@ -72,7 +72,6 @@ module Measures
       measure.measure_id = json["id"]
       measure.cql = cql
       measure.elm = elm
-debugger
       measure.elm_annotations = elm_annotations.to_json
       # Add metadata
       measure.hqmf_id = json["hqmf_id"]
