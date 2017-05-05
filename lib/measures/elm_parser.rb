@@ -34,8 +34,17 @@ module CQL_ELM
             ret[:node_type] = node_type  unless node_type.nil?
             ret[:children] << parse_node(child, node_type)
           else
+            debugger
             if (!(/^\n/ =~ child.to_html))
-              ret[:children] << {text: child.to_html}
+              define_name = nil
+              if (/^define/ =~ child.to_html)
+                define_name = child.to_html.split("\"")[1]
+              end
+              clause = {
+                text: child.to_html
+              }
+              clause[:define_name] = define_name unless define_name.nil?
+              ret[:children] << clause
             end
           end
           first_child = false
