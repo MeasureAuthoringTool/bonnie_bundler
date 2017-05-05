@@ -15,7 +15,7 @@ module Measures
       measure = nil
       cql = nil
       hqmf_path = nil
-      
+
       # Grabs the cql file contents and the hqmf file path
       cql_libraries, hqmf_path = get_files_from_zip(file, out_dir)
 
@@ -29,7 +29,7 @@ module Measures
       cql_libraries, model = remove_spaces_in_functions(cql_libraries, model)
 
       # Translate the cql to elm
-      elms = translate_cql_to_elm(cql_libraries)
+      elms, elm_xml = translate_cql_to_elm(cql_libraries)
 
       # Hash of define statements to which define statements they use.
       cql_definition_dependency_structure = populate_cql_definition_dependency_structure(main_cql_library, elms, model.populations_cql_map)
@@ -53,12 +53,11 @@ module Measures
       rescue Exception => e
         raise VSACException.new "Error Loading Value Sets from VSAC: #{e.message}"
       end
-
       # Create CQL Measure
       model.backfill_patient_characteristics_with_codes(HQMF2JS::Generator::CodesToJson.from_value_sets(value_set_models))
       json = model.to_json
       json.convert_keys_to_strings
-      measure = Measures::Loader.load_hqmf_cql_model_json(json, user, value_set_models.collect{|vs| vs.oid}, main_cql_library, cql_definition_dependency_structure, elms, cql_libraries)
+      measure = Measures::Loader.load_hqmf_cql_model_json(json, user, value_set_models.collect{|vs| vs.oid}, main_cql_library, cql_definition_dependency_structure, elms, elm_xml, cql_libraries)
       measure['episode_of_care'] = measure_details['episode_of_care']
       measure
     end
@@ -102,9 +101,23 @@ module Measures
             :file => cql
           }
         )
-        elm = request.execute
-        elm.gsub! 'urn:oid:', '' # Removes 'urn:oid:' from ELM for Bonnie
-        return parse_elm_response(elm)
+        elm_json = request.execute
+        elm_json.gsub! 'urn:oid:', '' # Removes 'urn:oid:' from ELM for Bonnie
+        
+        # now get the XML ELM
+        request = RestClient::Request.new(
+          :method => :post,
+          :accept => :xml,
+          :content_type => :xml,
+          :url => 'http://localhost:8080/cql/translator',
+          :payload => {
+            :multipart => true,
+            :file => cql
+          }
+        )
+        elm_xml = request.execute
+        elm_xml = CQL_ELM::Parser.parse(elm_xml)
+        return parse_elm_response(elm_json), elm_xml
       rescue RestClient::BadRequest => e
         begin
           # If there is a response, include it in the error else just include the error message
