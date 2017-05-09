@@ -72,7 +72,7 @@ module Measures
       measure.measure_id = json["id"]
       measure.cql = cql
       measure.elm = elm
-      measure.elm_annotations = elm_annotations.to_json
+      measure.elm_annotations = elm_annotations
       # Add metadata
       measure.hqmf_id = json["hqmf_id"]
       measure.hqmf_set_id = json["hqmf_set_id"]

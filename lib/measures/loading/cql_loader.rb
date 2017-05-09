@@ -29,7 +29,7 @@ module Measures
       cql_libraries, model = remove_spaces_in_functions(cql_libraries, model)
 
       # Translate the cql to elm
-      elms, elm_xml = translate_cql_to_elm(cql_libraries)
+      elms, elm_annotations = translate_cql_to_elm(cql_libraries)
 
       # Hash of define statements to which define statements they use.
       cql_definition_dependency_structure = populate_cql_definition_dependency_structure(main_cql_library, elms, model.populations_cql_map)
@@ -57,7 +57,7 @@ module Measures
       model.backfill_patient_characteristics_with_codes(HQMF2JS::Generator::CodesToJson.from_value_sets(value_set_models))
       json = model.to_json
       json.convert_keys_to_strings
-      measure = Measures::Loader.load_hqmf_cql_model_json(json, user, value_set_models.collect{|vs| vs.oid}, main_cql_library, cql_definition_dependency_structure, elms, elm_xml, cql_libraries)
+      measure = Measures::Loader.load_hqmf_cql_model_json(json, user, value_set_models.collect{|vs| vs.oid}, main_cql_library, cql_definition_dependency_structure, elms, elm_annotations, cql_libraries)
       measure['episode_of_care'] = measure_details['episode_of_care']
       measure
     end
@@ -89,7 +89,6 @@ module Measures
     # Translates the cql to elm json using a post request to CQLTranslation Jar.
     # Returns an array of ELM.
     def self.translate_cql_to_elm(cql)
-      elm = ''
       begin
         request = RestClient::Request.new(
           :method => :post,
@@ -115,9 +114,9 @@ module Measures
             :file => cql
           }
         )
-        elm_xml = request.execute
-        elm_xml = CQL_ELM::Parser.parse(elm_xml)
-        return parse_elm_response(elm_json), elm_xml
+        elm_annotations = request.execute
+        elm_annotations = CQL_ELM::Parser.parse(elm_annotations)
+        return parse_elm_response(elm_json), elm_annotations
       rescue RestClient::BadRequest => e
         begin
           # If there is a response, include it in the error else just include the error message
