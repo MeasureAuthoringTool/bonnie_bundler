@@ -20,14 +20,37 @@ module Measures
       # Grabs the cql file contents and the hqmf file path
       cql, hqmf_path = get_files_from_zip(file, out_dir)
 
+      # Load hqmf into HQMF Parser
+      model = Measures::Loader.parse_hqmf_model(hqmf_path)
+
+      # Adjust the names of all CQL functions so that they execute properly
+      # as JavaScript functions.
+      cql.scan(/define function (".*?")/).flatten.each do |func_name|
+        # Generate a replacement function name by transliterating to ASCII, and
+        # remove any spaces.
+        repl_name = ActiveSupport::Inflector.transliterate(func_name.delete('"')).gsub(/[[:space:]]/, '')
+
+        # If necessary, prepend a '_' in order to thwart function names that
+        # could potentially be reserved JavaScript keywords.
+        repl_name = '_' + repl_name if is_javascript_keyword(repl_name)
+
+        # Avoid potential name collisions.
+        repl_name = '_' + repl_name while cql.include?(repl_name) && func_name != repl_name
+
+        # Replace the function name in CQL
+        cql.gsub!(func_name, '"' + repl_name + '"')
+
+        # Replace the function name in measure observations
+        model.observations.each do |obs|
+          obs[:function_name] = repl_name if obs[:function_name] == func_name
+        end
+      end
+
       # Translate the cql to elm
       elm = translate_cql_to_elm(cql)
 
       # Parse the elm into json
       parsed_elm = JSON.parse(elm)
-
-      # Load hqmf into HQMF Parser
-      model = Measures::Loader.parse_hqmf_model(hqmf_path)
 
       # Grab the value sets from the elm
       elm_value_sets = []
@@ -90,5 +113,12 @@ module Measures
       end
     end
 
+    private
+
+    # Checks if the given string is a reserved keyword in JavaScript. Useful
+    # for sanitizing potential user input from imported CQL code.
+    def self.is_javascript_keyword(string)
+      ['do', 'if', 'in', 'for', 'let', 'new', 'try', 'var', 'case', 'else', 'enum', 'eval', 'false', 'null', 'this', 'true', 'void', 'with', 'break', 'catch', 'class', 'const', 'super', 'throw', 'while', 'yield', 'delete', 'export', 'import', 'public', 'return', 'static', 'switch', 'typeof', 'default', 'extends', 'finally', 'package', 'private', 'continue', 'debugger', 'function', 'arguments', 'interface', 'protected', 'implements', 'instanceof'].include? string
+    end
   end
 end
