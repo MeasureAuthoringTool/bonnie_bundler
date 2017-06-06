@@ -65,7 +65,7 @@ module Measures
       measure
     end
 
-    def self.load_hqmf_cql_model_json(json, user, measure_oids, elm, cql, measure_details=nil)
+    def self.load_hqmf_cql_model_json(json, user, measure_oids, main_cql_library, cql_definition_dependency_structure, elm, cql, measure_details=nil)
       measure = CqlMeasure.new
 
       # Set primary measure attributes
@@ -85,6 +85,8 @@ module Measures
       # Set CQL specific information
       measure.cql = cql
       measure.elm = elm
+      measure.main_cql_library = main_cql_library
+      measure.cql_statement_dependencies = cql_definition_dependency_structure
 
       # Add metadata
       metadata = measure_details

@@ -15,8 +15,7 @@ module Measures
       measure = nil
       cql = nil
       hqmf_path = nil
-      elm = ''
-
+      
       # Grabs the cql file contents and the hqmf file path
       cql, hqmf_path = get_files_from_zip(file, out_dir)
 
@@ -47,15 +46,23 @@ module Measures
       end
 
       # Translate the cql to elm
-      elm = translate_cql_to_elm(cql)
-
-      # Parse the elm into json
-      parsed_elm = JSON.parse(elm)
+      elms = translate_cql_to_elm(cql)
+      
+      # Load hqmf into HQMF Parser
+      model = Measures::Loader.parse_hqmf_model(hqmf_path)
+      
+      # Get main measure from hqmf parser
+      main_cql_library = model.cql_measure_library
+      
+      # Hash of which define statements are used for the measure.
+      cql_definition_dependency_structure = traverse_definition_structure(main_cql_library, elms, model.populations_cql_map)
 
       # Grab the value sets from the elm
       elm_value_sets = []
-      parsed_elm['library']['valueSets']['def'].each do |value_set|
-        elm_value_sets << value_set['id']
+      elms.each do | parsed_elm |''
+        parsed_elm['library']['valueSets']['def'].each do |value_set|
+          elm_value_sets << value_set['id']
+        end
       end
 
       # Get Value Sets
@@ -69,7 +76,7 @@ module Measures
       model.backfill_patient_characteristics_with_codes(HQMF2JS::Generator::CodesToJson.from_value_sets(value_set_models))
       json = model.to_json
       json.convert_keys_to_strings
-      measure = Measures::Loader.load_hqmf_cql_model_json(json, user, value_set_models.collect{|vs| vs.oid}, parsed_elm, cql)
+      measure = Measures::Loader.load_hqmf_cql_model_json(json, user, value_set_models.collect{|vs| vs.oid}, main_cql_library, cql_definition_dependency_structure, elms, cql)
       measure['episode_of_care'] = measure_details['episode_of_care']
       measure
     end
@@ -77,15 +84,21 @@ module Measures
     # Opens the zip and grabs the cql file contents and hqmf_path. Returns both items.
     def self.get_files_from_zip(file, out_dir)
       Zip::ZipFile.open(file.path) do |zip_file|
-        cql_entry = zip_file.glob(File.join('**','**.cql')).select {|x| !x.name.starts_with?('__MACOSX') }.first
+        cql_entries = zip_file.glob(File.join('**','**.cql')).select {|x| !x.name.starts_with?('__MACOSX') }
         hqmf_entry = zip_file.glob(File.join('**','**.xml')).select {|x| x.name.match(/.*eMeasure.xml/) && !x.name.starts_with?('__MACOSX') }.first
 
         begin
-          cql_path = extract(zip_file, cql_entry, out_dir) if cql_entry && cql_entry.size > 0
+          cql_paths = []
+          cql_entries.each do |cql_file|
+            cql_paths << extract(zip_file, cql_file, out_dir) if cql_file.size > 0
+          end
           hqmf_path = extract(zip_file, hqmf_entry, out_dir) if hqmf_entry && hqmf_entry.size > 0
 
-          cql = open(cql_path).read
-          return cql, hqmf_path
+          cql_contents = []
+          cql_paths.each do |cql_path|
+            cql_contents << open(cql_path).read
+          end
+          return cql_contents, hqmf_path
         rescue Exception => e
           raise MeasureLoadingException.new "Error Parsing Measure Logic: #{e.message}"
         end
@@ -96,9 +109,19 @@ module Measures
     def self.translate_cql_to_elm(cql)
       elm = ''
       begin
-        elm = RestClient.post('http://localhost:8080/cql/translator', cql, content_type: 'application/cql', accept: 'application/elm+json', timeout: 10)
+        request = RestClient::Request.new(
+          :method => :post,
+          :accept => :json,
+          :content_type => :json,
+          :url => 'http://localhost:8080/cql/translator',
+          :payload => {
+            :multipart => true,
+            :file => cql
+          }
+        )
+        elm = request.execute
         elm.gsub! 'urn:oid:', '' # Removes 'urn:oid:' from ELM for Bonnie
-        return elm
+        return parse_batch_response(elm)
       rescue RestClient::BadRequest => e
         begin
           # If there is a response, include it in the error else just include the error message
@@ -120,5 +143,87 @@ module Measures
     def self.is_javascript_keyword(string)
       ['do', 'if', 'in', 'for', 'let', 'new', 'try', 'var', 'case', 'else', 'enum', 'eval', 'false', 'null', 'this', 'true', 'void', 'with', 'break', 'catch', 'class', 'const', 'super', 'throw', 'while', 'yield', 'delete', 'export', 'import', 'public', 'return', 'static', 'switch', 'typeof', 'default', 'extends', 'finally', 'package', 'private', 'continue', 'debugger', 'function', 'arguments', 'interface', 'protected', 'implements', 'instanceof'].include? string
     end
+    # Parse the JSON response into an array of json objects (one for each library)
+    def self.parse_batch_response(response)
+      # Not the same delimiter in the response as we specify ourselves in the request,
+      # so we have to extract it.
+      delimiter = response.split("\r\n")[0].strip
+      parts = response.split(delimiter)
+      # The first part will always be an empty string. Just remove it.
+      parts.shift
+      # The last part will be the "--". Just remove it.
+      parts.pop
+      # Collects the response body as json. Grabs everything from the first '{' to the last '}'
+      results = parts.map{ |part| JSON.parse(part.match(/{.+}/m).to_s)}
+      results
+    end
+
+    # Loops over the populations and retrieves the define statements that are nested within it.
+    def self.traverse_definition_structure(main_cql_library, elms, populations_cql_map)
+      cql_population_statement_map = {}
+      main_library_elm = elms.find { |elm| elm['library']['identifier']['id'] == main_cql_library }
+      # { 'IPP' => ['Initial Population'] }
+      # Loop over the populations finding the starting statements for each.
+      populations_cql_map.each do | population, cql_population_name |
+        # Get statement that matches the cql_population_name
+        population_statement = main_library_elm['library']['statements']['def'].find { |statement| statement['name'] == cql_population_name.first }
+        cql_population_statement_map[population] = retrieve_all_statements_in_population(population_statement, elms)
+      end
+      cql_population_statement_map
+    end
+
+    # Given a starting define statement, a starting library and all of the libraries,
+    # this will return an array of all nested define statements.
+    def self.retrieve_all_statements_in_population(statement, elms)
+      all_results = []
+      sub_statement_names = retrieve_expressions_from_statement(statement)
+      # TODO: Check if sub_statement_name is another Population do we remove?
+      if sub_statement_names.length > 0
+        sub_statement_names.each do |sub_statement_name|
+          # Check if the statement is not a built in expression 
+          elm_index = library_index_for_expression(sub_statement_name, elms)    
+          if elm_index
+            all_results << sub_statement_name
+            # Grab the actual sub statement object and not just the name.
+            sub_statement = elms[elm_index]['library']['statements']['def'].find { |statement| statement['name'] == sub_statement_name } 
+            all_results.concat(retrieve_all_statements_in_population(sub_statement, elms))
+          end
+        end
+      else
+        all_results << statement['name']
+      end
+      all_results
+    end
+
+    # Finds which library the given define statement exists in.
+    def self.library_index_for_expression(name, elms)
+      elms.each_with_index do | parsed_elm, index |
+        parsed_elm['library']['statements']['def'].each do |statement|
+          if statement['name'] == name
+            return index
+          end
+        end
+      end
+      nil
+    end
+
+    # Traverses the given statement and returns all of the potential additional statements.
+    def self.retrieve_expressions_from_statement(h)
+      expressions = []
+      h.each do |k,v|
+        # If v is nil, an array is being iterated and the value is k.
+        # If v is not nil, a hash is being iterated and the value is v.
+        value = v || k
+        if value.is_a?(Hash) || value.is_a?(Array)
+          expressions.concat(retrieve_expressions_from_statement(value))
+        else
+          if k == 'type' && (v == 'ExpressionRef' || v == 'FunctionRef')
+            expressions << h['name'] unless h['name'] == 'Patient'
+          end
+        end
+      end
+      expressions
+    end
+
   end
 end

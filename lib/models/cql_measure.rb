@@ -28,8 +28,10 @@ class CqlMeasure
   field :publish_date, type: Date
   field :version, type: Integer
 
-  field :cql, type: String
-  field :elm, type: Hash
+  field :cql, type: Array
+  field :elm, type: Array
+  field :main_cql_library, type: String
+  field :cql_statement_dependencies, type: Hash
 
   field :population_criteria, type: Hash
   field :data_criteria, type: Hash
@@ -99,7 +101,6 @@ class CqlMeasure
     # we store the complexity for QDM variables
     # TODO: consider whether this is too much of a force fit
     self.complexity = { variables: [] }
-
     # Recursively look through an expression to count the logical branches
     def count_expression_logical_branches(expression)
       case expression
@@ -123,9 +124,11 @@ class CqlMeasure
     end
 
     # Determine the complexity of each statement
-    if statements = self.elm.try(:[], 'library').try(:[], 'statements').try(:[], 'def')
-      statements.each do |statement|
-        self.complexity[:variables] << { name: statement['name'], complexity: count_expression_logical_branches(statement['expression']) }
+    self.elm.each do |elm|
+      if statements = elm.try(:[], 'library').try(:[], 'statements').try(:[], 'def')
+        statements.each do |statement|
+          self.complexity[:variables] << { name: statement['name'], complexity: count_expression_logical_branches(statement['expression']) }
+        end
       end
     end
     self.complexity

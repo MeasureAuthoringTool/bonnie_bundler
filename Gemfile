@@ -3,7 +3,7 @@ gemspec
 
 #gem 'health-data-standards', '3.4.4'
 
-gem 'health-data-standards', :git => 'https://github.com/projectcypress/health-data-standards.git', :branch => 'cql4bonnie'
+gem 'health-data-standards', :git => 'https://github.com/projectcypress/health-data-standards.git', :branch => 'multi_library_support'
 gem 'quality-measure-engine', :git => 'https://github.com/pophealth/quality-measure-engine.git', :branch => 'master'
 gem 'hqmf2js', :git => 'https://github.com/projecttacoma/hqmf2js.git', :branch => 'master'
 gem 'hquery-patient-api', :git => 'https://github.com/projecttacoma/patientapi.git', :branch => 'QDM_5-0'
@@ -12,7 +12,7 @@ gem 'simplexml_parser', :git => 'https://github.com/projecttacoma/simplexml_pars
 # gem 'health-data-standards', :path => '../health-data-standards'
 # gem 'quality-measure-engine', :path => '../quality-measure-engine'
 # gem 'hqmf2js', :path => '../hqmf2js'
-# #gem 'hquery-patient-api', :path => '../patientapi'
+# gem 'hquery-patient-api', :path => '../patientapi'
 # gem 'simplexml_parser', :path => '../simplexml_parser'
 
 gem 'rails', '>= 4.0.0'
