@@ -42,7 +42,7 @@ module Measures
 
         # Replace the function name in measure observations
         model.observations.each do |obs|
-          obs[:function_name] = repl_name if obs[:function_name] == func_name
+          obs[:function_name] = repl_name if obs[:function_name] == func_name[1..-2] # Ignore quotes
         end
       end
 
