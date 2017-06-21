@@ -55,7 +55,7 @@ module Measures
       main_cql_library = model.cql_measure_library
       
       # Hash of which define statements are used for the measure.
-      cql_definition_dependency_structure = traverse_definition_structure(main_cql_library, elms, model.populations_cql_map)
+      cql_definition_dependency_structure = populate_cql_definition_dependency_structure(main_cql_library, elms, model.populations_cql_map)
 
       # Grab the value sets from the elm
       elm_value_sets = []
@@ -106,6 +106,7 @@ module Measures
     end
 
     # Translates the cql to elm json using a post request to CQLTranslation Jar.
+    # Returns an array of ELM.
     def self.translate_cql_to_elm(cql)
       elm = ''
       begin
@@ -121,7 +122,7 @@ module Measures
         )
         elm = request.execute
         elm.gsub! 'urn:oid:', '' # Removes 'urn:oid:' from ELM for Bonnie
-        return parse_batch_response(elm)
+        return parse_elm_response(elm)
       rescue RestClient::BadRequest => e
         begin
           # If there is a response, include it in the error else just include the error message
@@ -144,7 +145,7 @@ module Measures
       ['do', 'if', 'in', 'for', 'let', 'new', 'try', 'var', 'case', 'else', 'enum', 'eval', 'false', 'null', 'this', 'true', 'void', 'with', 'break', 'catch', 'class', 'const', 'super', 'throw', 'while', 'yield', 'delete', 'export', 'import', 'public', 'return', 'static', 'switch', 'typeof', 'default', 'extends', 'finally', 'package', 'private', 'continue', 'debugger', 'function', 'arguments', 'interface', 'protected', 'implements', 'instanceof'].include? string
     end
     # Parse the JSON response into an array of json objects (one for each library)
-    def self.parse_batch_response(response)
+    def self.parse_elm_response(response)
       # Not the same delimiter in the response as we specify ourselves in the request,
       # so we have to extract it.
       delimiter = response.split("\r\n")[0].strip
@@ -159,7 +160,7 @@ module Measures
     end
 
     # Loops over the populations and retrieves the define statements that are nested within it.
-    def self.traverse_definition_structure(main_cql_library, elms, populations_cql_map)
+    def self.populate_cql_definition_dependency_structure(main_cql_library, elms, populations_cql_map)
       cql_population_statement_map = {}
       main_library_elm = elms.find { |elm| elm['library']['identifier']['id'] == main_cql_library }
       # { 'IPP' => ['Initial Population'] }
@@ -167,6 +168,7 @@ module Measures
       populations_cql_map.each do | population, cql_population_name |
         # Get statement that matches the cql_population_name
         population_statement = main_library_elm['library']['statements']['def'].find { |statement| statement['name'] == cql_population_name.first }
+        # Recursive function that returns a list of statements, including duplicates
         cql_population_statement_map[population] = retrieve_all_statements_in_population(population_statement, elms)
       end
       cql_population_statement_map
@@ -181,11 +183,10 @@ module Measures
       if sub_statement_names.length > 0
         sub_statement_names.each do |sub_statement_name|
           # Check if the statement is not a built in expression 
-          elm_index = library_index_for_expression(sub_statement_name, elms)    
-          if elm_index
+          sub_statement = retrieve_sub_statement_for_expression_name(sub_statement_name, elms)    
+          if sub_statement
             all_results << sub_statement_name
-            # Grab the actual sub statement object and not just the name.
-            sub_statement = elms[elm_index]['library']['statements']['def'].find { |statement| statement['name'] == sub_statement_name } 
+            # Call this function with the sub_statement to further drill down.
             all_results.concat(retrieve_all_statements_in_population(sub_statement, elms))
           end
         end
@@ -196,12 +197,12 @@ module Measures
     end
 
     # Finds which library the given define statement exists in.
-    def self.library_index_for_expression(name, elms)
-      elms.each_with_index do | parsed_elm, index |
+    # Returns the JSON statement that contains the given name.
+    # If given statement name is a built in expression, return nil.
+    def self.retrieve_sub_statement_for_expression_name(name, elms)
+      elms.each do | parsed_elm |
         parsed_elm['library']['statements']['def'].each do |statement|
-          if statement['name'] == name
-            return index
-          end
+          return statement if statement['name'] == name
         end
       end
       nil
