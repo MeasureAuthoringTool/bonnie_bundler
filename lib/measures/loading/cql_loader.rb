@@ -144,6 +144,7 @@ module Measures
     def self.is_javascript_keyword(string)
       ['do', 'if', 'in', 'for', 'let', 'new', 'try', 'var', 'case', 'else', 'enum', 'eval', 'false', 'null', 'this', 'true', 'void', 'with', 'break', 'catch', 'class', 'const', 'super', 'throw', 'while', 'yield', 'delete', 'export', 'import', 'public', 'return', 'static', 'switch', 'typeof', 'default', 'extends', 'finally', 'package', 'private', 'continue', 'debugger', 'function', 'arguments', 'interface', 'protected', 'implements', 'instanceof'].include? string
     end
+
     # Parse the JSON response into an array of json objects (one for each library)
     def self.parse_elm_response(response)
       # Not the same delimiter in the response as we specify ourselves in the request,
