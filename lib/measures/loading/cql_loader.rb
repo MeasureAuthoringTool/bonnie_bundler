@@ -25,6 +25,7 @@ module Measures
       # Get main measure from hqmf parser
       main_cql_library = model.cql_measure_library
 
+      # Remove spaces in functions in all libraries, including observations.
       cql_libraries, model = remove_spaces_in_functions(cql_libraries, model)
 
       # Translate the cql to elm
