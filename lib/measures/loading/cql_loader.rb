@@ -17,42 +17,18 @@ module Measures
       hqmf_path = nil
       
       # Grabs the cql file contents and the hqmf file path
-      cql, hqmf_path = get_files_from_zip(file, out_dir)
+      cql_libraries, hqmf_path = get_files_from_zip(file, out_dir)
 
       # Load hqmf into HQMF Parser
       model = Measures::Loader.parse_hqmf_model(hqmf_path)
 
-      # Adjust the names of all CQL functions so that they execute properly
-      # as JavaScript functions.
-      cql.scan(/define function (".*?")/).flatten.each do |func_name|
-        # Generate a replacement function name by transliterating to ASCII, and
-        # remove any spaces.
-        repl_name = ActiveSupport::Inflector.transliterate(func_name.delete('"')).gsub(/[[:space:]]/, '')
-
-        # If necessary, prepend a '_' in order to thwart function names that
-        # could potentially be reserved JavaScript keywords.
-        repl_name = '_' + repl_name if is_javascript_keyword(repl_name)
-
-        # Avoid potential name collisions.
-        repl_name = '_' + repl_name while cql.include?(repl_name) && func_name != repl_name
-
-        # Replace the function name in CQL
-        cql.gsub!(func_name, '"' + repl_name + '"')
-
-        # Replace the function name in measure observations
-        model.observations.each do |obs|
-          obs[:function_name] = repl_name if obs[:function_name] == func_name[1..-2] # Ignore quotes
-        end
-      end
-
-      # Translate the cql to elm
-      elms = translate_cql_to_elm(cql)
-      
-      # Load hqmf into HQMF Parser
-      model = Measures::Loader.parse_hqmf_model(hqmf_path)
-      
       # Get main measure from hqmf parser
       main_cql_library = model.cql_measure_library
+
+      cql_libraries, model = remove_spaces_in_functions(cql_libraries, model)
+
+      # Translate the cql to elm
+      elms = translate_cql_to_elm(cql_libraries)
       
       # Hash of which define statements are used for the measure.
       cql_definition_dependency_structure = populate_cql_definition_dependency_structure(main_cql_library, elms, model.populations_cql_map)
@@ -76,7 +52,7 @@ module Measures
       model.backfill_patient_characteristics_with_codes(HQMF2JS::Generator::CodesToJson.from_value_sets(value_set_models))
       json = model.to_json
       json.convert_keys_to_strings
-      measure = Measures::Loader.load_hqmf_cql_model_json(json, user, value_set_models.collect{|vs| vs.oid}, main_cql_library, cql_definition_dependency_structure, elms, cql)
+      measure = Measures::Loader.load_hqmf_cql_model_json(json, user, value_set_models.collect{|vs| vs.oid}, main_cql_library, cql_definition_dependency_structure, elms, cql_libraries)
       measure['episode_of_care'] = measure_details['episode_of_care']
       measure
     end
@@ -138,6 +114,50 @@ module Measures
     end
 
     private
+    
+    # Parses CQL to remove spaces in functions and all references to those functions in other libraries
+    def self.remove_spaces_in_functions(cql_libraries, model)
+      # Track original and new function names
+      function_name_changes = {}
+
+      # Adjust the names of all CQL functions so that they execute properly
+      # as JavaScript functions.
+      cql_libraries.each do |cql| 
+        cql.scan(/define function (".*?")/).flatten.each do |func_name|
+          # Generate a replacement function name by transliterating to ASCII, and
+          # remove any spaces.
+          repl_name = ActiveSupport::Inflector.transliterate(func_name.delete('"')).gsub(/[[:space:]]/, '')
+
+          # If necessary, prepend a '_' in order to thwart function names that
+          # could potentially be reserved JavaScript keywords.
+          repl_name = '_' + repl_name if is_javascript_keyword(repl_name)
+
+          # Avoid potential name collisions.
+          repl_name = '_' + repl_name while cql.include?(repl_name) && func_name != repl_name
+
+          # Store the original function name and the new name
+          function_name_changes[func_name] = repl_name
+
+          # Replace the function name in CQL
+          cql.gsub!(func_name, '"' + repl_name + '"')
+
+          # Replace the function name in measure observations
+          model.observations.each do |obs|
+            obs[:function_name] = repl_name if obs[:function_name] == func_name[1..-2] # Ignore quotes
+          end
+        end
+      end
+      
+      # Iterate over cql_libraries to replace the function references in other librariers.
+      function_name_changes.each do |original_name, new_name|
+        cql_libraries.each do |cql|
+          cql.scan(/#{original_name}/).flatten.each do |func_name|
+            cql.gsub!(func_name, '"' + new_name + '"')
+          end
+        end
+      end
+      return cql_libraries, model
+    end
 
     # Checks if the given string is a reserved keyword in JavaScript. Useful
     # for sanitizing potential user input from imported CQL code.
