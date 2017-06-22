@@ -25,10 +25,7 @@ module Measures
       # Get main measure from hqmf parser
       main_cql_library = model.cql_measure_library
 
-<<<<<<< 866fa6862a79fad1840bc826a25e674e586285ff
       # Remove spaces in functions in all libraries, including observations.
-=======
->>>>>>> Refactored removing function spacing, to be compatible with multiple libraries.
       cql_libraries, model = remove_spaces_in_functions(cql_libraries, model)
 
       # Translate the cql to elm
@@ -140,11 +137,7 @@ module Measures
           repl_name = '_' + repl_name if is_javascript_keyword(repl_name)
 
           # Avoid potential name collisions.
-<<<<<<< 866fa6862a79fad1840bc826a25e674e586285ff
           repl_name = '_' + repl_name while cql.include?(repl_name) && func_name[1..-2] != repl_name
-=======
-          repl_name = '_' + repl_name while cql.include?(repl_name) && func_name != repl_name
->>>>>>> Refactored removing function spacing, to be compatible with multiple libraries.
 
           # Store the original function name and the new name
           function_name_changes[func_name] = repl_name
