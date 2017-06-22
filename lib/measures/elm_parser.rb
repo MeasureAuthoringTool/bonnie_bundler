@@ -22,6 +22,7 @@ module CQL_ELM
       }
       first_child = true
       node.children.each do |child|
+        
         begin
           if child.namespace.respond_to?(:prefix) && child.namespace.prefix == 'a'
             ref_node = nil
@@ -40,7 +41,7 @@ module CQL_ELM
                 define_name = child.to_html.split("\"")[1]
               end
               clause = {
-                text: child.to_html
+                text: child.to_html.gsub("&gt;", "<").gsub("&lt;", ">")
               }
               clause[:define_name] = define_name unless define_name.nil?
               ret[:children] << clause
