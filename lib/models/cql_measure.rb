@@ -29,7 +29,6 @@ class CqlMeasure
   field :version, type: Integer
   # Store the derived ELM as a simple hash
   # TODO: some simple documentation on the formatting of ELM (or pointers to main doc)
-  field :elm, type: Hash
   field :elm_annotations, type: Hash
 
   field :cql, type: Array
