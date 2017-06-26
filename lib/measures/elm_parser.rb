@@ -1,7 +1,7 @@
 module CQL_ELM
   class Parser
     @fields = ['expression', 'operand', 'suchThat']
-    
+    @curDefine
     def self.parse(elm_xml)
       ret = {
         statements: []
@@ -10,7 +10,9 @@ module CQL_ELM
       @doc = Nokogiri::XML(elm_xml)
       annotations = @doc.css("annotation")
       annotations.each do |node|
-          ret[:statements] << parse_node(node)
+          node, define_name = parse_node(node)
+          node[:define_name] = define_name
+          ret[:statements] << node
       end
       ret
     end
@@ -21,8 +23,8 @@ module CQL_ELM
         children: []
       }
       first_child = true
+      define_name = nil
       node.children.each do |child|
-        
         begin
           if child.namespace.respond_to?(:prefix) && child.namespace.prefix == 'a'
             ref_node = nil
@@ -31,29 +33,27 @@ module CQL_ELM
               ref_node ||= @doc.at_css(field + '[localId="'+child['r']+'"]') unless child['r'].nil?
             end
             node_type = ref_node['xsi:type'] unless ref_node.nil?
-            ret[:ref_id] = child['r'] unless child['r'].nil?
-            ret[:node_type] = node_type  unless node_type.nil?
-            ret[:children] << parse_node(child, node_type)
+            node, child_define_name = parse_node(child, node_type)
+            node[:node_type] = node_type  unless node_type.nil?
+            node[:ref_id] = child['r'] unless child['r'].nil?
+            define_name = child_define_name unless child_define_name.nil? 
+            ret[:children] << node
           else
-            if (!(/^\n/ =~ child.to_html))
-              define_name = nil
-              if (/^define/ =~ child.to_html)
-                define_name = child.to_html.split("\"")[1]
-              end
-              clause = {
-                text: child.to_html.gsub("&gt;", "<").gsub("&lt;", ">")
-              }
-              clause[:define_name] = define_name unless define_name.nil?
-              ret[:children] << clause
+            if (/^define/ =~ child.to_html)
+              define_name = child.to_html.split("\"")[1]
             end
+            clause = {
+              text: child.to_html.gsub("&gt;", "<").gsub("&lt;", ">")
+            }
+            clause[:ref_id] = child['r'] unless child['r'].nil?
+            ret[:children] << clause
           end
           first_child = false
         rescue Exception => e
-          debugger
           puts e
         end
       end
-      ret
+      return ret, define_name
     end
   end
 end
