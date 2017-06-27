@@ -36,9 +36,12 @@ module Measures
 
       # Grab the value sets from the elm
       elm_value_sets = []
-      elms.each do | parsed_elm |''
-        parsed_elm['library']['valueSets']['def'].each do |value_set|
-          elm_value_sets << value_set['id']
+      elms.each do | elm |
+        # Confirm the library has value sets
+        if elm['library'] && elm['library']['valueSets'] && elm['library']['valueSets']['def']
+          elm['library']['valueSets']['def'].each do |value_set|
+            elm_value_sets << value_set['id']
+          end
         end
       end
 
@@ -134,7 +137,7 @@ module Measures
           repl_name = '_' + repl_name if is_javascript_keyword(repl_name)
 
           # Avoid potential name collisions.
-          repl_name = '_' + repl_name while cql.include?(repl_name) && func_name != repl_name
+          repl_name = '_' + repl_name while cql.include?(repl_name) && func_name[1..-2] != repl_name
 
           # Store the original function name and the new name
           function_name_changes[func_name] = repl_name
@@ -185,7 +188,7 @@ module Measures
     def self.populate_cql_definition_dependency_structure(main_cql_library, elms, populations_cql_map)
       cql_population_statement_map = {}
       main_library_elm = elms.find { |elm| elm['library']['identifier']['id'] == main_cql_library }
-      # { 'IPP' => ['Initial Population'] }
+      # populations_cql_map structure is: { 'IPP' => ['Initial Population'] }
       # Loop over the populations finding the starting statements for each.
       populations_cql_map.each do | population, cql_population_name |
         # Get statement that matches the cql_population_name
@@ -201,7 +204,7 @@ module Measures
     def self.retrieve_all_statements_in_population(statement, elms)
       all_results = []
       sub_statement_names = retrieve_expressions_from_statement(statement)
-      # TODO: Check if sub_statement_name is another Population do we remove?
+      # Currently if sub_statement_name is another Population we do not remove it.
       if sub_statement_names.length > 0
         sub_statement_names.each do |sub_statement_name|
           # Check if the statement is not a built in expression 
@@ -231,9 +234,9 @@ module Measures
     end
 
     # Traverses the given statement and returns all of the potential additional statements.
-    def self.retrieve_expressions_from_statement(h)
+    def self.retrieve_expressions_from_statement(statement)
       expressions = []
-      h.each do |k,v|
+      statement.each do |k, v|
         # If v is nil, an array is being iterated and the value is k.
         # If v is not nil, a hash is being iterated and the value is v.
         value = v || k
@@ -241,7 +244,8 @@ module Measures
           expressions.concat(retrieve_expressions_from_statement(value))
         else
           if k == 'type' && (v == 'ExpressionRef' || v == 'FunctionRef')
-            expressions << h['name'] unless h['name'] == 'Patient'
+            # We ignore the Patient expression because it isn't an actual define statment in the cql
+            expressions << statement['name'] unless statement['name'] == 'Patient'
           end
         end
       end
