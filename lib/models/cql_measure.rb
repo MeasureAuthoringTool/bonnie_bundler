@@ -46,6 +46,8 @@ class CqlMeasure
 
   field :complexity, type: Hash
 
+  before_save :set_continuous_variable
+
   belongs_to :user
   belongs_to :bundle, class_name: "HealthDataStandards::CQM::Bundle"
   has_and_belongs_to_many :records, :inverse_of => nil
@@ -90,6 +92,11 @@ class CqlMeasure
 
   def all_data_criteria
     as_hqmf_model.all_data_criteria
+  end
+
+  def set_continuous_variable
+    self.continuous_variable = populations.map {|x| x.keys}.flatten.uniq.include? HQMF::PopulationCriteria::MSRPOPL
+    true
   end
 
   # When saving calculate the cyclomatic complexity of the measure
