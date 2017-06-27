@@ -22,8 +22,24 @@ module Measures
       # Load hqmf into HQMF Parser
       model = Measures::Loader.parse_hqmf_model(hqmf_path)
 
+<<<<<<< HEAD
       # Get main measure from hqmf parser
       main_cql_library = model.cql_measure_library
+=======
+      # Adjust the names of all CQL functions so that they execute properly
+      # as JavaScript functions.
+      cql.scan(/define function (".*?")/).flatten.each do |func_name|
+        # Generate a replacement function name by transliterating to ASCII, and
+        # remove any spaces.
+        repl_name = ActiveSupport::Inflector.transliterate(func_name.delete('"')).gsub(/[[:space:]]/, '')
+
+        # If necessary, prepend a '_' in order to thwart function names that
+        # could potentially be reserved JavaScript keywords.
+        repl_name = '_' + repl_name if is_javascript_keyword(repl_name)
+
+        # Avoid potential name collisions.
+        repl_name = '_' + repl_name while cql.include?(repl_name) && func_name[1..-2] != repl_name
+>>>>>>> Adjusted check for function name fixes
 
       # Remove spaces in functions in all libraries, including observations.
       cql_libraries, model = remove_spaces_in_functions(cql_libraries, model)
