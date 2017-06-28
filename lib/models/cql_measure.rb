@@ -95,6 +95,10 @@ class CqlMeasure
   end
 
   def set_continuous_variable
+    # The return value of this function is not related to whether or not this
+    # measure is a CV measure. The true return value ensures false is not
+    # accidentally returned here, which would cause the chain of 'before_*' to
+    # stop executing.
     self.continuous_variable = populations.map {|x| x.keys}.flatten.uniq.include? HQMF::PopulationCriteria::MSRPOPL
     true
   end
