@@ -33,6 +33,8 @@ module Measures
       
       # Hash of which define statements are used for the measure.
       cql_definition_dependency_structure = populate_cql_definition_dependency_structure(main_cql_library, elms, model.populations_cql_map)
+      
+      foo = traverse_new_hash(cql_definition_dependency_structure, elms)
 
       # Grab the value sets from the elm
       elm_value_sets = []
@@ -203,6 +205,9 @@ module Measures
     # this will return an array of all nested define statements.
     def self.retrieve_all_statements_in_population(statement, elms)
       all_results = []
+      if statement.is_a? String
+        statement = retrieve_sub_statement_for_expression_name(statement, elms)
+      end      
       sub_statement_names = retrieve_expressions_from_statement(statement)
       # Currently if sub_statement_name is another Population we do not remove it.
       if sub_statement_names.length > 0
@@ -252,5 +257,35 @@ module Measures
       expressions
     end
 
+    # Loops over keys of the given hash and loops over the list of statements 
+    # Original structure of hash is {IPP => ["In Demographics", Measurement Period Encounters"], NUMER => ["Tonsillitis"]}
+    def self.traverse_new_hash(starting_hash, elms)
+      # Starting_hash gets updated with the create_hash_for_all call. 
+      starting_hash.keys.each do |key|
+        starting_hash[key].each do |statement|
+          create_hash_for_all(starting_hash, statement, elms)
+        end
+      end
+      starting_hash
+    end
+
+    # Traverse list, create keys and drill down for each key.
+    # If key is already in place, skip.
+    def self.create_hash_for_all(starting_hash, key_statement, elms)
+      # If key already exists, return hash
+      if starting_hash.has_key? key_statement
+        return starting_hash
+      # Create new hash key and retrieve all sub statements
+      else
+        starting_hash[key_statement] = retrieve_all_statements_in_population(key_statement, elms).uniq
+        # If there are no statements return hash
+        return starting_hash if starting_hash[key_statement].empty?
+        # Loop over array of sub statements and build out hash keys for each.
+        starting_hash[key_statement].each do |statement|
+          starting_hash.merge!(create_hash_for_all(starting_hash, statement, elms))
+        end
+      end
+      starting_hash
+    end
   end
 end
