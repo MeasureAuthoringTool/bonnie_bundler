@@ -11,8 +11,10 @@ module CQL_ELM
       annotations = @doc.css("annotation")
       annotations.each do |node|
           node, define_name = parse_node(node)
-          node[:define_name] = define_name
-          ret[:statements] << node
+          if !define_name.nil?
+            node[:define_name] = define_name
+            ret[:statements] << node
+          end
       end
       ret
     end
@@ -22,7 +24,6 @@ module CQL_ELM
       ret = {
         children: []
       }
-      first_child = true
       define_name = nil
       node.children.each do |child|
         begin
@@ -39,16 +40,19 @@ module CQL_ELM
             define_name = child_define_name unless child_define_name.nil? 
             ret[:children] << node
           else
-            if (/^define/ =~ child.to_html)
-              define_name = child.to_html.split("\"")[1]
+            if (/^\n\s+$/ =~ child.to_html).nil?
+              if (/^define/ =~ child.to_html)
+                define_name = child.to_html.split("\"")[1]
+              end
+              clause = {
+                #text: child.to_html.gsub("&gt;", ">").gsub("&lt;", "<").gsub("&quot;", '"').gsub("&amp;", "&").gsub("&apos;", "'")
+                #text: child.to_html.gsub("\n", '<br/>').gsub(/\s/, "&#160;")
+                text: child.to_html
+              }
+              clause[:ref_id] = child['r'] unless child['r'].nil?
+              ret[:children] << clause
             end
-            clause = {
-              text: child.to_html.gsub("&gt;", "<").gsub("&lt;", ">")
-            }
-            clause[:ref_id] = child['r'] unless child['r'].nil?
-            ret[:children] << clause
           end
-          first_child = false
         rescue Exception => e
           puts e
         end
