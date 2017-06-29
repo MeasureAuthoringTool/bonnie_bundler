@@ -94,6 +94,7 @@ class CqlMeasure
     as_hqmf_model.all_data_criteria
   end
 
+  # Note whether or not the measure is a continuous variable measure.
   def set_continuous_variable
     # The return value of this function is not related to whether or not this
     # measure is a CV measure. The true return value ensures false is not
