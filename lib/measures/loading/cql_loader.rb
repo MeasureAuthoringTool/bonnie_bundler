@@ -207,12 +207,10 @@ module Measures
       xmls = parse_multipart_response(response)
       elm_annotations = {}
       xmls.each do |xml_lib|
-        doc = Nokogiri::XML(xml_lib)
         lib_annotations = CQL_ELM::Parser.parse(xml_lib)
-        id = doc.css("identifier").attr("id").value()
-        elm_annotations[id] = lib_annotations
+        elm_annotations[lib_annotations[:identifier][:id]] = lib_annotations
       end
-      elm_annotations = xmls.map { |elm_xml| CQL_ELM::Parser.parse(elm_xml) }
+      elm_annotations
     end
 
     def self.parse_multipart_response(response)
