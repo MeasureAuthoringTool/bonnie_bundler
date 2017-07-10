@@ -100,22 +100,27 @@ module Measures
             :file => cql
           }
         )
+
         elm_json = request.execute
         elm_json.gsub! 'urn:oid:', '' # Removes 'urn:oid:' from ELM for Bonnie
         
         # now get the XML ELM
         request = RestClient::Request.new(
           :method => :post,
-          :accept => :xml,
-          :content_type => :xml,
+          :headers => {
+            :accept => 'multipart/form-data',
+            'X-TargetFormat' => 'application/elm+xml'
+          },
+          :content_type => 'multipart/form-data',
           :url => 'http://localhost:8080/cql/translator',
           :payload => {
             :multipart => true,
             :file => cql
           }
         )
-        elm_annotations = request.execute
-        elm_annotations = CQL_ELM::Parser.parse(elm_annotations)
+        elm_xmls = request.execute
+        elm_annotations = parse_elm_annotations_response(elm_xmls)
+
         return parse_elm_response(elm_json), elm_annotations
       rescue RestClient::BadRequest => e
         begin
@@ -196,6 +201,38 @@ module Measures
       # Collects the response body as json. Grabs everything from the first '{' to the last '}'
       results = parts.map{ |part| JSON.parse(part.match(/{.+}/m).to_s)}
       results
+    end
+
+    def self.parse_elm_annotations_response(response)
+      xmls = parse_multipart_response(response)
+      elm_annotations = xmls.map { |elm_xml| CQL_ELM::Parser.parse(elm_xml) }
+    end
+
+    def self.parse_multipart_response(response)
+      # Not the same delimiter in the response as we specify ourselves in the request,
+      # so we have to extract it.
+      delimiter = response.split("\r\n")[0].strip
+      parts = response.split(delimiter)
+      # The first part will always be an empty string. Just remove it.
+      parts.shift
+      # The last part will be the "--". Just remove it.
+      parts.pop
+
+      parsed_parts = []
+      parts.each do |part|
+        lines = part.split("\r\n")
+        # The first line will always be empty string
+        lines.shift
+
+        # find the end of the http headers
+        headerEndIndex = lines.find_index { |line| line == '' }
+
+        # Remove the headers and reassemble
+        lines.shift(headerEndIndex+1)
+        parsed_parts << lines.join("\r\n")
+      end
+
+      parsed_parts
     end
 
     # Loops over the populations and retrieves the define statements that are nested within it.

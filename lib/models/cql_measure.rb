@@ -27,9 +27,8 @@ class CqlMeasure
   field :published, type: Boolean
   field :publish_date, type: Date
   field :version, type: Integer
-  # Store the derived ELM as a simple hash
-  # TODO: some simple documentation on the formatting of ELM (or pointers to main doc)
-  field :elm_annotations, type: Hash
+
+  field :elm_annotations, type: Array
 
   field :cql, type: Array
   field :elm, type: Array
