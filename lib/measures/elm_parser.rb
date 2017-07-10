@@ -2,12 +2,11 @@ module CQL_ELM
   class Parser
     @fields = ['expression', 'operand', 'suchThat']
     @curDefine
-    def self.parse(elm_xml)
+    def self.parse(annotations)
       ret = {
         statements: []
       }
 #      ret = Nokogiri::HTML.fragment('<div id="statements"></div>')
-      @doc = Nokogiri::XML(elm_xml)
       annotations = @doc.css("annotation")
       annotations.each do |node|
           node, define_name = parse_node(node)

@@ -28,7 +28,7 @@ class CqlMeasure
   field :publish_date, type: Date
   field :version, type: Integer
 
-  field :elm_annotations, type: Array
+  field :elm_annotations, type: Hash
 
   field :cql, type: Array
   field :elm, type: Array
