@@ -48,6 +48,8 @@ class CqlMeasure
 
   field :complexity, type: Hash
 
+  before_save :set_continuous_variable
+
   belongs_to :user
   belongs_to :bundle, class_name: "HealthDataStandards::CQM::Bundle"
   has_and_belongs_to_many :records, :inverse_of => nil
@@ -92,6 +94,16 @@ class CqlMeasure
 
   def all_data_criteria
     as_hqmf_model.all_data_criteria
+  end
+
+  # Note whether or not the measure is a continuous variable measure.
+  def set_continuous_variable
+    # The return value of this function is not related to whether or not this
+    # measure is a CV measure. The true return value ensures false is not
+    # accidentally returned here, which would cause the chain of 'before_*' to
+    # stop executing.
+    self.continuous_variable = populations.map {|x| x.keys}.flatten.uniq.include? HQMF::PopulationCriteria::MSRPOPL
+    true
   end
 
   # When saving calculate the cyclomatic complexity of the measure
