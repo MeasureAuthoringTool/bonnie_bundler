@@ -32,7 +32,7 @@ module Measures
       elms, elm_annotations = translate_cql_to_elm(cql_libraries)
 
       # Hash of define statements to which define statements they use.
-      cql_definition_dependency_structure = populate_cql_definition_dependency_structure(main_cql_library, elms, model.populations_cql_map)
+      cql_definition_dependency_structure = populate_cql_definition_dependency_structure(main_cql_library, elms)
       # Go back for the library statements
       cql_definition_dependency_structure = populate_used_library_dependencies(cql_definition_dependency_structure, main_cql_library, elms)
 
@@ -241,7 +241,7 @@ module Measures
     end
 
     # Loops over the populations and retrieves the define statements that are nested within it.
-    def self.populate_cql_definition_dependency_structure(main_cql_library, elms, populations_cql_map)
+    def self.populate_cql_definition_dependency_structure(main_cql_library, elms)
       cql_statement_depencency_map = {}
       main_library_elm = elms.find { |elm| elm['library']['identifier']['id'] == main_cql_library }
 
