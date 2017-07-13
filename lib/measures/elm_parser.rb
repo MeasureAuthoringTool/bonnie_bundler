@@ -2,6 +2,7 @@ module CQL_ELM
   class Parser
     #Fields are combined with the refId to find elm node that corrosponds to the current annotation node.
     @fields = ['expression', 'operand', 'suchThat']
+    @previousNoTrailingSpaceNotPeriod = false
     
     def self.parse(elm_xml)
       ret = {
@@ -63,6 +64,14 @@ module CQL_ELM
               clause = {
                 text: child.to_html
               }
+              #TODO: This is ugly, hopefully the stuff we get from the translation service will give good data
+              if @previousNoTrailingSpaceNotPeriod && (/\.$/ =~ clause[:text]).nil? && (/^\s/ =~ clause[:text]).nil?
+                clause[:text] = " " + clause[:text]
+              end
+              @previousNoTrailingSpaceNotPeriod = false
+              if (/\s$/ =~ clause[:text]).nil? && (/\.$/ =~ clause[:text]).nil?
+                @previousNoTrailingSpaceNotPeriod = true
+              end
               clause[:ref_id] = child['r'] unless child['r'].nil?
               ret[:children] << clause
             end
