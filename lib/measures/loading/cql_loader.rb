@@ -180,7 +180,7 @@ module Measures
       # The last part will be the "--". Just remove it.
       parts.pop
       # Collects the response body as json. Grabs everything from the first '{' to the last '}'
-      results = parts.map{ |part| JSON.parse(part.match(/{.+}/m).to_s)}
+      results = parts.map{ |part| JSON.parse(part.match(/{.+}/m).to_s, :max_nesting=>1000)}
       results
     end
 
