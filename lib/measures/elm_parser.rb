@@ -27,8 +27,7 @@ module CQL_ELM
     
     #Recursive function that traverses the annotation tree and constructs a representation
     #that will be compatible with the front end.
-    def self.parse_node(node, parent_type=nil)
-      parent_type = parent_type.downcase unless parent_type.nil?
+    def self.parse_node(node)
       ret = {
         children: []
       }
@@ -47,7 +46,7 @@ module CQL_ELM
             node_type = ref_node['xsi:type'] unless ref_node.nil?
             #Parses the current child recursively. child_define_name will bubble up to indicate which
             #statement is currently being traversed.
-            node, child_define_name = parse_node(child, node_type)
+            node, child_define_name = parse_node(child)
             node[:node_type] = node_type  unless node_type.nil?
             node[:ref_id] = child['r'] unless child['r'].nil?
             define_name = child_define_name unless child_define_name.nil? 
