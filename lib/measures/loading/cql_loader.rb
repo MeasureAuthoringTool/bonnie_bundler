@@ -29,7 +29,11 @@ module Measures
       cql_libraries, model = remove_spaces_in_functions(cql_libraries, model)
 
       # Translate the cql to elm
-      elms = translate_cql_to_elm(cql_libraries)
+      begin
+        elms = translate_cql_to_elm(cql_libraries)
+      rescue Exception => e
+        raise ElmParsingException.new "Error translating Cql to Elm: #{e.message}"
+      end      
       
       # Hash of which define statements are used for the measure.
       cql_definition_dependency_structure = populate_cql_definition_dependency_structure(main_cql_library, elms, model.populations_cql_map)
