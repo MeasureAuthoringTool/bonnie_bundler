@@ -1,4 +1,4 @@
-module CQL_ELM
+module CqlElm
   class Parser
     #Fields are combined with the refId to find elm node that corrosponds to the current annotation node.
     @fields = ['expression', 'operand', 'suchThat']
@@ -75,7 +75,7 @@ module CQL_ELM
               ret[:children] << clause
             end
           end
-        rescue Exception => e
+        rescue
           puts e
         end
       end

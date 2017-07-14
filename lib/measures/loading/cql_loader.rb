@@ -207,7 +207,7 @@ module Measures
       xmls = parse_multipart_response(response)
       elm_annotations = {}
       xmls.each do |xml_lib|
-        lib_annotations = CQL_ELM::Parser.parse(xml_lib)
+        lib_annotations = CqlElm::Parser.parse(xml_lib)
         elm_annotations[lib_annotations[:identifier][:id]] = lib_annotations
       end
       elm_annotations
