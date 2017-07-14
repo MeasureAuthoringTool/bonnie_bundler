@@ -79,6 +79,8 @@ module CqlElm
     
     def self.add_whitespace(clause)
       #TODO: This is ugly, hopefully the stuff we get from the translation service will give good data
+      #Improving this will most likely be based on Bryn's addition of pretty-print support to the next
+      #itteration of the translation jar
       if @previousNoTrailingSpaceNotPeriod && (/\.$/ =~ clause[:text]).nil? && (/^\s/ =~ clause[:text]).nil?
         clause[:text] = " " + clause[:text]
       end
