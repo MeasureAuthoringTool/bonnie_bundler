@@ -147,6 +147,11 @@ class CqlMeasure
   end
 
   before_save :make_positive_entry
+  # This method is needed for situations when there is a only
+  # a negated version of a data criteria.  Bonnie will only
+  # show the affirmative version of data criteria.  This method
+  # will create an affirmative version of a data criteria when there
+  # is only the negative one in the HQMF.
   def make_positive_entry
     negated_criteria = []
     description_hash = {}
@@ -163,10 +168,15 @@ class CqlMeasure
         # Check if there is a criterion has the affirmative description
         unless description_hash.value?(self.source_data_criteria[criterion]['description'].gsub(', Not ', ', '))
           # Make the new name based on the title, definition, and status
-          spoofed_criterion_name = self.source_data_criteria[criterion]['title'].gsub(' ', '') + '_' + self.source_data_criteria[criterion]['definition'].split.map(&:capitalize).join('') + self.source_data_criteria[criterion]['status'].split.map(&:capitalize).join('') + '_spoofed'
+          spoofed_criterion_name = self.source_data_criteria[criterion]['title'].gsub(' ', '') 
+            + '_' 
+            + self.source_data_criteria[criterion]['definition'].split.map(&:capitalize).join('') 
+            + self.source_data_criteria[criterion]['status'].split.map(&:capitalize).join('') + '_spoofed'
           self.source_data_criteria[spoofed_criterion_name] = self.source_data_criteria[criterion].dup
           self.source_data_criteria[spoofed_criterion_name]['negation'] = false
           self.source_data_criteria[spoofed_criterion_name]['description'] = self.source_data_criteria[criterion]['description'].gsub(', Not ', ', ')
+          self.source_data_criteria[spoofed_criterion_name]['source_data_criteria'] = 'Derived from ' 
+            + self.source_data_criteria[criterion]['source_data_criteria']
           self.data_criteria[spoofed_criterion_name] = self.source_data_criteria[spoofed_criterion_name]
         end
       end
