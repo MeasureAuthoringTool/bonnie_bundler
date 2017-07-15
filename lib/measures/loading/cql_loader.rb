@@ -32,7 +32,7 @@ module Measures
       begin
         elms = translate_cql_to_elm(cql_libraries)
       rescue Exception => e
-        raise ElmParsingException.new "Error translating Cql to Elm: #{e.message}"
+        raise ElmParsingException.new "Error translating CQL to ELM: #{e.message}"
       end      
       
       # Hash of which define statements are used for the measure.
@@ -185,7 +185,18 @@ module Measures
       parts.pop
       # Collects the response body as json. Grabs everything from the first '{' to the last '}'
       results = parts.map{ |part| JSON.parse(part.match(/{.+}/m).to_s, :max_nesting=>1000)}
-      results
+      return identify_error_response(results)
+    end
+    
+    def self.identify_error_response(elms)
+      begin
+        severity = elms[0]["library"]["annotation"][0]["errorSeverity"]
+        if (severity == "error")
+          raise ElmParsingException.new elms[0]["library"]["annotation"][0]["message"]
+        end
+      rescue 
+      end
+      elms
     end
 
     # Loops over the populations and retrieves the define statements that are nested within it.
