@@ -200,7 +200,7 @@ module Measures
         end
       end
       if (error_message != "")
-        raise ElmParsingException.new error_message
+        raise CqlToElmException.new error_message
       end
       elms
     end

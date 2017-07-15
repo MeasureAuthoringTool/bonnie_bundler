@@ -7,6 +7,6 @@ module Measures
   end
   class MeasureLoadingException < Exception
   end
-  class ElmParsingException < Exception
+  class CqlToElmException < Exception
   end
 end 
