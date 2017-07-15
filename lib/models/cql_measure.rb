@@ -145,4 +145,33 @@ class CqlMeasure
     end
     self.complexity
   end
+
+  before_save :make_positive_entry
+  def make_positive_entry
+    negated_criteria = []
+    description_hash = {}
+    # Find the criteria that are negated
+    # At the same time build a hash of criteria and their descriptions
+    self.source_data_criteria.each do |criterion, detail|
+      negated_criteria << criterion if detail['negation']
+      # Using the criterion name as there might be multiples of the same description
+      description_hash[criterion] = detail['description']
+    end
+
+    unless negated_criteria.length == 0
+      negated_criteria.each do |criterion|
+        # Check if there is a criterion has the affirmative description
+        unless description_hash.value?(self.source_data_criteria[criterion]['description'].gsub(', Not ', ', '))
+          # Make the new name based on the title, definition, and status
+          spoofed_criterion_name = self.source_data_criteria[criterion]['title'].gsub(' ', '') + '_' + self.source_data_criteria[criterion]['definition'].split.map(&:capitalize) + self.source_data_criteria[criterion]['status'].split.map(&:capitalize) + '_spoofed'
+          self.source_data_criteria[spoofed_criterion_name] = self.source_data_criteria[criterion].dup
+          self.source_data_criteria[spoofed_criterion_name]['negation'] = false
+          self.source_data_criteria[spoofed_criterion_name]['description'] = self.source_data_criteria[criterion]['description'].gsub(', Not ', ', ')
+          self.data_criteria[spoofed_criterion_name] = self.source_data_criteria[spoofed_criterion_name]
+        end
+      end
+    
+    end
+  end
+
 end
