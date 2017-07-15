@@ -32,7 +32,7 @@ module Measures
       begin
         elms = translate_cql_to_elm(cql_libraries)
       rescue Exception => e
-        raise ElmParsingException.new "Error translating CQL to ELM: #{e.message}"
+        raise CqlToElmException.new "Error translating CQL to ELM: #{e.message}"
       end      
       
       # Hash of which define statements are used for the measure.
