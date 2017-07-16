@@ -191,11 +191,13 @@ module Measures
     def self.identify_error_response(elms)
       error_message = ""
       elms.each do |elm|
-        elm["library"]["annotation"].each do |annotation|
-          if annotation["errorSeverity"] == "error"
-            err_msg = annotation["message"]
-            err_line = annotation["startLine"]
-            error_message += "\nLine: #{err_line}, Message: #{err_msg};"
+        if !(elm["library"]["annotation"].nil?)
+          elm["library"]["annotation"].each do |annotation|
+            if annotation["errorSeverity"] == "error"
+              err_msg = annotation["message"]
+              err_line = annotation["startLine"]
+              error_message += "\nLine: #{err_line}, Message: #{err_msg};"
+            end
           end
         end
       end
