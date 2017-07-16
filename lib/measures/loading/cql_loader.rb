@@ -195,7 +195,7 @@ module Measures
           if annotation["errorSeverity"] == "error"
             err_msg = annotation["message"]
             err_line = annotation["startLine"]
-            error_message += "Line: #{err_line}, Message: #{err_msg}; "
+            error_message += "\nLine: #{err_line}, Message: #{err_msg};"
           end
         end
       end
