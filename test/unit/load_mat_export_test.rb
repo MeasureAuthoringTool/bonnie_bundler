@@ -6,6 +6,7 @@ class LoadMATExportTest < ActiveSupport::TestCase
   setup do
     @mat_export = File.new File.join('test','fixtures','07_ExclusiveBreastMilkFeeding_Artifacts.zip')
     @cql_mat_export = File.new File.join('test', 'fixtures', 'BCS_v5_0_Artifacts.zip')
+    @cql_multilibrary_mat_export = File.new File.join('test', 'fixtures', 'bonnienesting01_fixed.zip')
   end
 
   test "Loading a MAT export zip file" do
@@ -32,6 +33,21 @@ class LoadMATExportTest < ActiveSupport::TestCase
       assert_equal "40280582-57B5-1CC0-0157-B53816CC0046", measure.hqmf_id
       assert_equal 1, measure.populations.size
       assert_equal 4, measure.population_criteria.keys.count
+    end
+  end
+  
+  test "Loading a CQL Mat export with multiple libraries, with VSAC credentials" do
+    VCR.use_cassette("multi_library_webcalls") do
+      dump_db
+      measure_details = { 'episode_of_care'=> false }
+      Measures::MATLoader.load(@cql_multilibrary_mat_export, nil, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD']).save
+      assert_equal 1, CqlMeasure.all.count
+      measure = CqlMeasure.all.first
+      assert_equal (measure.elm.instance_of? Array), true
+      assert_equal 4, measure.elm.size
+      measure.elm.each do |elm|
+        assert !(elm["library"].nil?)
+      end
     end
   end
 
