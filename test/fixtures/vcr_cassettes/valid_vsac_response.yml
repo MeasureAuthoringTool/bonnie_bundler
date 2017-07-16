@@ -2,6 +2,409 @@
 http_interactions:
 - request:
     method: post
+    uri: http://localhost:8080/cql/translator
+    body:
+      encoding: ASCII-8BIT
+      string: "--818605\r\nContent-Disposition: form-data; name=\"file[]\"\r\n\r\nlibrary
+        BCSTest version '0.0.001'\n\nusing QDM version '5.0'\n\ncodesystem \"LOINC:2.46\":
+        'urn:oid:2.16.840.1.113883.6.1' version 'urn:hl7:version:2.46'\n\ncodesystem
+        \"SNOMEDCT:2016-03\": 'urn:oid:2.16.840.1.113883.6.96' version 'urn:hl7:version:2016-03'\n\ncodesystem
+        \"CPT:2016\": 'urn:oid:2.16.840.1.113883.6.12' version 'urn:hl7:version:2016'\n\ncodesystem
+        \"AdministrativeGender:HL7V3.0_2015-07\": 'urn:oid:2.16.840.1.113883.5.1'
+        version 'urn:hl7:version:HL7V3.0_2015-07'\n\ncodesystem \"SNOMEDCT:2016-09\":
+        'urn:oid:2.16.840.1.113883.6.96' version 'urn:hl7:version:2016-09'\n\ncodesystem
+        \"LOINC:2.56\": 'urn:oid:2.16.840.1.113883.6.1' version 'urn:hl7:version:2.56'\n\ncodesystem
+        \"HCPCS:2016\": 'urn:oid:2.16.840.1.113883.6.285' version 'urn:hl7:version:2016'\n\ncodesystem
+        \"CDCREC:1.0\": 'urn:oid:2.16.840.1.113883.6.238' version 'urn:hl7:version:1.0'\n\ncodesystem
+        \"SOP:6.0\": 'urn:oid:2.16.840.1.113883.3.221.5' version 'urn:hl7:version:6.0'\n\nvalueset
+        \"ONC Administrative Sex\": 'urn:oid:2.16.840.1.113762.1.4.1' codesystems
+        {\"AdministrativeGender:HL7V3.0_2015-07\"}\n\nvalueset \"Race\": 'urn:oid:2.16.840.1.114222.4.11.836'
+        codesystems {\"CDCREC:1.0\"}\n\nvalueset \"Ethnicity\": 'urn:oid:2.16.840.1.114222.4.11.837'
+        codesystems {\"CDCREC:1.0\"}\n\nvalueset \"Payer\": 'urn:oid:2.16.840.1.114222.4.11.3591'
+        codesystems {\"SOP:6.0\"}\n\nvalueset \"Mammogram\": 'urn:oid:2.16.840.1.113883.3.464.1003.108.12.1018'
+        codesystems {\"LOINC:2.56\", \"HCPCS:2016\"}\n\nvalueset \"Face-to-Face Interaction\":
+        'urn:oid:2.16.840.1.113883.3.464.1003.101.12.1048' codesystems {\"SNOMEDCT:2016-09\"}\n\nvalueset
+        \"Home Healthcare Services\": 'urn:oid:2.16.840.1.113883.3.464.1003.101.12.1016'
+        codesystems {\"CPT:2016\"}\n\nvalueset \"Office Visit\": 'urn:oid:2.16.840.1.113883.3.464.1003.101.12.1001'
+        codesystems {\"CPT:2016\"}\n\nvalueset \"Bilateral Mastectomy\": 'urn:oid:2.16.840.1.113883.3.464.1003.198.12.1005'
+        codesystems {\"SNOMEDCT:2016-09\"}\n\nvalueset \"Unilateral Mastectomy\":
+        'urn:oid:2.16.840.1.113883.3.464.1003.198.12.1020' codesystems {\"SNOMEDCT:2016-09\",
+        \"CPT:2016\"}\n\nvalueset \"Female\": 'urn:oid:2.16.840.1.113883.3.560.100.2'
+        codesystems {\"AdministrativeGender:HL7V3.0_2015-07\"}\n\nparameter \"Measurement
+        Period\" Interval<DateTime>\n\ncontext Patient\n\ndefine \"SDE Ethnicity\":
+        [\"Patient Characteristic Ethnicity\": \"Ethnicity\"]\n\ndefine \"SDE Payer\":
+        [\"Patient Characteristic Payer\": \"Payer\"]\n\ndefine \"SDE Race\": [\"Patient
+        Characteristic Race\": \"Race\"]\n\ndefine \"SDE Sex\": [\"Patient Characteristic
+        Sex\": \"ONC Administrative Sex\"]\n\ndefine \"Initial Pop\": ([\"Encounter,
+        Performed\": \"Office Visit\"]\nunion [\"Encounter, Performed\": \"Face-to-Face
+        Interaction\"]\nunion [\"Encounter, Performed\": \"Home Healthcare Services\"])Enc\nwhere
+        Enc.relevantPeriod during \"Measurement Period\"\nand AgeInYearsAt(start of
+        \"Measurement Period\")>=65\n\ndefine \"Num\": [\"Diagnostic Study, Performed\":
+        \"Mammogram\"]Mam\nwhere Mam.relevantPeriod 26 months or less before end of
+        \"Measurement Period\"\n\ndefine \"Double Unilateral Mastectomy\": Count([\"Procedure,
+        Performed\": \"Unilateral Mastectomy\"]P\nwhere P.relevantPeriod before end
+        of \"Measurement Period\")=2\n\ndefine \"Denom\": exists(\"Initial Pop\")
+        and\nAgeInYearsAt(start of \"Measurement Period\")<74\nand exists([\"Patient
+        Characteristic Sex\": \"Female\"])\n\ndefine \"Denom Excl\": exists([\"Procedure,
+        Performed\": \"Bilateral Mastectomy\"]BIM\nwhere BIM.relevantPeriod before
+        end of \"Measurement Period\") or \"Double Unilateral Mastectomy\"\n\r\n--818605--\r\n"
+    headers:
+      Accept:
+      - "*/*; q=0.5, application/xml"
+      Accept-Encoding:
+      - gzip, deflate
+      Content-Length:
+      - '3432'
+      Content-Type:
+      - multipart/form-data; boundary=818605
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Mime-Version:
+      - '1.0'
+      Content-Type:
+      - multipart/form-data;boundary=Boundary_1_1904617969_1498142110726
+      Date:
+      - Thu, 22 Jun 2017 14:35:10 GMT
+      Transfer-Encoding:
+      - chunked
+    body:
+      encoding: UTF-8
+      string: "--Boundary_1_1904617969_1498142110726\r\nContent-Type: application/elm+json\r\nContent-Disposition:
+        form-data; name=\"file[]\"\r\n\r\n{\n   \"library\" : {\n      \"identifier\"
+        : {\n         \"id\" : \"BCSTest\",\n         \"version\" : \"0.0.001\"\n
+        \     },\n      \"schemaIdentifier\" : {\n         \"id\" : \"urn:hl7-org:elm\",\n
+        \        \"version\" : \"r1\"\n      },\n      \"usings\" : {\n         \"def\"
+        : [ {\n            \"localIdentifier\" : \"System\",\n            \"uri\"
+        : \"urn:hl7-org:elm-types:r1\"\n         }, {\n            \"localId\" : \"1\",\n
+        \           \"localIdentifier\" : \"QDM\",\n            \"uri\" : \"urn:healthit-gov:qdm:v5_0_draft\",\n
+        \           \"version\" : \"5.0\"\n         } ]\n      },\n      \"parameters\"
+        : {\n         \"def\" : [ {\n            \"localId\" : \"37\",\n            \"name\"
+        : \"Measurement Period\",\n            \"accessLevel\" : \"Public\",\n            \"parameterTypeSpecifier\"
+        : {\n               \"localId\" : \"36\",\n               \"type\" : \"IntervalTypeSpecifier\",\n
+        \              \"pointType\" : {\n                  \"localId\" : \"35\",\n
+        \                 \"name\" : \"{urn:hl7-org:elm-types:r1}DateTime\",\n                  \"type\"
+        : \"NamedTypeSpecifier\"\n               }\n            }\n         } ]\n
+        \     },\n      \"codeSystems\" : {\n         \"def\" : [ {\n            \"localId\"
+        : \"2\",\n            \"name\" : \"LOINC:2.46\",\n            \"id\" : \"urn:oid:2.16.840.1.113883.6.1\",\n
+        \           \"version\" : \"urn:hl7:version:2.46\",\n            \"accessLevel\"
+        : \"Public\"\n         }, {\n            \"localId\" : \"3\",\n            \"name\"
+        : \"SNOMEDCT:2016-03\",\n            \"id\" : \"urn:oid:2.16.840.1.113883.6.96\",\n
+        \           \"version\" : \"urn:hl7:version:2016-03\",\n            \"accessLevel\"
+        : \"Public\"\n         }, {\n            \"localId\" : \"4\",\n            \"name\"
+        : \"CPT:2016\",\n            \"id\" : \"urn:oid:2.16.840.1.113883.6.12\",\n
+        \           \"version\" : \"urn:hl7:version:2016\",\n            \"accessLevel\"
+        : \"Public\"\n         }, {\n            \"localId\" : \"5\",\n            \"name\"
+        : \"AdministrativeGender:HL7V3.0_2015-07\",\n            \"id\" : \"urn:oid:2.16.840.1.113883.5.1\",\n
+        \           \"version\" : \"urn:hl7:version:HL7V3.0_2015-07\",\n            \"accessLevel\"
+        : \"Public\"\n         }, {\n            \"localId\" : \"6\",\n            \"name\"
+        : \"SNOMEDCT:2016-09\",\n            \"id\" : \"urn:oid:2.16.840.1.113883.6.96\",\n
+        \           \"version\" : \"urn:hl7:version:2016-09\",\n            \"accessLevel\"
+        : \"Public\"\n         }, {\n            \"localId\" : \"7\",\n            \"name\"
+        : \"LOINC:2.56\",\n            \"id\" : \"urn:oid:2.16.840.1.113883.6.1\",\n
+        \           \"version\" : \"urn:hl7:version:2.56\",\n            \"accessLevel\"
+        : \"Public\"\n         }, {\n            \"localId\" : \"8\",\n            \"name\"
+        : \"HCPCS:2016\",\n            \"id\" : \"urn:oid:2.16.840.1.113883.6.285\",\n
+        \           \"version\" : \"urn:hl7:version:2016\",\n            \"accessLevel\"
+        : \"Public\"\n         }, {\n            \"localId\" : \"9\",\n            \"name\"
+        : \"CDCREC:1.0\",\n            \"id\" : \"urn:oid:2.16.840.1.113883.6.238\",\n
+        \           \"version\" : \"urn:hl7:version:1.0\",\n            \"accessLevel\"
+        : \"Public\"\n         }, {\n            \"localId\" : \"10\",\n            \"name\"
+        : \"SOP:6.0\",\n            \"id\" : \"urn:oid:2.16.840.1.113883.3.221.5\",\n
+        \           \"version\" : \"urn:hl7:version:6.0\",\n            \"accessLevel\"
+        : \"Public\"\n         } ]\n      },\n      \"valueSets\" : {\n         \"def\"
+        : [ {\n            \"localId\" : \"12\",\n            \"name\" : \"ONC Administrative
+        Sex\",\n            \"id\" : \"urn:oid:2.16.840.1.113762.1.4.1\",\n            \"accessLevel\"
+        : \"Public\",\n            \"codeSystem\" : [ {\n               \"localId\"
+        : \"11\",\n               \"name\" : \"AdministrativeGender:HL7V3.0_2015-07\"\n
+        \           } ]\n         }, {\n            \"localId\" : \"14\",\n            \"name\"
+        : \"Race\",\n            \"id\" : \"urn:oid:2.16.840.1.114222.4.11.836\",\n
+        \           \"accessLevel\" : \"Public\",\n            \"codeSystem\" : [
+        {\n               \"localId\" : \"13\",\n               \"name\" : \"CDCREC:1.0\"\n
+        \           } ]\n         }, {\n            \"localId\" : \"16\",\n            \"name\"
+        : \"Ethnicity\",\n            \"id\" : \"urn:oid:2.16.840.1.114222.4.11.837\",\n
+        \           \"accessLevel\" : \"Public\",\n            \"codeSystem\" : [
+        {\n               \"localId\" : \"15\",\n               \"name\" : \"CDCREC:1.0\"\n
+        \           } ]\n         }, {\n            \"localId\" : \"18\",\n            \"name\"
+        : \"Payer\",\n            \"id\" : \"urn:oid:2.16.840.1.114222.4.11.3591\",\n
+        \           \"accessLevel\" : \"Public\",\n            \"codeSystem\" : [
+        {\n               \"localId\" : \"17\",\n               \"name\" : \"SOP:6.0\"\n
+        \           } ]\n         }, {\n            \"localId\" : \"21\",\n            \"name\"
+        : \"Mammogram\",\n            \"id\" : \"urn:oid:2.16.840.1.113883.3.464.1003.108.12.1018\",\n
+        \           \"accessLevel\" : \"Public\",\n            \"codeSystem\" : [
+        {\n               \"localId\" : \"19\",\n               \"name\" : \"LOINC:2.56\"\n
+        \           }, {\n               \"localId\" : \"20\",\n               \"name\"
+        : \"HCPCS:2016\"\n            } ]\n         }, {\n            \"localId\"
+        : \"23\",\n            \"name\" : \"Face-to-Face Interaction\",\n            \"id\"
+        : \"urn:oid:2.16.840.1.113883.3.464.1003.101.12.1048\",\n            \"accessLevel\"
+        : \"Public\",\n            \"codeSystem\" : [ {\n               \"localId\"
+        : \"22\",\n               \"name\" : \"SNOMEDCT:2016-09\"\n            } ]\n
+        \        }, {\n            \"localId\" : \"25\",\n            \"name\" : \"Home
+        Healthcare Services\",\n            \"id\" : \"urn:oid:2.16.840.1.113883.3.464.1003.101.12.1016\",\n
+        \           \"accessLevel\" : \"Public\",\n            \"codeSystem\" : [
+        {\n               \"localId\" : \"24\",\n               \"name\" : \"CPT:2016\"\n
+        \           } ]\n         }, {\n            \"localId\" : \"27\",\n            \"name\"
+        : \"Office Visit\",\n            \"id\" : \"urn:oid:2.16.840.1.113883.3.464.1003.101.12.1001\",\n
+        \           \"accessLevel\" : \"Public\",\n            \"codeSystem\" : [
+        {\n               \"localId\" : \"26\",\n               \"name\" : \"CPT:2016\"\n
+        \           } ]\n         }, {\n            \"localId\" : \"29\",\n            \"name\"
+        : \"Bilateral Mastectomy\",\n            \"id\" : \"urn:oid:2.16.840.1.113883.3.464.1003.198.12.1005\",\n
+        \           \"accessLevel\" : \"Public\",\n            \"codeSystem\" : [
+        {\n               \"localId\" : \"28\",\n               \"name\" : \"SNOMEDCT:2016-09\"\n
+        \           } ]\n         }, {\n            \"localId\" : \"32\",\n            \"name\"
+        : \"Unilateral Mastectomy\",\n            \"id\" : \"urn:oid:2.16.840.1.113883.3.464.1003.198.12.1020\",\n
+        \           \"accessLevel\" : \"Public\",\n            \"codeSystem\" : [
+        {\n               \"localId\" : \"30\",\n               \"name\" : \"SNOMEDCT:2016-09\"\n
+        \           }, {\n               \"localId\" : \"31\",\n               \"name\"
+        : \"CPT:2016\"\n            } ]\n         }, {\n            \"localId\" :
+        \"34\",\n            \"name\" : \"Female\",\n            \"id\" : \"urn:oid:2.16.840.1.113883.3.560.100.2\",\n
+        \           \"accessLevel\" : \"Public\",\n            \"codeSystem\" : [
+        {\n               \"localId\" : \"33\",\n               \"name\" : \"AdministrativeGender:HL7V3.0_2015-07\"\n
+        \           } ]\n         } ]\n      },\n      \"statements\" : {\n         \"def\"
+        : [ {\n            \"name\" : \"Patient\",\n            \"context\" : \"Patient\",\n
+        \           \"expression\" : {\n               \"type\" : \"SingletonFrom\",\n
+        \              \"operand\" : {\n                  \"dataType\" : \"{urn:healthit-gov:qdm:v5_0_draft}Patient\",\n
+        \                 \"templateId\" : \"Patient\",\n                  \"type\"
+        : \"Retrieve\"\n               }\n            }\n         }, {\n            \"localId\"
+        : \"39\",\n            \"name\" : \"SDE Ethnicity\",\n            \"context\"
+        : \"Patient\",\n            \"accessLevel\" : \"Public\",\n            \"annotation\"
+        : [ {\n               \"type\" : \"Annotation\",\n               \"s\" : {\n
+        \                 \"value\" : [ \"define \\\"SDE Ethnicity\\\": [\\\"Patient
+        Characteristic Ethnicity\\\": \\\"Ethnicity\\\"]\" ]\n               }\n            }
+        ],\n            \"expression\" : {\n               \"localId\" : \"38\",\n
+        \              \"dataType\" : \"{urn:healthit-gov:qdm:v5_0_draft}PatientCharacteristicEthnicity\",\n
+        \              \"type\" : \"Retrieve\",\n               \"codes\" : {\n                  \"name\"
+        : \"Ethnicity\",\n                  \"type\" : \"ValueSetRef\"\n               }\n
+        \           }\n         }, {\n            \"localId\" : \"41\",\n            \"name\"
+        : \"SDE Payer\",\n            \"context\" : \"Patient\",\n            \"accessLevel\"
+        : \"Public\",\n            \"annotation\" : [ {\n               \"type\" :
+        \"Annotation\",\n               \"s\" : {\n                  \"value\" : [
+        \"define \\\"SDE Payer\\\": [\\\"Patient Characteristic Payer\\\": \\\"Payer\\\"]\"
+        ]\n               }\n            } ],\n            \"expression\" : {\n               \"localId\"
+        : \"40\",\n               \"dataType\" : \"{urn:healthit-gov:qdm:v5_0_draft}PatientCharacteristicPayer\",\n
+        \              \"type\" : \"Retrieve\",\n               \"codes\" : {\n                  \"name\"
+        : \"Payer\",\n                  \"type\" : \"ValueSetRef\"\n               }\n
+        \           }\n         }, {\n            \"localId\" : \"43\",\n            \"name\"
+        : \"SDE Race\",\n            \"context\" : \"Patient\",\n            \"accessLevel\"
+        : \"Public\",\n            \"annotation\" : [ {\n               \"type\" :
+        \"Annotation\",\n               \"s\" : {\n                  \"value\" : [
+        \"define \\\"SDE Race\\\": [\\\"Patient Characteristic Race\\\": \\\"Race\\\"]\"
+        ]\n               }\n            } ],\n            \"expression\" : {\n               \"localId\"
+        : \"42\",\n               \"dataType\" : \"{urn:healthit-gov:qdm:v5_0_draft}PatientCharacteristicRace\",\n
+        \              \"type\" : \"Retrieve\",\n               \"codes\" : {\n                  \"name\"
+        : \"Race\",\n                  \"type\" : \"ValueSetRef\"\n               }\n
+        \           }\n         }, {\n            \"localId\" : \"45\",\n            \"name\"
+        : \"SDE Sex\",\n            \"context\" : \"Patient\",\n            \"accessLevel\"
+        : \"Public\",\n            \"annotation\" : [ {\n               \"type\" :
+        \"Annotation\",\n               \"s\" : {\n                  \"value\" : [
+        \"define \\\"SDE Sex\\\": [\\\"Patient Characteristic Sex\\\": \\\"ONC Administrative
+        Sex\\\"]\" ]\n               }\n            } ],\n            \"expression\"
+        : {\n               \"localId\" : \"44\",\n               \"dataType\" : \"{urn:healthit-gov:qdm:v5_0_draft}PatientCharacteristicSex\",\n
+        \              \"type\" : \"Retrieve\",\n               \"codes\" : {\n                  \"name\"
+        : \"ONC Administrative Sex\",\n                  \"type\" : \"ValueSetRef\"\n
+        \              }\n            }\n         }, {\n            \"localId\" :
+        \"63\",\n            \"name\" : \"Initial Pop\",\n            \"context\"
+        : \"Patient\",\n            \"accessLevel\" : \"Public\",\n            \"annotation\"
+        : [ {\n               \"type\" : \"Annotation\",\n               \"s\" : {\n
+        \                 \"value\" : [ \"define \\\"Initial Pop\\\": ([\\\"Encounter,
+        Performed\\\": \\\"Office Visit\\\"]\\nunion [\\\"Encounter, Performed\\\":
+        \\\"Face-to-Face Interaction\\\"]\\nunion [\\\"Encounter, Performed\\\": \\\"Home
+        Healthcare Services\\\"])Enc\\nwhere Enc.relevantPeriod during \\\"Measurement
+        Period\\\"\\nand AgeInYearsAt(start of \\\"Measurement Period\\\")>=65\" ]\n
+        \              }\n            } ],\n            \"expression\" : {\n               \"localId\"
+        : \"62\",\n               \"type\" : \"Query\",\n               \"source\"
+        : [ {\n                  \"localId\" : \"51\",\n                  \"alias\"
+        : \"Enc\",\n                  \"expression\" : {\n                     \"localId\"
+        : \"50\",\n                     \"type\" : \"Union\",\n                     \"operand\"
+        : [ {\n                        \"localId\" : \"48\",\n                        \"type\"
+        : \"Union\",\n                        \"operand\" : [ {\n                           \"localId\"
+        : \"46\",\n                           \"dataType\" : \"{urn:healthit-gov:qdm:v5_0_draft}EncounterPerformed\",\n
+        \                          \"templateId\" : \"PositiveEncounterPerformed\",\n
+        \                          \"codeProperty\" : \"code\",\n                           \"type\"
+        : \"Retrieve\",\n                           \"codes\" : {\n                              \"name\"
+        : \"Office Visit\",\n                              \"type\" : \"ValueSetRef\"\n
+        \                          }\n                        }, {\n                           \"localId\"
+        : \"47\",\n                           \"dataType\" : \"{urn:healthit-gov:qdm:v5_0_draft}EncounterPerformed\",\n
+        \                          \"templateId\" : \"PositiveEncounterPerformed\",\n
+        \                          \"codeProperty\" : \"code\",\n                           \"type\"
+        : \"Retrieve\",\n                           \"codes\" : {\n                              \"name\"
+        : \"Face-to-Face Interaction\",\n                              \"type\" :
+        \"ValueSetRef\"\n                           }\n                        } ]\n
+        \                    }, {\n                        \"localId\" : \"49\",\n
+        \                       \"dataType\" : \"{urn:healthit-gov:qdm:v5_0_draft}EncounterPerformed\",\n
+        \                       \"templateId\" : \"PositiveEncounterPerformed\",\n
+        \                       \"codeProperty\" : \"code\",\n                        \"type\"
+        : \"Retrieve\",\n                        \"codes\" : {\n                           \"name\"
+        : \"Home Healthcare Services\",\n                           \"type\" : \"ValueSetRef\"\n
+        \                       }\n                     } ]\n                  }\n
+        \              } ],\n               \"relationship\" : [ ],\n               \"where\"
+        : {\n                  \"localId\" : \"61\",\n                  \"type\" :
+        \"And\",\n                  \"operand\" : [ {\n                     \"localId\"
+        : \"55\",\n                     \"type\" : \"IncludedIn\",\n                     \"operand\"
+        : [ {\n                        \"localId\" : \"53\",\n                        \"path\"
+        : \"relevantPeriod\",\n                        \"scope\" : \"Enc\",\n                        \"type\"
+        : \"Property\"\n                     }, {\n                        \"localId\"
+        : \"54\",\n                        \"name\" : \"Measurement Period\",\n                        \"type\"
+        : \"ParameterRef\"\n                     } ]\n                  }, {\n                     \"localId\"
+        : \"60\",\n                     \"type\" : \"GreaterOrEqual\",\n                     \"operand\"
+        : [ {\n                        \"localId\" : \"58\",\n                        \"precision\"
+        : \"Year\",\n                        \"type\" : \"CalculateAgeAt\",\n                        \"operand\"
+        : [ {\n                           \"path\" : \"birthDatetime\",\n                           \"type\"
+        : \"Property\",\n                           \"source\" : {\n                              \"name\"
+        : \"Patient\",\n                              \"type\" : \"ExpressionRef\"\n
+        \                          }\n                        }, {\n                           \"localId\"
+        : \"57\",\n                           \"type\" : \"Start\",\n                           \"operand\"
+        : {\n                              \"localId\" : \"56\",\n                              \"name\"
+        : \"Measurement Period\",\n                              \"type\" : \"ParameterRef\"\n
+        \                          }\n                        } ]\n                     },
+        {\n                        \"localId\" : \"59\",\n                        \"valueType\"
+        : \"{urn:hl7-org:elm-types:r1}Integer\",\n                        \"value\"
+        : \"65\",\n                        \"type\" : \"Literal\"\n                     }
+        ]\n                  } ]\n               }\n            }\n         }, {\n
+        \           \"localId\" : \"73\",\n            \"name\" : \"Num\",\n            \"context\"
+        : \"Patient\",\n            \"accessLevel\" : \"Public\",\n            \"annotation\"
+        : [ {\n               \"type\" : \"Annotation\",\n               \"s\" : {\n
+        \                 \"value\" : [ \"define \\\"Num\\\": [\\\"Diagnostic Study,
+        Performed\\\": \\\"Mammogram\\\"]Mam\\nwhere Mam.relevantPeriod 26 months
+        or less before end of \\\"Measurement Period\\\"\" ]\n               }\n            }
+        ],\n            \"expression\" : {\n               \"localId\" : \"72\",\n
+        \              \"type\" : \"Query\",\n               \"source\" : [ {\n                  \"localId\"
+        : \"65\",\n                  \"alias\" : \"Mam\",\n                  \"expression\"
+        : {\n                     \"localId\" : \"64\",\n                     \"dataType\"
+        : \"{urn:healthit-gov:qdm:v5_0_draft}DiagnosticStudyPerformed\",\n                     \"templateId\"
+        : \"PositiveDiagnosticStudyPerformed\",\n                     \"codeProperty\"
+        : \"code\",\n                     \"type\" : \"Retrieve\",\n                     \"codes\"
+        : {\n                        \"name\" : \"Mammogram\",\n                        \"type\"
+        : \"ValueSetRef\"\n                     }\n                  }\n               }
+        ],\n               \"relationship\" : [ ],\n               \"where\" : {\n
+        \                 \"localId\" : \"71\",\n                  \"type\" : \"In\",\n
+        \                 \"operand\" : [ {\n                     \"type\" : \"End\",\n
+        \                    \"operand\" : {\n                        \"localId\"
+        : \"67\",\n                        \"path\" : \"relevantPeriod\",\n                        \"scope\"
+        : \"Mam\",\n                        \"type\" : \"Property\"\n                     }\n
+        \                 }, {\n                     \"lowClosed\" : true,\n                     \"highClosed\"
+        : false,\n                     \"type\" : \"Interval\",\n                     \"low\"
+        : {\n                        \"type\" : \"Subtract\",\n                        \"operand\"
+        : [ {\n                           \"localId\" : \"69\",\n                           \"type\"
+        : \"End\",\n                           \"operand\" : {\n                              \"localId\"
+        : \"68\",\n                              \"name\" : \"Measurement Period\",\n
+        \                             \"type\" : \"ParameterRef\"\n                           }\n
+        \                       }, {\n                           \"localId\" : \"70\",\n
+        \                          \"value\" : 26,\n                           \"unit\"
+        : \"months\",\n                           \"type\" : \"Quantity\"\n                        }
+        ]\n                     },\n                     \"high\" : {\n                        \"localId\"
+        : \"69\",\n                        \"type\" : \"End\",\n                        \"operand\"
+        : {\n                           \"localId\" : \"68\",\n                           \"name\"
+        : \"Measurement Period\",\n                           \"type\" : \"ParameterRef\"\n
+        \                       }\n                     }\n                  } ]\n
+        \              }\n            }\n         }, {\n            \"localId\" :
+        \"85\",\n            \"name\" : \"Double Unilateral Mastectomy\",\n            \"context\"
+        : \"Patient\",\n            \"accessLevel\" : \"Public\",\n            \"annotation\"
+        : [ {\n               \"type\" : \"Annotation\",\n               \"s\" : {\n
+        \                 \"value\" : [ \"define \\\"Double Unilateral Mastectomy\\\":
+        Count([\\\"Procedure, Performed\\\": \\\"Unilateral Mastectomy\\\"]P\\nwhere
+        P.relevantPeriod before end of \\\"Measurement Period\\\")=2\" ]\n               }\n
+        \           } ],\n            \"expression\" : {\n               \"localId\"
+        : \"84\",\n               \"type\" : \"Equal\",\n               \"operand\"
+        : [ {\n                  \"localId\" : \"82\",\n                  \"type\"
+        : \"Count\",\n                  \"source\" : {\n                     \"localId\"
+        : \"81\",\n                     \"type\" : \"Query\",\n                     \"source\"
+        : [ {\n                        \"localId\" : \"75\",\n                        \"alias\"
+        : \"P\",\n                        \"expression\" : {\n                           \"localId\"
+        : \"74\",\n                           \"dataType\" : \"{urn:healthit-gov:qdm:v5_0_draft}ProcedurePerformed\",\n
+        \                          \"templateId\" : \"PositiveProcedurePerformed\",\n
+        \                          \"codeProperty\" : \"code\",\n                           \"type\"
+        : \"Retrieve\",\n                           \"codes\" : {\n                              \"name\"
+        : \"Unilateral Mastectomy\",\n                              \"type\" : \"ValueSetRef\"\n
+        \                          }\n                        }\n                     }
+        ],\n                     \"relationship\" : [ ],\n                     \"where\"
+        : {\n                        \"localId\" : \"80\",\n                        \"type\"
+        : \"Before\",\n                        \"operand\" : [ {\n                           \"localId\"
+        : \"77\",\n                           \"path\" : \"relevantPeriod\",\n                           \"scope\"
+        : \"P\",\n                           \"type\" : \"Property\"\n                        },
+        {\n                           \"localId\" : \"79\",\n                           \"type\"
+        : \"End\",\n                           \"operand\" : {\n                              \"localId\"
+        : \"78\",\n                              \"name\" : \"Measurement Period\",\n
+        \                             \"type\" : \"ParameterRef\"\n                           }\n
+        \                       } ]\n                     }\n                  }\n
+        \              }, {\n                  \"localId\" : \"83\",\n                  \"valueType\"
+        : \"{urn:hl7-org:elm-types:r1}Integer\",\n                  \"value\" : \"2\",\n
+        \                 \"type\" : \"Literal\"\n               } ]\n            }\n
+        \        }, {\n            \"localId\" : \"97\",\n            \"name\" : \"Denom\",\n
+        \           \"context\" : \"Patient\",\n            \"accessLevel\" : \"Public\",\n
+        \           \"annotation\" : [ {\n               \"type\" : \"Annotation\",\n
+        \              \"s\" : {\n                  \"value\" : [ \"define \\\"Denom\\\":
+        exists(\\\"Initial Pop\\\") and\\nAgeInYearsAt(start of \\\"Measurement Period\\\")<74\\nand
+        exists([\\\"Patient Characteristic Sex\\\": \\\"Female\\\"])\" ]\n               }\n
+        \           } ],\n            \"expression\" : {\n               \"localId\"
+        : \"96\",\n               \"type\" : \"And\",\n               \"operand\"
+        : [ {\n                  \"localId\" : \"93\",\n                  \"type\"
+        : \"And\",\n                  \"operand\" : [ {\n                     \"localId\"
+        : \"87\",\n                     \"type\" : \"Exists\",\n                     \"operand\"
+        : {\n                        \"localId\" : \"86\",\n                        \"name\"
+        : \"Initial Pop\",\n                        \"type\" : \"ExpressionRef\"\n
+        \                    }\n                  }, {\n                     \"localId\"
+        : \"92\",\n                     \"type\" : \"Less\",\n                     \"operand\"
+        : [ {\n                        \"localId\" : \"90\",\n                        \"precision\"
+        : \"Year\",\n                        \"type\" : \"CalculateAgeAt\",\n                        \"operand\"
+        : [ {\n                           \"path\" : \"birthDatetime\",\n                           \"type\"
+        : \"Property\",\n                           \"source\" : {\n                              \"name\"
+        : \"Patient\",\n                              \"type\" : \"ExpressionRef\"\n
+        \                          }\n                        }, {\n                           \"localId\"
+        : \"89\",\n                           \"type\" : \"Start\",\n                           \"operand\"
+        : {\n                              \"localId\" : \"88\",\n                              \"name\"
+        : \"Measurement Period\",\n                              \"type\" : \"ParameterRef\"\n
+        \                          }\n                        } ]\n                     },
+        {\n                        \"localId\" : \"91\",\n                        \"valueType\"
+        : \"{urn:hl7-org:elm-types:r1}Integer\",\n                        \"value\"
+        : \"74\",\n                        \"type\" : \"Literal\"\n                     }
+        ]\n                  } ]\n               }, {\n                  \"localId\"
+        : \"95\",\n                  \"type\" : \"Exists\",\n                  \"operand\"
+        : {\n                     \"localId\" : \"94\",\n                     \"dataType\"
+        : \"{urn:healthit-gov:qdm:v5_0_draft}PatientCharacteristicSex\",\n                     \"type\"
+        : \"Retrieve\",\n                     \"codes\" : {\n                        \"name\"
+        : \"Female\",\n                        \"type\" : \"ValueSetRef\"\n                     }\n
+        \                 }\n               } ]\n            }\n         }, {\n            \"localId\"
+        : \"109\",\n            \"name\" : \"Denom Excl\",\n            \"context\"
+        : \"Patient\",\n            \"accessLevel\" : \"Public\",\n            \"annotation\"
+        : [ {\n               \"type\" : \"Annotation\",\n               \"s\" : {\n
+        \                 \"value\" : [ \"define \\\"Denom Excl\\\": exists([\\\"Procedure,
+        Performed\\\": \\\"Bilateral Mastectomy\\\"]BIM\\nwhere BIM.relevantPeriod
+        before end of \\\"Measurement Period\\\") or \\\"Double Unilateral Mastectomy\\\"\"
+        ]\n               }\n            } ],\n            \"expression\" : {\n               \"localId\"
+        : \"108\",\n               \"type\" : \"Or\",\n               \"operand\"
+        : [ {\n                  \"localId\" : \"106\",\n                  \"type\"
+        : \"Exists\",\n                  \"operand\" : {\n                     \"localId\"
+        : \"105\",\n                     \"type\" : \"Query\",\n                     \"source\"
+        : [ {\n                        \"localId\" : \"99\",\n                        \"alias\"
+        : \"BIM\",\n                        \"expression\" : {\n                           \"localId\"
+        : \"98\",\n                           \"dataType\" : \"{urn:healthit-gov:qdm:v5_0_draft}ProcedurePerformed\",\n
+        \                          \"templateId\" : \"PositiveProcedurePerformed\",\n
+        \                          \"codeProperty\" : \"code\",\n                           \"type\"
+        : \"Retrieve\",\n                           \"codes\" : {\n                              \"name\"
+        : \"Bilateral Mastectomy\",\n                              \"type\" : \"ValueSetRef\"\n
+        \                          }\n                        }\n                     }
+        ],\n                     \"relationship\" : [ ],\n                     \"where\"
+        : {\n                        \"localId\" : \"104\",\n                        \"type\"
+        : \"Before\",\n                        \"operand\" : [ {\n                           \"localId\"
+        : \"101\",\n                           \"path\" : \"relevantPeriod\",\n                           \"scope\"
+        : \"BIM\",\n                           \"type\" : \"Property\"\n                        },
+        {\n                           \"localId\" : \"103\",\n                           \"type\"
+        : \"End\",\n                           \"operand\" : {\n                              \"localId\"
+        : \"102\",\n                              \"name\" : \"Measurement Period\",\n
+        \                             \"type\" : \"ParameterRef\"\n                           }\n
+        \                       } ]\n                     }\n                  }\n
+        \              }, {\n                  \"localId\" : \"107\",\n                  \"name\"
+        : \"Double Unilateral Mastectomy\",\n                  \"type\" : \"ExpressionRef\"\n
+        \              } ]\n            }\n         } ]\n      }\n   }\n}\r\n--Boundary_1_1904617969_1498142110726--\r\n"
+    http_version: 
+  recorded_at: Thu, 22 Jun 2017 14:35:10 GMT
+- request:
+    method: post
     uri: https://vsac.nlm.nih.gov/vsac/ws/Ticket
     body:
       encoding: US-ASCII
@@ -1727,684 +2130,4 @@ http_interactions:
         </ns0:RetrieveMultipleValueSetsResponse>
     http_version: 
   recorded_at: Thu, 22 Jun 2017 14:35:16 GMT
-- request:
-    method: post
-    uri: http://localhost:8080/cql/translator
-    body:
-      encoding: ASCII-8BIT
-      string: "--912378\r\nContent-Disposition: form-data; name=\"file[]\"\r\n\r\nlibrary
-        BCSTest version '0.0.001'\n\nusing QDM version '5.0'\n\ncodesystem \"LOINC:2.46\":
-        'urn:oid:2.16.840.1.113883.6.1' version 'urn:hl7:version:2.46'\n\ncodesystem
-        \"SNOMEDCT:2016-03\": 'urn:oid:2.16.840.1.113883.6.96' version 'urn:hl7:version:2016-03'\n\ncodesystem
-        \"CPT:2016\": 'urn:oid:2.16.840.1.113883.6.12' version 'urn:hl7:version:2016'\n\ncodesystem
-        \"AdministrativeGender:HL7V3.0_2015-07\": 'urn:oid:2.16.840.1.113883.5.1'
-        version 'urn:hl7:version:HL7V3.0_2015-07'\n\ncodesystem \"SNOMEDCT:2016-09\":
-        'urn:oid:2.16.840.1.113883.6.96' version 'urn:hl7:version:2016-09'\n\ncodesystem
-        \"LOINC:2.56\": 'urn:oid:2.16.840.1.113883.6.1' version 'urn:hl7:version:2.56'\n\ncodesystem
-        \"HCPCS:2016\": 'urn:oid:2.16.840.1.113883.6.285' version 'urn:hl7:version:2016'\n\ncodesystem
-        \"CDCREC:1.0\": 'urn:oid:2.16.840.1.113883.6.238' version 'urn:hl7:version:1.0'\n\ncodesystem
-        \"SOP:6.0\": 'urn:oid:2.16.840.1.113883.3.221.5' version 'urn:hl7:version:6.0'\n\nvalueset
-        \"ONC Administrative Sex\": 'urn:oid:2.16.840.1.113762.1.4.1' codesystems
-        {\"AdministrativeGender:HL7V3.0_2015-07\"}\n\nvalueset \"Race\": 'urn:oid:2.16.840.1.114222.4.11.836'
-        codesystems {\"CDCREC:1.0\"}\n\nvalueset \"Ethnicity\": 'urn:oid:2.16.840.1.114222.4.11.837'
-        codesystems {\"CDCREC:1.0\"}\n\nvalueset \"Payer\": 'urn:oid:2.16.840.1.114222.4.11.3591'
-        codesystems {\"SOP:6.0\"}\n\nvalueset \"Mammogram\": 'urn:oid:2.16.840.1.113883.3.464.1003.108.12.1018'
-        codesystems {\"LOINC:2.56\", \"HCPCS:2016\"}\n\nvalueset \"Face-to-Face Interaction\":
-        'urn:oid:2.16.840.1.113883.3.464.1003.101.12.1048' codesystems {\"SNOMEDCT:2016-09\"}\n\nvalueset
-        \"Home Healthcare Services\": 'urn:oid:2.16.840.1.113883.3.464.1003.101.12.1016'
-        codesystems {\"CPT:2016\"}\n\nvalueset \"Office Visit\": 'urn:oid:2.16.840.1.113883.3.464.1003.101.12.1001'
-        codesystems {\"CPT:2016\"}\n\nvalueset \"Bilateral Mastectomy\": 'urn:oid:2.16.840.1.113883.3.464.1003.198.12.1005'
-        codesystems {\"SNOMEDCT:2016-09\"}\n\nvalueset \"Unilateral Mastectomy\":
-        'urn:oid:2.16.840.1.113883.3.464.1003.198.12.1020' codesystems {\"SNOMEDCT:2016-09\",
-        \"CPT:2016\"}\n\nvalueset \"Female\": 'urn:oid:2.16.840.1.113883.3.560.100.2'
-        codesystems {\"AdministrativeGender:HL7V3.0_2015-07\"}\n\nparameter \"Measurement
-        Period\" Interval<DateTime>\n\ncontext Patient\n\ndefine \"SDE Ethnicity\":
-        [\"Patient Characteristic Ethnicity\": \"Ethnicity\"]\n\ndefine \"SDE Payer\":
-        [\"Patient Characteristic Payer\": \"Payer\"]\n\ndefine \"SDE Race\": [\"Patient
-        Characteristic Race\": \"Race\"]\n\ndefine \"SDE Sex\": [\"Patient Characteristic
-        Sex\": \"ONC Administrative Sex\"]\n\ndefine \"Initial Pop\": ([\"Encounter,
-        Performed\": \"Office Visit\"]\nunion [\"Encounter, Performed\": \"Face-to-Face
-        Interaction\"]\nunion [\"Encounter, Performed\": \"Home Healthcare Services\"])Enc\nwhere
-        Enc.relevantPeriod during \"Measurement Period\"\nand AgeInYearsAt(start of
-        \"Measurement Period\")>=65\n\ndefine \"Num\": [\"Diagnostic Study, Performed\":
-        \"Mammogram\"]Mam\nwhere Mam.relevantPeriod 26 months or less before end of
-        \"Measurement Period\"\n\ndefine \"Double Unilateral Mastectomy\": Count([\"Procedure,
-        Performed\": \"Unilateral Mastectomy\"]P\nwhere P.relevantPeriod before end
-        of \"Measurement Period\")=2\n\ndefine \"Denom\": exists(\"Initial Pop\")
-        and\nAgeInYearsAt(start of \"Measurement Period\")<74\nand exists([\"Patient
-        Characteristic Sex\": \"Female\"])\n\ndefine \"Denom Excl\": exists([\"Procedure,
-        Performed\": \"Bilateral Mastectomy\"]BIM\nwhere BIM.relevantPeriod before
-        end of \"Measurement Period\") or \"Double Unilateral Mastectomy\"\n\r\n--912378--\r\n"
-    headers:
-      Accept:
-      - "*/*; q=0.5, application/xml"
-      Accept-Encoding:
-      - gzip, deflate
-      Content-Length:
-      - '3432'
-      Content-Type:
-      - multipart/form-data; boundary=912378
-      User-Agent:
-      - Ruby
-  response:
-    status:
-      code: 200
-      message: OK
-    headers:
-      Mime-Version:
-      - '1.0'
-      Content-Type:
-      - multipart/form-data;boundary=Boundary_17_1514896132_1500142538389
-      Date:
-      - Sat, 15 Jul 2017 18:15:38 GMT
-      Transfer-Encoding:
-      - chunked
-    body:
-      encoding: UTF-8
-      string: "--Boundary_17_1514896132_1500142538389\r\nContent-Type: application/elm+json\r\nContent-Disposition:
-        form-data; name=\"file[]\"\r\n\r\n{\n   \"library\" : {\n      \"annotation\"
-        : [ {\n         \"startLine\" : 49,\n         \"startChar\" : 25,\n         \"endLine\"
-        : 49,\n         \"endChar\" : 73,\n         \"message\" : \"Retrieve has a
-        terminology target but does not specify a code path and the type of the retrieve
-        does not have a primary code path defined.\",\n         \"errorType\" : \"semantic\",\n
-        \        \"errorSeverity\" : \"warning\",\n         \"type\" : \"CqlToElmError\"\n
-        \     }, {\n         \"startLine\" : 49,\n         \"startChar\" : 25,\n         \"endLine\"
-        : 49,\n         \"endChar\" : 73,\n         \"message\" : \"Could not resolve
-        membership operator for terminology target of the retrieve.\",\n         \"errorType\"
-        : \"semantic\",\n         \"errorSeverity\" : \"warning\",\n         \"type\"
-        : \"CqlToElmError\"\n      }, {\n         \"startLine\" : 51,\n         \"startChar\"
-        : 21,\n         \"endLine\" : 51,\n         \"endChar\" : 61,\n         \"message\"
-        : \"Retrieve has a terminology target but does not specify a code path and
-        the type of the retrieve does not have a primary code path defined.\",\n         \"errorType\"
-        : \"semantic\",\n         \"errorSeverity\" : \"warning\",\n         \"type\"
-        : \"CqlToElmError\"\n      }, {\n         \"startLine\" : 51,\n         \"startChar\"
-        : 21,\n         \"endLine\" : 51,\n         \"endChar\" : 61,\n         \"message\"
-        : \"Could not resolve membership operator for terminology target of the retrieve.\",\n
-        \        \"errorType\" : \"semantic\",\n         \"errorSeverity\" : \"warning\",\n
-        \        \"type\" : \"CqlToElmError\"\n      }, {\n         \"startLine\"
-        : 53,\n         \"startChar\" : 20,\n         \"endLine\" : 53,\n         \"endChar\"
-        : 58,\n         \"message\" : \"Retrieve has a terminology target but does
-        not specify a code path and the type of the retrieve does not have a primary
-        code path defined.\",\n         \"errorType\" : \"semantic\",\n         \"errorSeverity\"
-        : \"warning\",\n         \"type\" : \"CqlToElmError\"\n      }, {\n         \"startLine\"
-        : 53,\n         \"startChar\" : 20,\n         \"endLine\" : 53,\n         \"endChar\"
-        : 58,\n         \"message\" : \"Could not resolve membership operator for
-        terminology target of the retrieve.\",\n         \"errorType\" : \"semantic\",\n
-        \        \"errorSeverity\" : \"warning\",\n         \"type\" : \"CqlToElmError\"\n
-        \     }, {\n         \"startLine\" : 55,\n         \"startChar\" : 19,\n         \"endLine\"
-        : 55,\n         \"endChar\" : 74,\n         \"message\" : \"Retrieve has a
-        terminology target but does not specify a code path and the type of the retrieve
-        does not have a primary code path defined.\",\n         \"errorType\" : \"semantic\",\n
-        \        \"errorSeverity\" : \"warning\",\n         \"type\" : \"CqlToElmError\"\n
-        \     }, {\n         \"startLine\" : 55,\n         \"startChar\" : 19,\n         \"endLine\"
-        : 55,\n         \"endChar\" : 74,\n         \"message\" : \"Could not resolve
-        membership operator for terminology target of the retrieve.\",\n         \"errorType\"
-        : \"semantic\",\n         \"errorSeverity\" : \"warning\",\n         \"type\"
-        : \"CqlToElmError\"\n      }, {\n         \"startLine\" : 71,\n         \"startChar\"
-        : 12,\n         \"endLine\" : 71,\n         \"endChar\" : 51,\n         \"message\"
-        : \"Retrieve has a terminology target but does not specify a code path and
-        the type of the retrieve does not have a primary code path defined.\",\n         \"errorType\"
-        : \"semantic\",\n         \"errorSeverity\" : \"warning\",\n         \"type\"
-        : \"CqlToElmError\"\n      }, {\n         \"startLine\" : 71,\n         \"startChar\"
-        : 12,\n         \"endLine\" : 71,\n         \"endChar\" : 51,\n         \"message\"
-        : \"Could not resolve membership operator for terminology target of the retrieve.\",\n
-        \        \"errorType\" : \"semantic\",\n         \"errorSeverity\" : \"warning\",\n
-        \        \"type\" : \"CqlToElmError\"\n      } ],\n      \"identifier\" :
-        {\n         \"id\" : \"BCSTest\",\n         \"version\" : \"0.0.001\"\n      },\n
-        \     \"schemaIdentifier\" : {\n         \"id\" : \"urn:hl7-org:elm\",\n         \"version\"
-        : \"r1\"\n      },\n      \"usings\" : {\n         \"def\" : [ {\n            \"localIdentifier\"
-        : \"System\",\n            \"uri\" : \"urn:hl7-org:elm-types:r1\"\n         },
-        {\n            \"localId\" : \"1\",\n            \"localIdentifier\" : \"QDM\",\n
-        \           \"uri\" : \"urn:healthit-gov:qdm:v5_0_draft\",\n            \"version\"
-        : \"5.0\"\n         } ]\n      },\n      \"parameters\" : {\n         \"def\"
-        : [ {\n            \"localId\" : \"37\",\n            \"name\" : \"Measurement
-        Period\",\n            \"accessLevel\" : \"Public\",\n            \"parameterTypeSpecifier\"
-        : {\n               \"localId\" : \"36\",\n               \"type\" : \"IntervalTypeSpecifier\",\n
-        \              \"pointType\" : {\n                  \"localId\" : \"35\",\n
-        \                 \"name\" : \"{urn:hl7-org:elm-types:r1}DateTime\",\n                  \"type\"
-        : \"NamedTypeSpecifier\"\n               }\n            }\n         } ]\n
-        \     },\n      \"codeSystems\" : {\n         \"def\" : [ {\n            \"localId\"
-        : \"2\",\n            \"name\" : \"LOINC:2.46\",\n            \"id\" : \"urn:oid:2.16.840.1.113883.6.1\",\n
-        \           \"version\" : \"urn:hl7:version:2.46\",\n            \"accessLevel\"
-        : \"Public\"\n         }, {\n            \"localId\" : \"3\",\n            \"name\"
-        : \"SNOMEDCT:2016-03\",\n            \"id\" : \"urn:oid:2.16.840.1.113883.6.96\",\n
-        \           \"version\" : \"urn:hl7:version:2016-03\",\n            \"accessLevel\"
-        : \"Public\"\n         }, {\n            \"localId\" : \"4\",\n            \"name\"
-        : \"CPT:2016\",\n            \"id\" : \"urn:oid:2.16.840.1.113883.6.12\",\n
-        \           \"version\" : \"urn:hl7:version:2016\",\n            \"accessLevel\"
-        : \"Public\"\n         }, {\n            \"localId\" : \"5\",\n            \"name\"
-        : \"AdministrativeGender:HL7V3.0_2015-07\",\n            \"id\" : \"urn:oid:2.16.840.1.113883.5.1\",\n
-        \           \"version\" : \"urn:hl7:version:HL7V3.0_2015-07\",\n            \"accessLevel\"
-        : \"Public\"\n         }, {\n            \"localId\" : \"6\",\n            \"name\"
-        : \"SNOMEDCT:2016-09\",\n            \"id\" : \"urn:oid:2.16.840.1.113883.6.96\",\n
-        \           \"version\" : \"urn:hl7:version:2016-09\",\n            \"accessLevel\"
-        : \"Public\"\n         }, {\n            \"localId\" : \"7\",\n            \"name\"
-        : \"LOINC:2.56\",\n            \"id\" : \"urn:oid:2.16.840.1.113883.6.1\",\n
-        \           \"version\" : \"urn:hl7:version:2.56\",\n            \"accessLevel\"
-        : \"Public\"\n         }, {\n            \"localId\" : \"8\",\n            \"name\"
-        : \"HCPCS:2016\",\n            \"id\" : \"urn:oid:2.16.840.1.113883.6.285\",\n
-        \           \"version\" : \"urn:hl7:version:2016\",\n            \"accessLevel\"
-        : \"Public\"\n         }, {\n            \"localId\" : \"9\",\n            \"name\"
-        : \"CDCREC:1.0\",\n            \"id\" : \"urn:oid:2.16.840.1.113883.6.238\",\n
-        \           \"version\" : \"urn:hl7:version:1.0\",\n            \"accessLevel\"
-        : \"Public\"\n         }, {\n            \"localId\" : \"10\",\n            \"name\"
-        : \"SOP:6.0\",\n            \"id\" : \"urn:oid:2.16.840.1.113883.3.221.5\",\n
-        \           \"version\" : \"urn:hl7:version:6.0\",\n            \"accessLevel\"
-        : \"Public\"\n         } ]\n      },\n      \"valueSets\" : {\n         \"def\"
-        : [ {\n            \"localId\" : \"12\",\n            \"name\" : \"ONC Administrative
-        Sex\",\n            \"id\" : \"urn:oid:2.16.840.1.113762.1.4.1\",\n            \"accessLevel\"
-        : \"Public\",\n            \"codeSystem\" : [ {\n               \"localId\"
-        : \"11\",\n               \"name\" : \"AdministrativeGender:HL7V3.0_2015-07\"\n
-        \           } ]\n         }, {\n            \"localId\" : \"14\",\n            \"name\"
-        : \"Race\",\n            \"id\" : \"urn:oid:2.16.840.1.114222.4.11.836\",\n
-        \           \"accessLevel\" : \"Public\",\n            \"codeSystem\" : [
-        {\n               \"localId\" : \"13\",\n               \"name\" : \"CDCREC:1.0\"\n
-        \           } ]\n         }, {\n            \"localId\" : \"16\",\n            \"name\"
-        : \"Ethnicity\",\n            \"id\" : \"urn:oid:2.16.840.1.114222.4.11.837\",\n
-        \           \"accessLevel\" : \"Public\",\n            \"codeSystem\" : [
-        {\n               \"localId\" : \"15\",\n               \"name\" : \"CDCREC:1.0\"\n
-        \           } ]\n         }, {\n            \"localId\" : \"18\",\n            \"name\"
-        : \"Payer\",\n            \"id\" : \"urn:oid:2.16.840.1.114222.4.11.3591\",\n
-        \           \"accessLevel\" : \"Public\",\n            \"codeSystem\" : [
-        {\n               \"localId\" : \"17\",\n               \"name\" : \"SOP:6.0\"\n
-        \           } ]\n         }, {\n            \"localId\" : \"21\",\n            \"name\"
-        : \"Mammogram\",\n            \"id\" : \"urn:oid:2.16.840.1.113883.3.464.1003.108.12.1018\",\n
-        \           \"accessLevel\" : \"Public\",\n            \"codeSystem\" : [
-        {\n               \"localId\" : \"19\",\n               \"name\" : \"LOINC:2.56\"\n
-        \           }, {\n               \"localId\" : \"20\",\n               \"name\"
-        : \"HCPCS:2016\"\n            } ]\n         }, {\n            \"localId\"
-        : \"23\",\n            \"name\" : \"Face-to-Face Interaction\",\n            \"id\"
-        : \"urn:oid:2.16.840.1.113883.3.464.1003.101.12.1048\",\n            \"accessLevel\"
-        : \"Public\",\n            \"codeSystem\" : [ {\n               \"localId\"
-        : \"22\",\n               \"name\" : \"SNOMEDCT:2016-09\"\n            } ]\n
-        \        }, {\n            \"localId\" : \"25\",\n            \"name\" : \"Home
-        Healthcare Services\",\n            \"id\" : \"urn:oid:2.16.840.1.113883.3.464.1003.101.12.1016\",\n
-        \           \"accessLevel\" : \"Public\",\n            \"codeSystem\" : [
-        {\n               \"localId\" : \"24\",\n               \"name\" : \"CPT:2016\"\n
-        \           } ]\n         }, {\n            \"localId\" : \"27\",\n            \"name\"
-        : \"Office Visit\",\n            \"id\" : \"urn:oid:2.16.840.1.113883.3.464.1003.101.12.1001\",\n
-        \           \"accessLevel\" : \"Public\",\n            \"codeSystem\" : [
-        {\n               \"localId\" : \"26\",\n               \"name\" : \"CPT:2016\"\n
-        \           } ]\n         }, {\n            \"localId\" : \"29\",\n            \"name\"
-        : \"Bilateral Mastectomy\",\n            \"id\" : \"urn:oid:2.16.840.1.113883.3.464.1003.198.12.1005\",\n
-        \           \"accessLevel\" : \"Public\",\n            \"codeSystem\" : [
-        {\n               \"localId\" : \"28\",\n               \"name\" : \"SNOMEDCT:2016-09\"\n
-        \           } ]\n         }, {\n            \"localId\" : \"32\",\n            \"name\"
-        : \"Unilateral Mastectomy\",\n            \"id\" : \"urn:oid:2.16.840.1.113883.3.464.1003.198.12.1020\",\n
-        \           \"accessLevel\" : \"Public\",\n            \"codeSystem\" : [
-        {\n               \"localId\" : \"30\",\n               \"name\" : \"SNOMEDCT:2016-09\"\n
-        \           }, {\n               \"localId\" : \"31\",\n               \"name\"
-        : \"CPT:2016\"\n            } ]\n         }, {\n            \"localId\" :
-        \"34\",\n            \"name\" : \"Female\",\n            \"id\" : \"urn:oid:2.16.840.1.113883.3.560.100.2\",\n
-        \           \"accessLevel\" : \"Public\",\n            \"codeSystem\" : [
-        {\n               \"localId\" : \"33\",\n               \"name\" : \"AdministrativeGender:HL7V3.0_2015-07\"\n
-        \           } ]\n         } ]\n      },\n      \"statements\" : {\n         \"def\"
-        : [ {\n            \"name\" : \"Patient\",\n            \"context\" : \"Patient\",\n
-        \           \"expression\" : {\n               \"type\" : \"SingletonFrom\",\n
-        \              \"operand\" : {\n                  \"dataType\" : \"{urn:healthit-gov:qdm:v5_0_draft}Patient\",\n
-        \                 \"templateId\" : \"Patient\",\n                  \"type\"
-        : \"Retrieve\"\n               }\n            }\n         }, {\n            \"localId\"
-        : \"39\",\n            \"name\" : \"SDE Ethnicity\",\n            \"context\"
-        : \"Patient\",\n            \"accessLevel\" : \"Public\",\n            \"annotation\"
-        : [ {\n               \"type\" : \"Annotation\",\n               \"s\" : {\n
-        \                 \"r\" : \"39\",\n                  \"s\" : [ {\n                     \"value\"
-        : [ \"define \",\"\\\"SDE Ethnicity\\\"\",\": \" ]\n                  }, {\n
-        \                    \"r\" : \"38\",\n                     \"s\" : [ {\n                        \"value\"
-        : [ \"[\",\"\\\"Patient Characteristic Ethnicity\\\"\",\": \" ]\n                     },
-        {\n                        \"s\" : [ {\n                           \"value\"
-        : [ \"\\\"Ethnicity\\\"\" ]\n                        } ]\n                     },
-        {\n                        \"value\" : [ \"]\" ]\n                     } ]\n
-        \                 } ]\n               }\n            } ],\n            \"expression\"
-        : {\n               \"localId\" : \"38\",\n               \"dataType\" : \"{urn:healthit-gov:qdm:v5_0_draft}PatientCharacteristicEthnicity\",\n
-        \              \"type\" : \"Retrieve\",\n               \"codes\" : {\n                  \"name\"
-        : \"Ethnicity\",\n                  \"type\" : \"ValueSetRef\"\n               }\n
-        \           }\n         }, {\n            \"localId\" : \"41\",\n            \"name\"
-        : \"SDE Payer\",\n            \"context\" : \"Patient\",\n            \"accessLevel\"
-        : \"Public\",\n            \"annotation\" : [ {\n               \"type\" :
-        \"Annotation\",\n               \"s\" : {\n                  \"r\" : \"41\",\n
-        \                 \"s\" : [ {\n                     \"value\" : [ \"define
-        \",\"\\\"SDE Payer\\\"\",\": \" ]\n                  }, {\n                     \"r\"
-        : \"40\",\n                     \"s\" : [ {\n                        \"value\"
-        : [ \"[\",\"\\\"Patient Characteristic Payer\\\"\",\": \" ]\n                     },
-        {\n                        \"s\" : [ {\n                           \"value\"
-        : [ \"\\\"Payer\\\"\" ]\n                        } ]\n                     },
-        {\n                        \"value\" : [ \"]\" ]\n                     } ]\n
-        \                 } ]\n               }\n            } ],\n            \"expression\"
-        : {\n               \"localId\" : \"40\",\n               \"dataType\" : \"{urn:healthit-gov:qdm:v5_0_draft}PatientCharacteristicPayer\",\n
-        \              \"type\" : \"Retrieve\",\n               \"codes\" : {\n                  \"name\"
-        : \"Payer\",\n                  \"type\" : \"ValueSetRef\"\n               }\n
-        \           }\n         }, {\n            \"localId\" : \"43\",\n            \"name\"
-        : \"SDE Race\",\n            \"context\" : \"Patient\",\n            \"accessLevel\"
-        : \"Public\",\n            \"annotation\" : [ {\n               \"type\" :
-        \"Annotation\",\n               \"s\" : {\n                  \"r\" : \"43\",\n
-        \                 \"s\" : [ {\n                     \"value\" : [ \"define
-        \",\"\\\"SDE Race\\\"\",\": \" ]\n                  }, {\n                     \"r\"
-        : \"42\",\n                     \"s\" : [ {\n                        \"value\"
-        : [ \"[\",\"\\\"Patient Characteristic Race\\\"\",\": \" ]\n                     },
-        {\n                        \"s\" : [ {\n                           \"value\"
-        : [ \"\\\"Race\\\"\" ]\n                        } ]\n                     },
-        {\n                        \"value\" : [ \"]\" ]\n                     } ]\n
-        \                 } ]\n               }\n            } ],\n            \"expression\"
-        : {\n               \"localId\" : \"42\",\n               \"dataType\" : \"{urn:healthit-gov:qdm:v5_0_draft}PatientCharacteristicRace\",\n
-        \              \"type\" : \"Retrieve\",\n               \"codes\" : {\n                  \"name\"
-        : \"Race\",\n                  \"type\" : \"ValueSetRef\"\n               }\n
-        \           }\n         }, {\n            \"localId\" : \"45\",\n            \"name\"
-        : \"SDE Sex\",\n            \"context\" : \"Patient\",\n            \"accessLevel\"
-        : \"Public\",\n            \"annotation\" : [ {\n               \"type\" :
-        \"Annotation\",\n               \"s\" : {\n                  \"r\" : \"45\",\n
-        \                 \"s\" : [ {\n                     \"value\" : [ \"define
-        \",\"\\\"SDE Sex\\\"\",\": \" ]\n                  }, {\n                     \"r\"
-        : \"44\",\n                     \"s\" : [ {\n                        \"value\"
-        : [ \"[\",\"\\\"Patient Characteristic Sex\\\"\",\": \" ]\n                     },
-        {\n                        \"s\" : [ {\n                           \"value\"
-        : [ \"\\\"ONC Administrative Sex\\\"\" ]\n                        } ]\n                     },
-        {\n                        \"value\" : [ \"]\" ]\n                     } ]\n
-        \                 } ]\n               }\n            } ],\n            \"expression\"
-        : {\n               \"localId\" : \"44\",\n               \"dataType\" : \"{urn:healthit-gov:qdm:v5_0_draft}PatientCharacteristicSex\",\n
-        \              \"type\" : \"Retrieve\",\n               \"codes\" : {\n                  \"name\"
-        : \"ONC Administrative Sex\",\n                  \"type\" : \"ValueSetRef\"\n
-        \              }\n            }\n         }, {\n            \"localId\" :
-        \"63\",\n            \"name\" : \"Initial Pop\",\n            \"context\"
-        : \"Patient\",\n            \"accessLevel\" : \"Public\",\n            \"annotation\"
-        : [ {\n               \"type\" : \"Annotation\",\n               \"s\" : {\n
-        \                 \"r\" : \"63\",\n                  \"s\" : [ {\n                     \"value\"
-        : [ \"define \",\"\\\"Initial Pop\\\"\",\": \" ]\n                  }, {\n
-        \                    \"r\" : \"62\",\n                     \"s\" : [ {\n                        \"s\"
-        : [ {\n                           \"r\" : \"51\",\n                           \"s\"
-        : [ {\n                              \"r\" : \"50\",\n                              \"s\"
-        : [ {\n                                 \"value\" : [ \"(\" ]\n                              },
-        {\n                                 \"r\" : \"50\",\n                                 \"s\"
-        : [ {\n                                    \"r\" : \"48\",\n                                    \"s\"
-        : [ {\n                                       \"r\" : \"46\",\n                                       \"s\"
-        : [ {\n                                          \"value\" : [ \"[\",\"\\\"Encounter,
-        Performed\\\"\",\": \" ]\n                                       }, {\n                                          \"s\"
-        : [ {\n                                             \"value\" : [ \"\\\"Office
-        Visit\\\"\" ]\n                                          } ]\n                                       },
-        {\n                                          \"value\" : [ \"]\" ]\n                                       }
-        ]\n                                    }, {\n                                       \"value\"
-        : [ \"\\nunion \" ]\n                                    }, {\n                                       \"r\"
-        : \"47\",\n                                       \"s\" : [ {\n                                          \"value\"
-        : [ \"[\",\"\\\"Encounter, Performed\\\"\",\": \" ]\n                                       },
-        {\n                                          \"s\" : [ {\n                                             \"value\"
-        : [ \"\\\"Face-to-Face Interaction\\\"\" ]\n                                          }
-        ]\n                                       }, {\n                                          \"value\"
-        : [ \"]\" ]\n                                       } ]\n                                    }
-        ]\n                                 }, {\n                                    \"value\"
-        : [ \"\\nunion \" ]\n                                 }, {\n                                    \"r\"
-        : \"49\",\n                                    \"s\" : [ {\n                                       \"value\"
-        : [ \"[\",\"\\\"Encounter, Performed\\\"\",\": \" ]\n                                    },
-        {\n                                       \"s\" : [ {\n                                          \"value\"
-        : [ \"\\\"Home Healthcare Services\\\"\" ]\n                                       }
-        ]\n                                    }, {\n                                       \"value\"
-        : [ \"]\" ]\n                                    } ]\n                                 }
-        ]\n                              }, {\n                                 \"value\"
-        : [ \")\" ]\n                              } ]\n                           },
-        {\n                              \"value\" : [ \"Enc\" ]\n                           }
-        ]\n                        } ]\n                     }, {\n                        \"value\"
-        : [ \"\\n\" ]\n                     }, {\n                        \"r\" :
-        \"61\",\n                        \"s\" : [ {\n                           \"value\"
-        : [ \"where \" ]\n                        }, {\n                           \"r\"
-        : \"61\",\n                           \"s\" : [ {\n                              \"r\"
-        : \"55\",\n                              \"s\" : [ {\n                                 \"r\"
-        : \"53\",\n                                 \"s\" : [ {\n                                    \"r\"
-        : \"52\",\n                                    \"s\" : [ {\n                                       \"value\"
-        : [ \"Enc\" ]\n                                    } ]\n                                 },
-        {\n                                    \"value\" : [ \".\" ]\n                                 },
-        {\n                                    \"r\" : \"53\",\n                                    \"s\"
-        : [ {\n                                       \"value\" : [ \"relevantPeriod\"
-        ]\n                                    } ]\n                                 }
-        ]\n                              }, {\n                                 \"value\"
-        : [ \" \",\"during\",\" \" ]\n                              }, {\n                                 \"r\"
-        : \"54\",\n                                 \"s\" : [ {\n                                    \"value\"
-        : [ \"\\\"Measurement Period\\\"\" ]\n                                 } ]\n
-        \                             } ]\n                           }, {\n                              \"value\"
-        : [ \"\\nand \" ]\n                           }, {\n                              \"r\"
-        : \"60\",\n                              \"s\" : [ {\n                                 \"r\"
-        : \"58\",\n                                 \"s\" : [ {\n                                    \"value\"
-        : [ \"AgeInYearsAt\",\"(\" ]\n                                 }, {\n                                    \"r\"
-        : \"57\",\n                                    \"s\" : [ {\n                                       \"value\"
-        : [ \"start of \" ]\n                                    }, {\n                                       \"r\"
-        : \"56\",\n                                       \"s\" : [ {\n                                          \"value\"
-        : [ \"\\\"Measurement Period\\\"\" ]\n                                       }
-        ]\n                                    } ]\n                                 },
-        {\n                                    \"value\" : [ \")\" ]\n                                 }
-        ]\n                              }, {\n                                 \"value\"
-        : [ \">=\",\"65\" ]\n                              } ]\n                           }
-        ]\n                        } ]\n                     } ]\n                  }
-        ]\n               }\n            } ],\n            \"expression\" : {\n               \"localId\"
-        : \"62\",\n               \"type\" : \"Query\",\n               \"source\"
-        : [ {\n                  \"localId\" : \"51\",\n                  \"alias\"
-        : \"Enc\",\n                  \"expression\" : {\n                     \"localId\"
-        : \"50\",\n                     \"type\" : \"Union\",\n                     \"operand\"
-        : [ {\n                        \"localId\" : \"48\",\n                        \"type\"
-        : \"Union\",\n                        \"operand\" : [ {\n                           \"localId\"
-        : \"46\",\n                           \"dataType\" : \"{urn:healthit-gov:qdm:v5_0_draft}PositiveEncounterPerformed\",\n
-        \                          \"templateId\" : \"PositiveEncounterPerformed\",\n
-        \                          \"codeProperty\" : \"code\",\n                           \"type\"
-        : \"Retrieve\",\n                           \"codes\" : {\n                              \"name\"
-        : \"Office Visit\",\n                              \"type\" : \"ValueSetRef\"\n
-        \                          }\n                        }, {\n                           \"localId\"
-        : \"47\",\n                           \"dataType\" : \"{urn:healthit-gov:qdm:v5_0_draft}PositiveEncounterPerformed\",\n
-        \                          \"templateId\" : \"PositiveEncounterPerformed\",\n
-        \                          \"codeProperty\" : \"code\",\n                           \"type\"
-        : \"Retrieve\",\n                           \"codes\" : {\n                              \"name\"
-        : \"Face-to-Face Interaction\",\n                              \"type\" :
-        \"ValueSetRef\"\n                           }\n                        } ]\n
-        \                    }, {\n                        \"localId\" : \"49\",\n
-        \                       \"dataType\" : \"{urn:healthit-gov:qdm:v5_0_draft}PositiveEncounterPerformed\",\n
-        \                       \"templateId\" : \"PositiveEncounterPerformed\",\n
-        \                       \"codeProperty\" : \"code\",\n                        \"type\"
-        : \"Retrieve\",\n                        \"codes\" : {\n                           \"name\"
-        : \"Home Healthcare Services\",\n                           \"type\" : \"ValueSetRef\"\n
-        \                       }\n                     } ]\n                  }\n
-        \              } ],\n               \"relationship\" : [ ],\n               \"where\"
-        : {\n                  \"localId\" : \"61\",\n                  \"type\" :
-        \"And\",\n                  \"operand\" : [ {\n                     \"localId\"
-        : \"55\",\n                     \"type\" : \"IncludedIn\",\n                     \"operand\"
-        : [ {\n                        \"localId\" : \"53\",\n                        \"path\"
-        : \"relevantPeriod\",\n                        \"scope\" : \"Enc\",\n                        \"type\"
-        : \"Property\"\n                     }, {\n                        \"localId\"
-        : \"54\",\n                        \"name\" : \"Measurement Period\",\n                        \"type\"
-        : \"ParameterRef\"\n                     } ]\n                  }, {\n                     \"localId\"
-        : \"60\",\n                     \"type\" : \"GreaterOrEqual\",\n                     \"operand\"
-        : [ {\n                        \"localId\" : \"58\",\n                        \"precision\"
-        : \"Year\",\n                        \"type\" : \"CalculateAgeAt\",\n                        \"operand\"
-        : [ {\n                           \"path\" : \"birthDatetime\",\n                           \"type\"
-        : \"Property\",\n                           \"source\" : {\n                              \"name\"
-        : \"Patient\",\n                              \"type\" : \"ExpressionRef\"\n
-        \                          }\n                        }, {\n                           \"localId\"
-        : \"57\",\n                           \"type\" : \"Start\",\n                           \"operand\"
-        : {\n                              \"localId\" : \"56\",\n                              \"name\"
-        : \"Measurement Period\",\n                              \"type\" : \"ParameterRef\"\n
-        \                          }\n                        } ]\n                     },
-        {\n                        \"localId\" : \"59\",\n                        \"valueType\"
-        : \"{urn:hl7-org:elm-types:r1}Integer\",\n                        \"value\"
-        : \"65\",\n                        \"type\" : \"Literal\"\n                     }
-        ]\n                  } ]\n               }\n            }\n         }, {\n
-        \           \"localId\" : \"73\",\n            \"name\" : \"Num\",\n            \"context\"
-        : \"Patient\",\n            \"accessLevel\" : \"Public\",\n            \"annotation\"
-        : [ {\n               \"type\" : \"Annotation\",\n               \"s\" : {\n
-        \                 \"r\" : \"73\",\n                  \"s\" : [ {\n                     \"value\"
-        : [ \"define \",\"\\\"Num\\\"\",\": \" ]\n                  }, {\n                     \"r\"
-        : \"72\",\n                     \"s\" : [ {\n                        \"s\"
-        : [ {\n                           \"r\" : \"65\",\n                           \"s\"
-        : [ {\n                              \"r\" : \"64\",\n                              \"s\"
-        : [ {\n                                 \"r\" : \"64\",\n                                 \"s\"
-        : [ {\n                                    \"value\" : [ \"[\",\"\\\"Diagnostic
-        Study, Performed\\\"\",\": \" ]\n                                 }, {\n                                    \"s\"
-        : [ {\n                                       \"value\" : [ \"\\\"Mammogram\\\"\"
-        ]\n                                    } ]\n                                 },
-        {\n                                    \"value\" : [ \"]\" ]\n                                 }
-        ]\n                              } ]\n                           }, {\n                              \"value\"
-        : [ \"Mam\" ]\n                           } ]\n                        } ]\n
-        \                    }, {\n                        \"value\" : [ \"\\n\" ]\n
-        \                    }, {\n                        \"r\" : \"71\",\n                        \"s\"
-        : [ {\n                           \"value\" : [ \"where \" ]\n                        },
-        {\n                           \"r\" : \"71\",\n                           \"s\"
-        : [ {\n                              \"r\" : \"67\",\n                              \"s\"
-        : [ {\n                                 \"r\" : \"66\",\n                                 \"s\"
-        : [ {\n                                    \"value\" : [ \"Mam\" ]\n                                 }
-        ]\n                              }, {\n                                 \"value\"
-        : [ \".\" ]\n                              }, {\n                                 \"r\"
-        : \"67\",\n                                 \"s\" : [ {\n                                    \"value\"
-        : [ \"relevantPeriod\" ]\n                                 } ]\n                              }
-        ]\n                           }, {\n                              \"value\"
-        : [ \" \" ]\n                           }, {\n                              \"r\"
-        : \"71\",\n                              \"s\" : [ {\n                                 \"r\"
-        : \"70\",\n                                 \"s\" : [ {\n                                    \"value\"
-        : [ \"26 \",\"months\" ]\n                                 } ]\n                              },
-        {\n                                 \"value\" : [ \" or less before\" ]\n
-        \                             } ]\n                           }, {\n                              \"value\"
-        : [ \" \" ]\n                           }, {\n                              \"r\"
-        : \"69\",\n                              \"s\" : [ {\n                                 \"value\"
-        : [ \"end of \" ]\n                              }, {\n                                 \"r\"
-        : \"68\",\n                                 \"s\" : [ {\n                                    \"value\"
-        : [ \"\\\"Measurement Period\\\"\" ]\n                                 } ]\n
-        \                             } ]\n                           } ]\n                        }
-        ]\n                     } ]\n                  } ]\n               }\n            }
-        ],\n            \"expression\" : {\n               \"localId\" : \"72\",\n
-        \              \"type\" : \"Query\",\n               \"source\" : [ {\n                  \"localId\"
-        : \"65\",\n                  \"alias\" : \"Mam\",\n                  \"expression\"
-        : {\n                     \"localId\" : \"64\",\n                     \"dataType\"
-        : \"{urn:healthit-gov:qdm:v5_0_draft}PositiveDiagnosticStudyPerformed\",\n
-        \                    \"templateId\" : \"PositiveDiagnosticStudyPerformed\",\n
-        \                    \"codeProperty\" : \"code\",\n                     \"type\"
-        : \"Retrieve\",\n                     \"codes\" : {\n                        \"name\"
-        : \"Mammogram\",\n                        \"type\" : \"ValueSetRef\"\n                     }\n
-        \                 }\n               } ],\n               \"relationship\"
-        : [ ],\n               \"where\" : {\n                  \"localId\" : \"71\",\n
-        \                 \"type\" : \"In\",\n                  \"operand\" : [ {\n
-        \                    \"type\" : \"End\",\n                     \"operand\"
-        : {\n                        \"localId\" : \"67\",\n                        \"path\"
-        : \"relevantPeriod\",\n                        \"scope\" : \"Mam\",\n                        \"type\"
-        : \"Property\"\n                     }\n                  }, {\n                     \"lowClosed\"
-        : true,\n                     \"highClosed\" : false,\n                     \"type\"
-        : \"Interval\",\n                     \"low\" : {\n                        \"type\"
-        : \"Subtract\",\n                        \"operand\" : [ {\n                           \"localId\"
-        : \"69\",\n                           \"type\" : \"End\",\n                           \"operand\"
-        : {\n                              \"localId\" : \"68\",\n                              \"name\"
-        : \"Measurement Period\",\n                              \"type\" : \"ParameterRef\"\n
-        \                          }\n                        }, {\n                           \"localId\"
-        : \"70\",\n                           \"value\" : 26,\n                           \"unit\"
-        : \"months\",\n                           \"type\" : \"Quantity\"\n                        }
-        ]\n                     },\n                     \"high\" : {\n                        \"localId\"
-        : \"69\",\n                        \"type\" : \"End\",\n                        \"operand\"
-        : {\n                           \"localId\" : \"68\",\n                           \"name\"
-        : \"Measurement Period\",\n                           \"type\" : \"ParameterRef\"\n
-        \                       }\n                     }\n                  } ]\n
-        \              }\n            }\n         }, {\n            \"localId\" :
-        \"85\",\n            \"name\" : \"Double Unilateral Mastectomy\",\n            \"context\"
-        : \"Patient\",\n            \"accessLevel\" : \"Public\",\n            \"annotation\"
-        : [ {\n               \"type\" : \"Annotation\",\n               \"s\" : {\n
-        \                 \"r\" : \"85\",\n                  \"s\" : [ {\n                     \"value\"
-        : [ \"define \",\"\\\"Double Unilateral Mastectomy\\\"\",\": \" ]\n                  },
-        {\n                     \"r\" : \"84\",\n                     \"s\" : [ {\n
-        \                       \"r\" : \"82\",\n                        \"s\" : [
-        {\n                           \"value\" : [ \"Count\",\"(\" ]\n                        },
-        {\n                           \"r\" : \"81\",\n                           \"s\"
-        : [ {\n                              \"s\" : [ {\n                                 \"r\"
-        : \"75\",\n                                 \"s\" : [ {\n                                    \"r\"
-        : \"74\",\n                                    \"s\" : [ {\n                                       \"r\"
-        : \"74\",\n                                       \"s\" : [ {\n                                          \"value\"
-        : [ \"[\",\"\\\"Procedure, Performed\\\"\",\": \" ]\n                                       },
-        {\n                                          \"s\" : [ {\n                                             \"value\"
-        : [ \"\\\"Unilateral Mastectomy\\\"\" ]\n                                          }
-        ]\n                                       }, {\n                                          \"value\"
-        : [ \"]\" ]\n                                       } ]\n                                    }
-        ]\n                                 }, {\n                                    \"value\"
-        : [ \"P\" ]\n                                 } ]\n                              }
-        ]\n                           }, {\n                              \"value\"
-        : [ \"\\n\" ]\n                           }, {\n                              \"r\"
-        : \"80\",\n                              \"s\" : [ {\n                                 \"value\"
-        : [ \"where \" ]\n                              }, {\n                                 \"r\"
-        : \"80\",\n                                 \"s\" : [ {\n                                    \"r\"
-        : \"77\",\n                                    \"s\" : [ {\n                                       \"r\"
-        : \"76\",\n                                       \"s\" : [ {\n                                          \"value\"
-        : [ \"P\" ]\n                                       } ]\n                                    },
-        {\n                                       \"value\" : [ \".\" ]\n                                    },
-        {\n                                       \"r\" : \"77\",\n                                       \"s\"
-        : [ {\n                                          \"value\" : [ \"relevantPeriod\"
-        ]\n                                       } ]\n                                    }
-        ]\n                                 }, {\n                                    \"value\"
-        : [ \" \",\"before\",\" \" ]\n                                 }, {\n                                    \"r\"
-        : \"79\",\n                                    \"s\" : [ {\n                                       \"value\"
-        : [ \"end of \" ]\n                                    }, {\n                                       \"r\"
-        : \"78\",\n                                       \"s\" : [ {\n                                          \"value\"
-        : [ \"\\\"Measurement Period\\\"\" ]\n                                       }
-        ]\n                                    } ]\n                                 }
-        ]\n                              } ]\n                           } ]\n                        },
-        {\n                           \"value\" : [ \")\" ]\n                        }
-        ]\n                     }, {\n                        \"value\" : [ \"=\",\"2\"
-        ]\n                     } ]\n                  } ]\n               }\n            }
-        ],\n            \"expression\" : {\n               \"localId\" : \"84\",\n
-        \              \"type\" : \"Equal\",\n               \"operand\" : [ {\n                  \"localId\"
-        : \"82\",\n                  \"type\" : \"Count\",\n                  \"source\"
-        : {\n                     \"localId\" : \"81\",\n                     \"type\"
-        : \"Query\",\n                     \"source\" : [ {\n                        \"localId\"
-        : \"75\",\n                        \"alias\" : \"P\",\n                        \"expression\"
-        : {\n                           \"localId\" : \"74\",\n                           \"dataType\"
-        : \"{urn:healthit-gov:qdm:v5_0_draft}PositiveProcedurePerformed\",\n                           \"templateId\"
-        : \"PositiveProcedurePerformed\",\n                           \"codeProperty\"
-        : \"code\",\n                           \"type\" : \"Retrieve\",\n                           \"codes\"
-        : {\n                              \"name\" : \"Unilateral Mastectomy\",\n
-        \                             \"type\" : \"ValueSetRef\"\n                           }\n
-        \                       }\n                     } ],\n                     \"relationship\"
-        : [ ],\n                     \"where\" : {\n                        \"localId\"
-        : \"80\",\n                        \"type\" : \"Before\",\n                        \"operand\"
-        : [ {\n                           \"localId\" : \"77\",\n                           \"path\"
-        : \"relevantPeriod\",\n                           \"scope\" : \"P\",\n                           \"type\"
-        : \"Property\"\n                        }, {\n                           \"localId\"
-        : \"79\",\n                           \"type\" : \"End\",\n                           \"operand\"
-        : {\n                              \"localId\" : \"78\",\n                              \"name\"
-        : \"Measurement Period\",\n                              \"type\" : \"ParameterRef\"\n
-        \                          }\n                        } ]\n                     }\n
-        \                 }\n               }, {\n                  \"localId\" :
-        \"83\",\n                  \"valueType\" : \"{urn:hl7-org:elm-types:r1}Integer\",\n
-        \                 \"value\" : \"2\",\n                  \"type\" : \"Literal\"\n
-        \              } ]\n            }\n         }, {\n            \"localId\"
-        : \"97\",\n            \"name\" : \"Denom\",\n            \"context\" : \"Patient\",\n
-        \           \"accessLevel\" : \"Public\",\n            \"annotation\" : [
-        {\n               \"type\" : \"Annotation\",\n               \"s\" : {\n                  \"r\"
-        : \"97\",\n                  \"s\" : [ {\n                     \"value\" :
-        [ \"define \",\"\\\"Denom\\\"\",\": \" ]\n                  }, {\n                     \"r\"
-        : \"96\",\n                     \"s\" : [ {\n                        \"r\"
-        : \"93\",\n                        \"s\" : [ {\n                           \"r\"
-        : \"87\",\n                           \"s\" : [ {\n                              \"value\"
-        : [ \"exists\" ]\n                           }, {\n                              \"r\"
-        : \"86\",\n                              \"s\" : [ {\n                                 \"value\"
-        : [ \"(\" ]\n                              }, {\n                                 \"r\"
-        : \"86\",\n                                 \"s\" : [ {\n                                    \"value\"
-        : [ \"\\\"Initial Pop\\\"\" ]\n                                 } ]\n                              },
-        {\n                                 \"value\" : [ \")\" ]\n                              }
-        ]\n                           } ]\n                        }, {\n                           \"value\"
-        : [ \" and\\n\" ]\n                        }, {\n                           \"r\"
-        : \"92\",\n                           \"s\" : [ {\n                              \"r\"
-        : \"90\",\n                              \"s\" : [ {\n                                 \"value\"
-        : [ \"AgeInYearsAt\",\"(\" ]\n                              }, {\n                                 \"r\"
-        : \"89\",\n                                 \"s\" : [ {\n                                    \"value\"
-        : [ \"start of \" ]\n                                 }, {\n                                    \"r\"
-        : \"88\",\n                                    \"s\" : [ {\n                                       \"value\"
-        : [ \"\\\"Measurement Period\\\"\" ]\n                                    }
-        ]\n                                 } ]\n                              },
-        {\n                                 \"value\" : [ \")\" ]\n                              }
-        ]\n                           }, {\n                              \"value\"
-        : [ \"<\",\"74\" ]\n                           } ]\n                        }
-        ]\n                     }, {\n                        \"value\" : [ \"\\nand
-        \" ]\n                     }, {\n                        \"r\" : \"95\",\n
-        \                       \"s\" : [ {\n                           \"value\"
-        : [ \"exists\" ]\n                        }, {\n                           \"r\"
-        : \"94\",\n                           \"s\" : [ {\n                              \"value\"
-        : [ \"(\" ]\n                           }, {\n                              \"r\"
-        : \"94\",\n                              \"s\" : [ {\n                                 \"value\"
-        : [ \"[\",\"\\\"Patient Characteristic Sex\\\"\",\": \" ]\n                              },
-        {\n                                 \"s\" : [ {\n                                    \"value\"
-        : [ \"\\\"Female\\\"\" ]\n                                 } ]\n                              },
-        {\n                                 \"value\" : [ \"]\" ]\n                              }
-        ]\n                           }, {\n                              \"value\"
-        : [ \")\" ]\n                           } ]\n                        } ]\n
-        \                    } ]\n                  } ]\n               }\n            }
-        ],\n            \"expression\" : {\n               \"localId\" : \"96\",\n
-        \              \"type\" : \"And\",\n               \"operand\" : [ {\n                  \"localId\"
-        : \"93\",\n                  \"type\" : \"And\",\n                  \"operand\"
-        : [ {\n                     \"localId\" : \"87\",\n                     \"type\"
-        : \"Exists\",\n                     \"operand\" : {\n                        \"localId\"
-        : \"86\",\n                        \"name\" : \"Initial Pop\",\n                        \"type\"
-        : \"ExpressionRef\"\n                     }\n                  }, {\n                     \"localId\"
-        : \"92\",\n                     \"type\" : \"Less\",\n                     \"operand\"
-        : [ {\n                        \"localId\" : \"90\",\n                        \"precision\"
-        : \"Year\",\n                        \"type\" : \"CalculateAgeAt\",\n                        \"operand\"
-        : [ {\n                           \"path\" : \"birthDatetime\",\n                           \"type\"
-        : \"Property\",\n                           \"source\" : {\n                              \"name\"
-        : \"Patient\",\n                              \"type\" : \"ExpressionRef\"\n
-        \                          }\n                        }, {\n                           \"localId\"
-        : \"89\",\n                           \"type\" : \"Start\",\n                           \"operand\"
-        : {\n                              \"localId\" : \"88\",\n                              \"name\"
-        : \"Measurement Period\",\n                              \"type\" : \"ParameterRef\"\n
-        \                          }\n                        } ]\n                     },
-        {\n                        \"localId\" : \"91\",\n                        \"valueType\"
-        : \"{urn:hl7-org:elm-types:r1}Integer\",\n                        \"value\"
-        : \"74\",\n                        \"type\" : \"Literal\"\n                     }
-        ]\n                  } ]\n               }, {\n                  \"localId\"
-        : \"95\",\n                  \"type\" : \"Exists\",\n                  \"operand\"
-        : {\n                     \"localId\" : \"94\",\n                     \"dataType\"
-        : \"{urn:healthit-gov:qdm:v5_0_draft}PatientCharacteristicSex\",\n                     \"type\"
-        : \"Retrieve\",\n                     \"codes\" : {\n                        \"name\"
-        : \"Female\",\n                        \"type\" : \"ValueSetRef\"\n                     }\n
-        \                 }\n               } ]\n            }\n         }, {\n            \"localId\"
-        : \"109\",\n            \"name\" : \"Denom Excl\",\n            \"context\"
-        : \"Patient\",\n            \"accessLevel\" : \"Public\",\n            \"annotation\"
-        : [ {\n               \"type\" : \"Annotation\",\n               \"s\" : {\n
-        \                 \"r\" : \"109\",\n                  \"s\" : [ {\n                     \"value\"
-        : [ \"define \",\"\\\"Denom Excl\\\"\",\": \" ]\n                  }, {\n
-        \                    \"r\" : \"108\",\n                     \"s\" : [ {\n
-        \                       \"r\" : \"106\",\n                        \"s\" :
-        [ {\n                           \"value\" : [ \"exists\" ]\n                        },
-        {\n                           \"r\" : \"105\",\n                           \"s\"
-        : [ {\n                              \"value\" : [ \"(\" ]\n                           },
-        {\n                              \"r\" : \"105\",\n                              \"s\"
-        : [ {\n                                 \"s\" : [ {\n                                    \"r\"
-        : \"99\",\n                                    \"s\" : [ {\n                                       \"r\"
-        : \"98\",\n                                       \"s\" : [ {\n                                          \"r\"
-        : \"98\",\n                                          \"s\" : [ {\n                                             \"value\"
-        : [ \"[\",\"\\\"Procedure, Performed\\\"\",\": \" ]\n                                          },
-        {\n                                             \"s\" : [ {\n                                                \"value\"
-        : [ \"\\\"Bilateral Mastectomy\\\"\" ]\n                                             }
-        ]\n                                          }, {\n                                             \"value\"
-        : [ \"]\" ]\n                                          } ]\n                                       }
-        ]\n                                    }, {\n                                       \"value\"
-        : [ \"BIM\" ]\n                                    } ]\n                                 }
-        ]\n                              }, {\n                                 \"value\"
-        : [ \"\\n\" ]\n                              }, {\n                                 \"r\"
-        : \"104\",\n                                 \"s\" : [ {\n                                    \"value\"
-        : [ \"where \" ]\n                                 }, {\n                                    \"r\"
-        : \"104\",\n                                    \"s\" : [ {\n                                       \"r\"
-        : \"101\",\n                                       \"s\" : [ {\n                                          \"r\"
-        : \"100\",\n                                          \"s\" : [ {\n                                             \"value\"
-        : [ \"BIM\" ]\n                                          } ]\n                                       },
-        {\n                                          \"value\" : [ \".\" ]\n                                       },
-        {\n                                          \"r\" : \"101\",\n                                          \"s\"
-        : [ {\n                                             \"value\" : [ \"relevantPeriod\"
-        ]\n                                          } ]\n                                       }
-        ]\n                                    }, {\n                                       \"value\"
-        : [ \" \",\"before\",\" \" ]\n                                    }, {\n                                       \"r\"
-        : \"103\",\n                                       \"s\" : [ {\n                                          \"value\"
-        : [ \"end of \" ]\n                                       }, {\n                                          \"r\"
-        : \"102\",\n                                          \"s\" : [ {\n                                             \"value\"
-        : [ \"\\\"Measurement Period\\\"\" ]\n                                          }
-        ]\n                                       } ]\n                                    }
-        ]\n                                 } ]\n                              } ]\n
-        \                          }, {\n                              \"value\" :
-        [ \")\" ]\n                           } ]\n                        } ]\n                     },
-        {\n                        \"value\" : [ \" or \" ]\n                     },
-        {\n                        \"r\" : \"107\",\n                        \"s\"
-        : [ {\n                           \"value\" : [ \"\\\"Double Unilateral Mastectomy\\\"\"
-        ]\n                        } ]\n                     } ]\n                  }
-        ]\n               }\n            } ],\n            \"expression\" : {\n               \"localId\"
-        : \"108\",\n               \"type\" : \"Or\",\n               \"operand\"
-        : [ {\n                  \"localId\" : \"106\",\n                  \"type\"
-        : \"Exists\",\n                  \"operand\" : {\n                     \"localId\"
-        : \"105\",\n                     \"type\" : \"Query\",\n                     \"source\"
-        : [ {\n                        \"localId\" : \"99\",\n                        \"alias\"
-        : \"BIM\",\n                        \"expression\" : {\n                           \"localId\"
-        : \"98\",\n                           \"dataType\" : \"{urn:healthit-gov:qdm:v5_0_draft}PositiveProcedurePerformed\",\n
-        \                          \"templateId\" : \"PositiveProcedurePerformed\",\n
-        \                          \"codeProperty\" : \"code\",\n                           \"type\"
-        : \"Retrieve\",\n                           \"codes\" : {\n                              \"name\"
-        : \"Bilateral Mastectomy\",\n                              \"type\" : \"ValueSetRef\"\n
-        \                          }\n                        }\n                     }
-        ],\n                     \"relationship\" : [ ],\n                     \"where\"
-        : {\n                        \"localId\" : \"104\",\n                        \"type\"
-        : \"Before\",\n                        \"operand\" : [ {\n                           \"localId\"
-        : \"101\",\n                           \"path\" : \"relevantPeriod\",\n                           \"scope\"
-        : \"BIM\",\n                           \"type\" : \"Property\"\n                        },
-        {\n                           \"localId\" : \"103\",\n                           \"type\"
-        : \"End\",\n                           \"operand\" : {\n                              \"localId\"
-        : \"102\",\n                              \"name\" : \"Measurement Period\",\n
-        \                             \"type\" : \"ParameterRef\"\n                           }\n
-        \                       } ]\n                     }\n                  }\n
-        \              }, {\n                  \"localId\" : \"107\",\n                  \"name\"
-        : \"Double Unilateral Mastectomy\",\n                  \"type\" : \"ExpressionRef\"\n
-        \              } ]\n            }\n         } ]\n      }\n   }\n}\r\n--Boundary_17_1514896132_1500142538389--\r\n"
-    http_version: 
-  recorded_at: Sat, 15 Jul 2017 18:15:38 GMT
 recorded_with: VCR 3.0.3
