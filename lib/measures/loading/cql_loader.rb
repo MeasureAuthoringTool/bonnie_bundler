@@ -29,7 +29,11 @@ module Measures
       cql_libraries, model = remove_spaces_in_functions(cql_libraries, model)
 
       # Translate the cql to elm
-      elms = translate_cql_to_elm(cql_libraries)
+      begin
+        elms = translate_cql_to_elm(cql_libraries)
+      rescue Exception => e
+        raise CqlToElmException.new "Error translating CQL to ELM #{e.message}"
+      end      
       
       # Hash of which define statements are used for the measure.
       cql_definition_dependency_structure = populate_cql_definition_dependency_structure(main_cql_library, elms, model.populations_cql_map)
@@ -181,7 +185,26 @@ module Measures
       parts.pop
       # Collects the response body as json. Grabs everything from the first '{' to the last '}'
       results = parts.map{ |part| JSON.parse(part.match(/{.+}/m).to_s, :max_nesting=>1000)}
-      results
+      return identify_error_response(results)
+    end
+    
+    def self.identify_error_response(elms)
+      error_message = ""
+      elms.each do |elm|
+        if !(elm["library"]["annotation"].nil?)
+          elm["library"]["annotation"].each do |annotation|
+            if annotation["errorSeverity"] == "error"
+              err_msg = annotation["message"]
+              err_line = annotation["startLine"]
+              error_message += "\nLine: #{err_line}, Message: #{err_msg};"
+            end
+          end
+        end
+      end
+      if (error_message != "")
+        raise CqlToElmException.new error_message
+      end
+      elms
     end
 
     # Loops over the populations and retrieves the define statements that are nested within it.
