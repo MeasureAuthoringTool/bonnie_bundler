@@ -168,19 +168,18 @@ class CqlMeasure
         # Check if there is a criterion has the affirmative description
         unless description_hash.value?(self.source_data_criteria[criterion]['description'].gsub(', Not ', ', '))
           # Make the new name based on the title, definition, and status
-          spoofed_criterion_name = self.source_data_criteria[criterion]['title'].gsub(' ', '') 
-            + '_' 
-            + self.source_data_criteria[criterion]['definition'].split.map(&:capitalize).join('') 
-            + self.source_data_criteria[criterion]['status'].split.map(&:capitalize).join('') + '_spoofed'
+          spoofed_title = self.source_data_criteria[criterion]['title'].gsub(' ', '')
+          spoofed_def = self.source_data_criteria[criterion]['definition'] ? self.source_data_criteria[criterion]['definition'].split.map(&:capitalize).join('') : ''
+          spoofed_status = self.source_data_criteria[criterion]['status'] ? self.source_data_criteria[criterion]['status'].split.map(&:capitalize).join('') : ''
+          spoofed_criterion_name = spoofed_title + '_' + spoofed_def + spoofed_status + '_spoofed'
           self.source_data_criteria[spoofed_criterion_name] = self.source_data_criteria[criterion].dup
           self.source_data_criteria[spoofed_criterion_name]['negation'] = false
           self.source_data_criteria[spoofed_criterion_name]['description'] = self.source_data_criteria[criterion]['description'].gsub(', Not ', ', ')
-          self.source_data_criteria[spoofed_criterion_name]['source_data_criteria'] = 'Derived from ' 
-            + self.source_data_criteria[criterion]['source_data_criteria']
+          self.source_data_criteria[spoofed_criterion_name]['source_data_criteria'] = 'Derived from ' + self.source_data_criteria[criterion]['source_data_criteria']
           self.data_criteria[spoofed_criterion_name] = self.source_data_criteria[spoofed_criterion_name]
         end
       end
-    
+
     end
   end
 
