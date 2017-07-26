@@ -155,7 +155,6 @@ class CqlMeasure
   # will create an affirmative version of a data criteria when there
   # is only the negative one in the HQMF.
   def make_positive_entry
-    debugger
     negated_criteria = []
     description_hash = {}
     # Find the criteria that are negated
