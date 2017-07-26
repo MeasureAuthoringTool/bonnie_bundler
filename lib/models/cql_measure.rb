@@ -48,8 +48,6 @@ class CqlMeasure
 
   field :complexity, type: Hash
 
-  before_save :set_continuous_variable
-
   belongs_to :user
   belongs_to :bundle, class_name: "HealthDataStandards::CQM::Bundle"
   has_and_belongs_to_many :records, :inverse_of => nil
@@ -97,6 +95,7 @@ class CqlMeasure
   end
 
   # Note whether or not the measure is a continuous variable measure.
+  before_save :set_continuous_variable
   def set_continuous_variable
     # The return value of this function is not related to whether or not this
     # measure is a CV measure. The true return value ensures false is not
@@ -148,12 +147,12 @@ class CqlMeasure
     self.complexity
   end
 
-  before_save :make_positive_entry
   # This method is needed for situations when there is a only
   # a negated version of a data criteria.  Bonnie will only
   # show the affirmative version of data criteria.  This method
   # will create an affirmative version of a data criteria when there
   # is only the negative one in the HQMF.
+  before_save :make_positive_entry
   def make_positive_entry
     negated_criteria = []
     description_hash = {}
@@ -166,6 +165,7 @@ class CqlMeasure
     end
 
     unless negated_criteria.length == 0
+
       negated_criteria.each do |criterion|
         description = self.source_data_criteria[criterion]['description']
 
@@ -175,7 +175,7 @@ class CqlMeasure
         description = description.gsub(', Not Done', '')
         # sometimes just "Not" used: "Encounter, Not Performed"
         # should transform to "Encounter, Performed"
-        description = description.gsub(', Not', ', ')
+        description = description.gsub(', Not', ',')
 
         # Check if there is a criterion has the affirmative description
         unless description_hash.value?(description)
