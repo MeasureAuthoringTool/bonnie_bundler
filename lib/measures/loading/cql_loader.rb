@@ -53,13 +53,88 @@ module Measures
       rescue Exception => e
         raise VSACException.new "Error Loading Value Sets from VSAC: #{e.message}"
       end
-      # Create CQL Measure
-      model.backfill_patient_characteristics_with_codes(HQMF2JS::Generator::CodesToJson.from_value_sets(value_set_models))
+
+      # Get code systems and codes for all value sets in the elm.
+      all_codes_and_code_names = HQMF2JS::Generator::CodesToJson.from_value_sets(value_set_models)
+
+      # Generate single reference code objects and a complete list of code systems and codes for the measure.
+      single_code_references, all_codes_and_code_names = generate_single_code_references(elms, all_codes_and_code_names, user)
+
+      model.backfill_patient_characteristics_with_codes(all_codes_and_code_names)
       json = model.to_json
       json.convert_keys_to_strings
-      measure = Measures::Loader.load_hqmf_cql_model_json(json, user, value_set_models.collect{|vs| vs.oid}, main_cql_library, cql_definition_dependency_structure, elms, elm_annotations, cql_libraries)
+
+      # Loop over data criteria to search for data criteria that is using a single reference code.
+      # Once found set the Data Criteria's 'code_list_id' to our fake oid. Do the same for source data criteria.
+      json['data_criteria'].each do |data_criteria_name, data_criteria|
+        # We do not want to replace an existing code_list_id. Skip.
+        unless data_criteria['code_list_id']
+          if data_criteria['inline_code_list']
+            # Check to see if inline_code_list contains the correct code_system and code for a direct reference code.
+            data_criteria['inline_code_list'].each do |code_system, code_list|
+              # Loop over all single code reference objects.
+              single_code_references.each do |single_code_object|
+                # If Data Criteria contains a matching code system, check if the correct code exists in the data critera values.
+                # If both values match, set the Data Criteria's 'code_list_id' to the single_code_object_guid.
+                if code_system == single_code_object[:code_system_name] && code_list.include?(single_code_object[:code])
+                  data_criteria['code_list_id'] = single_code_object[:guid]
+                  # Modify the matching source data criteria
+                  json['source_data_criteria'][data_criteria_name + "_source"]['code_list_id'] = single_code_object[:guid]
+                end
+              end
+            end
+          end
+        end
+      end
+
+       # Add our new fake oids to measure value sets.
+      all_value_set_oids = value_set_models.collect{|vs| vs.oid}
+      single_code_references.each do |single_code|
+        all_value_set_oids << single_code[:guid]
+      end
+
+      # Create CQL Measure
+      measure = Measures::Loader.load_hqmf_cql_model_json(json, user, all_value_set_oids, main_cql_library, cql_definition_dependency_structure, elms, elm_annotations, cql_libraries)
       measure['episode_of_care'] = measure_details['episode_of_care']
       measure
+    end
+
+    # Add single code references by finding the codes from the elm and creating new ValueSet objects
+    # With a generated GUID as a fake oid.
+    def self.generate_single_code_references(elms, all_codes_and_code_names, user)
+      single_code_references = []
+      # Add all single code references from each elm file
+      elms.each do | elm |
+        # Check if elm has single reference code.
+        if elm['library'] && elm['library']['codes'] && elm['library']['codes']['def']
+          # Loops over all single codes and saves them as fake valuesets.
+          elm['library']['codes']['def'].each do |code_reference|
+            code_sets = {}
+            code_system = code_reference['codeSystem']['name']
+
+            # TODO: Will it always be structured as "LOINC:2.4"?
+            code_system_name = code_system.split(":").first
+            code_system_version = code_system.split(":").last
+
+            code_sets[code_system_name] ||= []
+            code_sets[code_system_name] << code_reference['id']
+            # Generate a unique number as our fake "oid"
+            code_guid = SecureRandom.uuid
+
+            # Keep a list of generated_guids and a hash of guids with code system names and codes.
+            single_code_references << { guid: code_guid, code_system_name: code_system_name, code: code_reference['id'] }
+
+            all_codes_and_code_names[code_guid] = code_sets
+            # Create a new "ValueSet" and "Concept" object and save.
+            valueSet = HealthDataStandards::SVS::ValueSet.new({oid: code_guid, display_name: code_reference['name'], version: '' ,concepts: [], user_id: user.id})
+            concept = HealthDataStandards::SVS::Concept.new({code: code_reference['id'], code_system_name: code_system_name, code_system_version: code_system_version, display_name: code_reference['name']})
+            valueSet.concepts << concept
+            valueSet.save!
+          end
+        end
+      end
+      # Returns a list of single code objects and a complete list of code systems and codes for all valuesets on the measure.
+      return single_code_references, all_codes_and_code_names
     end
 
     # Opens the zip and grabs the cql file contents and hqmf_path. Returns both items.
