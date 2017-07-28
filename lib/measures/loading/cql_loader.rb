@@ -57,6 +57,10 @@ module Measures
       # Get code systems and codes for all value sets in the elm.
       all_codes_and_code_names = HQMF2JS::Generator::CodesToJson.from_value_sets(value_set_models)
 
+      # Replace code system oids with friendly names
+      # NOTE: This is a gross patch and a better solution should be implemented
+      replace_codesystem_oids_with_names(elms)
+
       # Generate single reference code objects and a complete list of code systems and codes for the measure.
       single_code_references, all_codes_and_code_names = generate_single_code_references(elms, all_codes_and_code_names, user)
 
@@ -99,6 +103,18 @@ module Measures
       measure
     end
 
+    # Replace all the code system ids that are oids with the friendly name of the code system
+    # NOTE: This is a gross patch and a better solution should be implemented
+    def self.replace_codesystem_oids_with_names(elms)
+      elms.each do |elm|
+        elm['library']['codeSystems']['def'].each do |code_system|
+          code_name = HealthDataStandards::Util::CodeSystemHelper.code_system_for(code_system['id'])
+          # if the helper returns "Unknown" then keep what was there
+          code_system['id'] = code_name unless code_name == "Unknown"
+        end
+      end
+    end
+
     # Add single code references by finding the codes from the elm and creating new ValueSet objects
     # With a generated GUID as a fake oid.
     def self.generate_single_code_references(elms, all_codes_and_code_names, user)
@@ -110,11 +126,12 @@ module Measures
           # Loops over all single codes and saves them as fake valuesets.
           elm['library']['codes']['def'].each do |code_reference|
             code_sets = {}
-            code_system = code_reference['codeSystem']['name']
 
-            # TODO: Will it always be structured as "LOINC:2.4"?
-            code_system_name = code_system.split(":").first
-            code_system_version = code_system.split(":").last
+            # look up the referenced code system
+            code_system_def = elm['library']['codeSystems']['def'].find { |code_sys| code_sys['name'] == code_reference['codeSystem']['name'] }
+
+            code_system_name = code_system_def['id']
+            code_system_version = code_system_def['version']
 
             code_sets[code_system_name] ||= []
             code_sets[code_system_name] << code_reference['id']
