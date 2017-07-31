@@ -105,7 +105,8 @@ module Measures
     end
 
     # Replace all the code system ids that are oids with the friendly name of the code system
-    # NOTE: This is a gross patch and a better solution should be implemented
+    # TODO: preferred solution would be to continue using OIDs in the ELM and enable Bonnie to supply those OIDs
+    #   to the calculation engine in patient data and value sets.
     def self.replace_codesystem_oids_with_names(elms)
       elms.each do |elm|
         elm['library']['codeSystems']['def'].each do |code_system|
