@@ -58,7 +58,8 @@ module Measures
       all_codes_and_code_names = HQMF2JS::Generator::CodesToJson.from_value_sets(value_set_models)
 
       # Replace code system oids with friendly names
-      # NOTE: This is a gross patch and a better solution should be implemented
+      # TODO: preferred solution would be to continue using OIDs in the ELM and enable Bonnie to supply those OIDs
+      #   to the calculation engine in patient data and value sets.
       replace_codesystem_oids_with_names(elms)
 
       # Generate single reference code objects and a complete list of code systems and codes for the measure.
