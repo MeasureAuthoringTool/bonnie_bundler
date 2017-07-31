@@ -109,10 +109,13 @@ module Measures
     #   to the calculation engine in patient data and value sets.
     def self.replace_codesystem_oids_with_names(elms)
       elms.each do |elm|
-        elm['library']['codeSystems']['def'].each do |code_system|
-          code_name = HealthDataStandards::Util::CodeSystemHelper.code_system_for(code_system['id'])
-          # if the helper returns "Unknown" then keep what was there
-          code_system['id'] = code_name unless code_name == "Unknown"
+        # Only do replacement if there are any code systems in this library.
+        if elm['library'].has_key?('codeSystems')
+          elm['library']['codeSystems']['def'].each do |code_system|
+            code_name = HealthDataStandards::Util::CodeSystemHelper.code_system_for(code_system['id'])
+            # if the helper returns "Unknown" then keep what was there
+            code_system['id'] = code_name unless code_name == "Unknown"
+          end
         end
       end
     end
