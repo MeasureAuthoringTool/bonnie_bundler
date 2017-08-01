@@ -62,6 +62,9 @@ module Measures
       #   to the calculation engine in patient data and value sets.
       replace_codesystem_oids_with_names(elms)
 
+      # Depening on the value of the value set version, change it to null, strip out a substring or leave it alone.
+      modify_value_set_versions(elms)
+
       # Generate single reference code objects and a complete list of code systems and codes for the measure.
       single_code_references, all_codes_and_code_names = generate_single_code_references(elms, all_codes_and_code_names, user)
 
@@ -115,6 +118,23 @@ module Measures
             code_name = HealthDataStandards::Util::CodeSystemHelper.code_system_for(code_system['id'])
             # if the helper returns "Unknown" then keep what was there
             code_system['id'] = code_name unless code_name == "Unknown"
+          end
+        end
+      end
+    end
+
+    # Adjusting value set version data. If version is profile, set the version to nil
+    def self.modify_value_set_versions(elms)
+      elms.each do |elm|
+        if elm['library']['valueSets'] && elm['library']['valueSets']['def']
+          elm['library']['valueSets']['def'].each do |value_set|
+            # If value set has a version and it starts with 'urn:hl7:profile:' then set to nil
+            if value_set['version'] && value_set['version'].include?('urn:hl7:profile:')
+              value_set['version'] = nil
+            # If value has a version and it starts with 'urn:hl7:version:' then strip that and keep the actual version value.
+            elsif value_set['version'] && value_set['version'].include?('urn:hl7:version:')
+              value_set['version'] = value_set['version'].split('urn:hl7:version').last
+            end
           end
         end
       end
