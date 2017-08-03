@@ -133,7 +133,7 @@ module Measures
               value_set['version'] = nil
             # If value has a version and it starts with 'urn:hl7:version:' then strip that and keep the actual version value.
             elsif value_set['version'] && value_set['version'].include?('urn:hl7:version:')
-              value_set['version'] = value_set['version'].split('urn:hl7:version').last
+              value_set['version'] = value_set['version'].split('urn:hl7:version:').last
             end
           end
         end
