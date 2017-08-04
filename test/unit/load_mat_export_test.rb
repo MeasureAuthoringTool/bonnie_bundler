@@ -1,5 +1,6 @@
 require 'test_helper'
 require 'vcr_setup.rb'
+require 'pry'
 
 class LoadMATExportTest < ActiveSupport::TestCase
 
@@ -25,8 +26,12 @@ class LoadMATExportTest < ActiveSupport::TestCase
     # The filter doesn't seem to be working.
     VCR.use_cassette("valid_vsac_response") do
       dump_db
+      u = User.new
+      u.save
+      
       measure_details = { 'episode_of_care'=> false }
-      Measures::MATLoader.load(@cql_mat_export, nil, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD']).save
+#      binding.pry
+      Measures::MATLoader.load(@cql_mat_export, u, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD']).save
       assert_equal 1, CqlMeasure.all.count
       measure = CqlMeasure.all.first
       assert_equal "BCSTest", measure.title
@@ -39,8 +44,12 @@ class LoadMATExportTest < ActiveSupport::TestCase
   test "Loading a CQL Mat export with multiple libraries, with VSAC credentials" do
     VCR.use_cassette("multi_library_webcalls") do
       dump_db
+      u = User.new
+      u.save
+
+      
       measure_details = { 'episode_of_care'=> false }
-      Measures::MATLoader.load(@cql_multilibrary_mat_export, nil, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD']).save
+      Measures::MATLoader.load(@cql_multilibrary_mat_export, u, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD']).save
       assert_equal 1, CqlMeasure.all.count
       measure = CqlMeasure.all.first
       assert_equal (measure.elm.instance_of? Array), true
