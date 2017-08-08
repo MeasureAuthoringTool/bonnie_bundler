@@ -36,13 +36,16 @@ module Measures
       # Go back for the library statements
       cql_definition_dependency_structure = populate_used_library_dependencies(cql_definition_dependency_structure, main_cql_library, elms)
 
+      # Depening on the value of the value set version, change it to null, strip out a substring or leave it alone.
+      modify_value_set_versions(elms)
+
       # Grab the value sets from the elm
       elm_value_sets = []
       elms.each do | elm |
         # Confirm the library has value sets
         if elm['library'] && elm['library']['valueSets'] && elm['library']['valueSets']['def']
           elm['library']['valueSets']['def'].each do |value_set|
-            elm_value_sets << value_set['id']
+            elm_value_sets << {oid: value_set['id'], version: value_set['version']}
           end
         end
       end
@@ -61,9 +64,6 @@ module Measures
       # TODO: preferred solution would be to continue using OIDs in the ELM and enable Bonnie to supply those OIDs
       #   to the calculation engine in patient data and value sets.
       replace_codesystem_oids_with_names(elms)
-
-      # Depening on the value of the value set version, change it to null, strip out a substring or leave it alone.
-      modify_value_set_versions(elms)
 
       # Generate single reference code objects and a complete list of code systems and codes for the measure.
       single_code_references, all_codes_and_code_names = generate_single_code_references(elms, all_codes_and_code_names, user)
@@ -132,8 +132,9 @@ module Measures
             if value_set['version'] && value_set['version'].include?('urn:hl7:profile:')
               value_set['version'] = nil
             # If value has a version and it starts with 'urn:hl7:version:' then strip that and keep the actual version value.
+            # Remove '%20' and replace with a 'space'
             elsif value_set['version'] && value_set['version'].include?('urn:hl7:version:')
-              value_set['version'] = value_set['version'].split('urn:hl7:version:').last
+              value_set['version'] = value_set['version'].split('urn:hl7:version:').last.gsub('%20', ' ')
             end
           end
         end

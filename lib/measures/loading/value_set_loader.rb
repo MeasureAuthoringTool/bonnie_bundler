@@ -115,7 +115,10 @@ module Measures
 
     end
 
-    def self.load_value_sets_from_vsac(value_set_oids, username, password, user=nil, overwrite=false, effectiveDate=nil, includeDraft=false, ticket_granting_ticket=nil)
+    def self.load_value_sets_from_vsac(value_sets, username, password, user=nil, overwrite=false, effectiveDate=nil, includeDraft=false, ticket_granting_ticket=nil)
+      # Get a list of just the oids
+      value_set_oids = value_sets.map {|value_set| value_set[:oid]}
+
       value_set_models = []
       from_vsac = 0
       
@@ -141,19 +144,26 @@ module Measures
         FileUtils.mkdir_p(codeset_base_dir) unless overwrite
 
         RestClient.proxy = ENV["http_proxy"]
-        value_set_oids.each_with_index do |oid,index| 
+        value_sets.each_with_index do |value_set,index|
 
-          set = existing_value_set_map[oid]
+          set = existing_value_set_map[value_set[:oid]]
           
           if (set.nil?)
             
             vs_data = nil
             
-            cached_service_result = File.join(codeset_base_dir,"#{oid}.xml") unless overwrite
+            cached_service_result = File.join(codeset_base_dir,"#{value_set[:oid]}.xml") unless overwrite
             if (cached_service_result && File.exists?(cached_service_result))
               vs_data = File.read cached_service_result
             else
-              vs_data = api.get_valueset(oid, effective_date: effectiveDate, include_draft: includeDraft, profile: nlm_config["profile"])
+              # If value set has a specified version, pass it in to the API call.
+              # Cannot include draft when looking for a specific version
+              if value_set[:version]
+                vs_data = api.get_valueset(value_set[:oid], version: value_set[:version], effective_date: effectiveDate, include_draft: false, profile: nlm_config["profile"])
+              # If no value set version exists, just pass in the oid.
+              else
+                vs_data = api.get_valueset(value_set[:oid], effective_date: effectiveDate, include_draft: includeDraft, profile: nlm_config["profile"])
+              end
               vs_data.force_encoding("utf-8") # there are some funky unicodes coming out of the vs response that are not in ASCII as the string reports to be
               from_vsac += 1
               File.open(cached_service_result, 'w') {|f| f.write(vs_data) } unless overwrite
@@ -165,8 +175,8 @@ module Measures
             
             vs_element = doc.at_xpath("/vs:RetrieveValueSetResponse/vs:ValueSet|/vs:RetrieveMultipleValueSetsResponse/vs:DescribedValueSet")
 
-            if vs_element && vs_element["ID"] == oid
-              vs_element["id"] = oid
+            if vs_element && vs_element["ID"] == value_set[:oid]
+              vs_element["id"] = value_set[:oid]
               set = HealthDataStandards::SVS::ValueSet.load_from_xml(doc)
               set.user = user
               #bundle id for user should always be the same 1 user to 1 bundle
