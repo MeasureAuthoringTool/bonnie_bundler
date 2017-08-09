@@ -1,6 +1,5 @@
 require 'test_helper'
 require 'vcr_setup.rb'
-require 'pry'
 
 class LoadMATExportTest < ActiveSupport::TestCase
 
