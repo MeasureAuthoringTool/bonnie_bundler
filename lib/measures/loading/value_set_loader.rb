@@ -144,7 +144,7 @@ module Measures
         FileUtils.mkdir_p(codeset_base_dir) unless overwrite
 
         RestClient.proxy = ENV["http_proxy"]
-        value_sets.each_with_index do |value_set,index|
+        value_sets.each do |value_set|
 
           set = existing_value_set_map[value_set[:oid]]
           
@@ -160,8 +160,8 @@ module Measures
               # Cannot include draft when looking for a specific version
               if value_set[:version]
                 vs_data = api.get_valueset(value_set[:oid], version: value_set[:version], effective_date: effectiveDate, include_draft: false, profile: nlm_config["profile"])
-              # If no value set version exists, just pass in the oid.
               else
+                # If no value set version exists, just pass in the oid.
                 vs_data = api.get_valueset(value_set[:oid], effective_date: effectiveDate, include_draft: includeDraft, profile: nlm_config["profile"])
               end
               vs_data.force_encoding("utf-8") # there are some funky unicodes coming out of the vs response that are not in ASCII as the string reports to be
@@ -175,8 +175,8 @@ module Measures
             
             vs_element = doc.at_xpath("/vs:RetrieveValueSetResponse/vs:ValueSet|/vs:RetrieveMultipleValueSetsResponse/vs:DescribedValueSet")
 
-            if vs_element && vs_element["ID"] == value_set[:oid]
-              vs_element["id"] = value_set[:oid]
+            if vs_element && vs_element['ID'] == value_set[:oid]
+              vs_element['id'] = value_set[:oid]
               set = HealthDataStandards::SVS::ValueSet.load_from_xml(doc)
               set.user = user
               #bundle id for user should always be the same 1 user to 1 bundle

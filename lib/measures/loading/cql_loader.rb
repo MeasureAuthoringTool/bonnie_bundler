@@ -132,9 +132,8 @@ module Measures
             if value_set['version'] && value_set['version'].include?('urn:hl7:profile:')
               value_set['version'] = nil
             # If value has a version and it starts with 'urn:hl7:version:' then strip that and keep the actual version value.
-            # Remove '%20' and replace with a 'space'
             elsif value_set['version'] && value_set['version'].include?('urn:hl7:version:')
-              value_set['version'] = value_set['version'].split('urn:hl7:version:').last.gsub('%20', ' ')
+              value_set['version'] = URI.decode(value_set['version'].split('urn:hl7:version:').last)
             end
           end
         end
