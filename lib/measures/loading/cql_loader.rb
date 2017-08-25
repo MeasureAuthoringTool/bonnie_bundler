@@ -104,6 +104,7 @@ module Measures
       # Create CQL Measure
       measure = Measures::Loader.load_hqmf_cql_model_json(json, user, all_value_set_oids, main_cql_library, cql_definition_dependency_structure, elms, elm_annotations, cql_libraries)
       measure['episode_of_care'] = measure_details['episode_of_care']
+      measure['type'] = measure_details['type']
       measure
     end
 
