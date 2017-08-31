@@ -1,6 +1,6 @@
 module Measures
   # Utility class for loading CQL measure definitions into the database from the MAT export zip
-  class CQLLoader < BaseLoaderDefinition
+  class CqlLoader < BaseLoaderDefinition
 
     def self.mat_cql_export?(zip_file)
       # Open the zip file and iterate over each of the files.
@@ -27,16 +27,16 @@ module Measures
       hqmf_path = nil
 
       # Grabs the cql file contents and the hqmf file path
-      cql_libraries, hqmf_path = get_files_from_zip(file, out_dir)
+      cql_libraries, hqmf_path = get_files_from_zip(zip_file, out_dir)
 
       # Load hqmf into HQMF Parser
       hqmf_model = Measures::Loader.parse_hqmf_model(hqmf_path)
 
       # Get main measure from hqmf parser
-      main_cql_library = model.cql_measure_library
+      main_cql_library = hqmf_model.cql_measure_library
 
       # Remove spaces in functions in all libraries, including observations.
-      cql_libraries, model = remove_spaces_in_functions(cql_libraries, model)
+      cql_libraries, hqmf_model = remove_spaces_in_functions(cql_libraries, hqmf_model)
 
       # Translate the cql to elm
       elms, elm_annotations = translate_cql_to_elm(cql_libraries)
