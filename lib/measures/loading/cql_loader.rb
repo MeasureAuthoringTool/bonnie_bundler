@@ -79,7 +79,7 @@ module Measures
       single_code_references, all_codes_and_code_names = generate_single_code_references(elms, all_codes_and_code_names, user)
 
       # Create CQL Measure
-      hqmf_model.backfill_patient_characteristics_with_codes(HQMF2JS::Generator::CodesToJson.from_value_sets(value_set_models))
+      hqmf_model.backfill_patient_characteristics_with_codes(all_codes_and_code_names)
       json = hqmf_model.to_json
       json.convert_keys_to_strings
 
@@ -196,8 +196,6 @@ module Measures
         cql_entries = file.glob(File.join('**','**.cql')).select {|x| !x.name.starts_with?('__MACOSX') }
         zip_xml_files = file.glob(File.join('**','**.xml')).select {|x| !x.name.starts_with?('__MACOSX') }
         
-        #hqmf_entry = file.glob(File.join('**','**.xml')).select {|x| x.name.match(/.*eMeasure.xml/) && !x.name.starts_with?('__MACOSX') }.first
-
         begin
           cql_paths = []
           cql_entries.each do |cql_file|
