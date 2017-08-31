@@ -11,8 +11,8 @@ GIT
 
 GIT
   remote: https://github.com/projectcypress/health-data-standards.git
-  revision: a7e4bbbe486defa4ce87413ad57c2bb72af6969b
-  branch: cql4bonnie-QDM5_3
+  revision: e26c436e6e46bad7a2a71f6ceec9a4871f1780ac
+  branch: cql4bonnie
   specs:
     health-data-standards (3.6.1)
       activesupport (~> 4.1.1)
@@ -229,7 +229,6 @@ DEPENDENCIES
   hquery-patient-api!
   minitest (~> 5.0)
   mongoid
-  nokogiri (~> 1.6.8)
   pry
   pry-nav
   quality-measure-engine!
