@@ -37,7 +37,7 @@ module Measures
       measure
     end
 
-    def self.load_measure_xml(xml_path, user, vsac_user, vsac_password, measure_details, overwrite_valuesets=true, cache=false, effectiveDate=nil, includeDraft=false, ticket_granting_ticket=nil)
+    def self.load_measure_xml(xml_path, user, vsac_user, vsac_password, measure_details, overwrite_valuesets=true, cache=false, includeDraft=false, ticket_granting_ticket=nil)
       # Load the model from the document
       begin
         model = Measures::Loader.parse_hqmf_model(xml_path)
@@ -52,7 +52,7 @@ module Measures
           value_sets << {oid: oid, version: nil}
         end
 
-        value_set_models =  Measures::ValueSetLoader.load_value_sets_from_vsac(value_sets, vsac_user, vsac_password, user, overwrite_valuesets, effectiveDate, includeDraft, ticket_granting_ticket)
+        value_set_models =  Measures::ValueSetLoader.load_value_sets_from_vsac(value_sets, vsac_user, vsac_password, user, overwrite_valuesets, includeDraft, ticket_granting_ticket)
       rescue Exception => e
         raise VSACException.new "Error Loading Value Sets from VSAC: #{e.message}" 
       end
