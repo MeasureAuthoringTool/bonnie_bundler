@@ -11,11 +11,7 @@ GIT
 
 GIT
   remote: https://github.com/projectcypress/health-data-standards.git
-<<<<<<< HEAD
   revision: e26c436e6e46bad7a2a71f6ceec9a4871f1780ac
-=======
-  revision: bd878ef302cf6046064950646aad54ad0ae84021
->>>>>>> Updated Gemfile.lock
   branch: cql4bonnie
   specs:
     health-data-standards (3.6.1)
@@ -233,7 +229,6 @@ DEPENDENCIES
   hquery-patient-api!
   minitest (~> 5.0)
   mongoid
-  nokogiri (~> 1.6.8)
   pry
   pry-nav
   quality-measure-engine!
@@ -250,8 +245,4 @@ DEPENDENCIES
   webmock
 
 BUNDLED WITH
-<<<<<<< HEAD
    1.13.1
-=======
-   1.13.6
->>>>>>> Updated Gemfile.lock
