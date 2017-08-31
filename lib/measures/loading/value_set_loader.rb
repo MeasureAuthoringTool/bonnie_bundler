@@ -115,7 +115,7 @@ module Measures
 
     end
 
-    def self.load_value_sets_from_vsac(value_sets, username, password, user=nil, overwrite=false, effectiveDate=nil, includeDraft=false, ticket_granting_ticket=nil)
+    def self.load_value_sets_from_vsac(value_sets, username, password, user=nil, overwrite=false, includeDraft=false, ticket_granting_ticket=nil)
       # Get a list of just the oids
       value_set_oids = value_sets.map {|value_set| value_set[:oid]}
 
@@ -158,11 +158,13 @@ module Measures
             else
               # If value set has a specified version, pass it in to the API call.
               # Cannot include draft when looking for a specific version
-              if value_set[:version]
-                vs_data = api.get_valueset(value_set[:oid], version: value_set[:version], effective_date: effectiveDate, include_draft: false, profile: nlm_config["profile"])
+              if value_set[:version] && !includeDraft
+                vs_data = api.get_valueset(value_set[:oid], version: value_set[:version], include_draft: false, profile: nlm_config["profile"])
+              elsif value_set[:profile] && !includeDraft
+                vs_data = api.get_valueset(value_set[:oid], include_draft: false, profile: value_set[:profile])
               else
                 # If no value set version exists, just pass in the oid.
-                vs_data = api.get_valueset(value_set[:oid], effective_date: effectiveDate, include_draft: includeDraft, profile: nlm_config["profile"])
+                vs_data = api.get_valueset(value_set[:oid], include_draft: includeDraft, profile: nlm_config["profile"])
               end
               vs_data.force_encoding("utf-8") # there are some funky unicodes coming out of the vs response that are not in ASCII as the string reports to be
               from_vsac += 1
@@ -182,7 +184,11 @@ module Measures
               #bundle id for user should always be the same 1 user to 1 bundle
               #using this to allow cat I generation without extensive modification to HDS
               set.bundle = user.bundle if (user && user.respond_to?(:bundle))
-
+              if value_set[:profile]
+                set.profile = value_set[:profile]
+              else
+                set.profile = nlm_config["profile"]
+              end
               set.save!
               existing_value_set_map[set.oid] = set
             else

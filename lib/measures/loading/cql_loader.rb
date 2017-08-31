@@ -11,7 +11,7 @@ module Measures
       end
     end
 
-    def self.load_mat_cql_exports(user, file, out_dir, measure_details, vsac_user, vsac_password, overwrite_valuesets=true, cache=false, effectiveDate=nil, includeDraft=false, ticket_granting_ticket=nil)
+    def self.load_mat_cql_exports(user, file, out_dir, measure_details, vsac_user, vsac_password, overwrite_valuesets=true, cache=false, includeDraft=false, ticket_granting_ticket=nil)
       measure = nil
       cql = nil
       hqmf_path = nil
@@ -45,14 +45,14 @@ module Measures
         # Confirm the library has value sets
         if elm['library'] && elm['library']['valueSets'] && elm['library']['valueSets']['def']
           elm['library']['valueSets']['def'].each do |value_set|
-            elm_value_sets << {oid: value_set['id'], version: value_set['version']}
+            elm_value_sets << {oid: value_set['id'], version: value_set['version'], profile: value_set['profile']}
           end
         end
       end
 
       # Get Value Sets
       begin
-        value_set_models =  Measures::ValueSetLoader.load_value_sets_from_vsac(elm_value_sets, vsac_user, vsac_password, user, overwrite_valuesets, effectiveDate, includeDraft, ticket_granting_ticket)
+        value_set_models =  Measures::ValueSetLoader.load_value_sets_from_vsac(elm_value_sets, vsac_user, vsac_password, user, overwrite_valuesets, includeDraft, ticket_granting_ticket)
       rescue Exception => e
         raise VSACException.new "Error Loading Value Sets from VSAC: #{e.message}"
       end
@@ -130,6 +130,7 @@ module Measures
           elm['library']['valueSets']['def'].each do |value_set|
             # If value set has a version and it starts with 'urn:hl7:profile:' then set to nil
             if value_set['version'] && value_set['version'].include?('urn:hl7:profile:')
+              value_set['profile'] = URI.decode(value_set['version'].split('urn:hl7:profile:').last)
               value_set['version'] = nil
             # If value has a version and it starts with 'urn:hl7:version:' then strip that and keep the actual version value.
             elsif value_set['version'] && value_set['version'].include?('urn:hl7:version:')
