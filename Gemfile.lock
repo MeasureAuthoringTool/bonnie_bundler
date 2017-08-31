@@ -229,6 +229,7 @@ DEPENDENCIES
   hquery-patient-api!
   minitest (~> 5.0)
   mongoid
+  nokogiri (~> 1.6.8)
   pry
   pry-nav
   quality-measure-engine!
