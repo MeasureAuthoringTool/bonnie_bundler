@@ -6,6 +6,7 @@ class LoadMATExportTest < ActiveSupport::TestCase
   setup do
     @mat_export = File.new File.join('test','fixtures','07_ExclusiveBreastMilkFeeding_Artifacts.zip')
     @cql_mat_export = File.new File.join('test', 'fixtures', 'BCS_v5_0_Artifacts.zip')
+    @cql_mat_5_4_export = File.new File.join('test', 'fixtures', 'Test134_v5_4_Artifacts.zip')
     @cql_multi_library_mat_export = File.new File.join('test', 'fixtures', 'bonnienesting01_fixed.zip')
   end
 
@@ -36,6 +37,25 @@ class LoadMATExportTest < ActiveSupport::TestCase
       assert_equal "40280582-57B5-1CC0-0157-B53816CC0046", measure.hqmf_id
       assert_equal 1, measure.populations.size
       assert_equal 4, measure.population_criteria.keys.count
+    end
+  end
+  
+  test "Loading a MAT 5.4 CQL export zip file with VSAC credentials" do
+    VCR.use_cassette("mat_5-4_cql_export_vsac_response") do
+      dump_db
+      user = User.new
+      user.save
+      
+      measure_details = { 'episode_of_care'=> false }
+      Measures::MATLoader.load(@cql_mat_5_4_export, user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD']).save
+      assert_equal 1, CqlMeasure.all.count
+      measure = CqlMeasure.all.first
+      assert_equal "Test CMS 134", measure.title
+      assert_equal "40280582-5C27-8179-015C-308B1F99003B", measure.hqmf_id
+      assert_equal "7B2A9277-43DA-4D99-9BEE-6AC271A07747", measure.hqmf_set_id
+      assert_equal 1, measure.populations.size
+      assert_equal 4, measure.population_criteria.keys.count
+      assert_equal 1, measure.elm.size
     end
   end
   

@@ -3,30 +3,40 @@ module Measures
   class CqlLoader < BaseLoaderDefinition
 
     def self.mat_cql_export?(zip_file)
+      # Open the zip file and iterate over each of the files.
       Zip::ZipFile.open(zip_file.path) do |zip_file|
-        # Check for CQL and ELM
+        # Check for CQL, HQMF, ELM and Human Readable
         cql_entry = zip_file.glob(File.join('**','**.cql')).select {|x| !x.name.starts_with?('__MACOSX') }.first
-        hqmf_entry = zip_file.glob(File.join('**','**.xml')).select {|x| x.name.match(/.*eMeasure.xml/) && !x.name.starts_with?('__MACOSX') }.first
-        !cql_entry.nil? && !hqmf_entry.nil?
+        human_readable_entry = zip_file.glob(File.join('**','**.html')).select { |x| !x.name.starts_with?('__MACOSX') }.first
+        
+        # Grab all xml files in the zip.
+        zip_xml_files = zip_file.glob(File.join('**','**.xml')).select {|x| !x.name.starts_with?('__MACOSX') }
+        
+        if zip_xml_files.count > 0 
+          xml_files_hash = extract_xml_files(zip_file, zip_xml_files)
+          !cql_entry.nil? && !human_readable_entry.nil? && !xml_files_hash[:HQMF_XML].nil? && !xml_files_hash[:ELM_XML].nil?
+        else
+          false
+        end
       end
     end
-
-    def self.load_mat_cql_exports(user, file, out_dir, measure_details, vsac_user, vsac_password, overwrite_valuesets=true, cache=false, effectiveDate=nil, includeDraft=false, ticket_granting_ticket=nil)
+     
+    def self.load_mat_cql_exports(user, zip_file, out_dir, measure_details, vsac_user, vsac_password, overwrite_valuesets=true, cache=false, effectiveDate=nil, includeDraft=false, ticket_granting_ticket=nil)
       measure = nil
       cql = nil
       hqmf_path = nil
 
       # Grabs the cql file contents and the hqmf file path
-      cql_libraries, hqmf_path = get_files_from_zip(file, out_dir)
+      cql_libraries, hqmf_path = get_files_from_zip(zip_file, out_dir)
 
       # Load hqmf into HQMF Parser
-      model = Measures::Loader.parse_hqmf_model(hqmf_path)
+      hqmf_model = Measures::Loader.parse_hqmf_model(hqmf_path)
 
       # Get main measure from hqmf parser
-      main_cql_library = model.cql_measure_library
+      main_cql_library = hqmf_model.cql_measure_library
 
       # Remove spaces in functions in all libraries, including observations.
-      cql_libraries, model = remove_spaces_in_functions(cql_libraries, model)
+      cql_libraries, hqmf_model = remove_spaces_in_functions(cql_libraries, hqmf_model)
 
       # Translate the cql to elm
       elms, elm_annotations = translate_cql_to_elm(cql_libraries)
@@ -68,8 +78,9 @@ module Measures
       # Generate single reference code objects and a complete list of code systems and codes for the measure.
       single_code_references, all_codes_and_code_names = generate_single_code_references(elms, all_codes_and_code_names, user)
 
-      model.backfill_patient_characteristics_with_codes(all_codes_and_code_names)
-      json = model.to_json
+      # Create CQL Measure
+      hqmf_model.backfill_patient_characteristics_with_codes(all_codes_and_code_names)
+      json = hqmf_model.to_json
       json.convert_keys_to_strings
 
       # Loop over data criteria to search for data criteria that is using a single reference code.
@@ -181,23 +192,25 @@ module Measures
     end
 
     # Opens the zip and grabs the cql file contents and hqmf_path. Returns both items.
-    def self.get_files_from_zip(file, out_dir)
-      Zip::ZipFile.open(file.path) do |zip_file|
-        cql_entries = zip_file.glob(File.join('**','**.cql')).select {|x| !x.name.starts_with?('__MACOSX') }
-        hqmf_entry = zip_file.glob(File.join('**','**.xml')).select {|x| x.name.match(/.*eMeasure.xml/) && !x.name.starts_with?('__MACOSX') }.first
-
+    def self.get_files_from_zip(zip_file, out_dir)
+      Zip::ZipFile.open(zip_file.path) do |file|
+        cql_entries = file.glob(File.join('**','**.cql')).select {|x| !x.name.starts_with?('__MACOSX') }
+        zip_xml_files = file.glob(File.join('**','**.xml')).select {|x| !x.name.starts_with?('__MACOSX') }
+        
         begin
           cql_paths = []
           cql_entries.each do |cql_file|
-            cql_paths << extract(zip_file, cql_file, out_dir) if cql_file.size > 0
+            cql_paths << extract(file, cql_file, out_dir) if cql_file.size > 0
           end
-          hqmf_path = extract(zip_file, hqmf_entry, out_dir) if hqmf_entry && hqmf_entry.size > 0
 
           cql_contents = []
           cql_paths.each do |cql_path|
             cql_contents << open(cql_path).read
           end
-          return cql_contents, hqmf_path
+          
+          xml_file_paths = extract_xml_files(file, zip_xml_files, out_dir)
+
+          return cql_contents, xml_file_paths[:HQMF_XML]
         rescue Exception => e
           raise MeasureLoadingException.new "Error Parsing Measure Logic: #{e.message}"
         end
