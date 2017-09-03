@@ -106,14 +106,25 @@ module Measures
         end
       end
 
-       # Add our new fake oids to measure value sets.
+      # Add our new fake oids to measure value sets.
+      # LDY: HERE!!!
+      debugger
       all_value_set_oids = value_set_models.collect{|vs| vs.oid}
       single_code_references.each do |single_code|
         all_value_set_oids << single_code[:guid]
       end
+      
+      # Add a mapping to value set versions
+      value_set_oid_version_map = {}
+      value_set_models.each do |vs|
+        value_set_oid_version_map[vs.oid] = vs.version
+      end
+      single_code_references.each do |single_code|
+        value_set_oid_version_map[single_code[:guid]] = ""
+      end
 
       # Create CQL Measure
-      measure = Measures::Loader.load_hqmf_cql_model_json(json, user, all_value_set_oids, main_cql_library, cql_definition_dependency_structure, elms, elm_annotations, cql_libraries)
+      measure = Measures::Loader.load_hqmf_cql_model_json(json, user, all_value_set_oids, main_cql_library, cql_definition_dependency_structure, elms, elm_annotations, cql_libraries, nil, value_set_oid_version_map)
       measure['episode_of_care'] = measure_details['episode_of_care']
       measure['type'] = measure_details['type']
       measure

@@ -116,6 +116,11 @@ module Measures
     end
 
     def self.load_value_sets_from_vsac(value_sets, username, password, user=nil, overwrite=false, effectiveDate=nil, includeDraft=false, ticket_granting_ticket=nil)
+      debugger
+      
+      # TODO UNDO THIS BEFORE COMMITTING!!! 9/2/2017
+      overwrite = false
+      
       # Get a list of just the oids
       value_set_oids = value_sets.map {|value_set| value_set[:oid]}
 
@@ -128,11 +133,7 @@ module Measures
         backup_vs = []
         if overwrite
           backup_vs = get_existing_vs(user, value_set_oids).to_a
-          delete_existing_vs(user, value_set_oids) 
-        else
-          HealthDataStandards::SVS::ValueSet.by_user(user).each do |set|
-            existing_value_set_map[set.oid] = set
-          end
+          delete_existing_vs(user, value_set_oids)
         end
         
         nlm_config = APP_CONFIG["nlm"]
@@ -146,10 +147,12 @@ module Measures
         RestClient.proxy = ENV["http_proxy"]
         value_sets.each do |value_set|
 
-          set = existing_value_set_map[value_set[:oid]]
+          value_set_version = value_set[:version] ? value_set[:version] : "N/A"
+          set = HealthDataStandards::SVS::ValueSet.where({user_id: user.id, oid: value_set[:oid], version: value_set_version}).first()
           
-          if (set.nil?)
-            
+          if (set)
+            existing_value_set_map[set.oid] = set
+          else
             vs_data = nil
             
             cached_service_result = File.join(codeset_base_dir,"#{value_set[:oid]}.xml") unless overwrite
