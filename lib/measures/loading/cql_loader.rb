@@ -102,7 +102,7 @@ module Measures
 
       # Get Value Sets
       value_set_models = []
-      if vsac_user && vsac_password
+      if (vsac_user && vsac_password) || ticket_granting_ticket
         begin
           value_set_models =  Measures::ValueSetLoader.load_value_sets_from_vsac(elm_value_sets, vsac_user, vsac_password, user, overwrite_valuesets, effectiveDate, includeDraft, ticket_granting_ticket)
         rescue Exception => e
