@@ -99,7 +99,6 @@ module Measures
           end
         end
       end
-      elm_value_sets
 
       # Get Value Sets
       value_set_models = []

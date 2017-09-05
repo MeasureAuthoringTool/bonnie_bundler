@@ -144,29 +144,24 @@ module Measures
 
           value_set_version = value_set[:version] ? value_set[:version] : "N/A"
           set = HealthDataStandards::SVS::ValueSet.where({user_id: user.id, oid: value_set[:oid], version: value_set_version}).first()
-          
+
           if (set)
             existing_value_set_map[set.oid] = set
           else
             vs_data = nil
             
-            cached_service_result = File.join(codeset_base_dir,"#{value_set[:oid]}.xml") unless overwrite
-            if (cached_service_result && File.exists?(cached_service_result))
-              vs_data = File.read cached_service_result
+            # If value set has a specified version, pass it in to the API call.
+            # Cannot include draft when looking for a specific version
+            if value_set[:version]
+              vs_data = api.get_valueset(value_set[:oid], version: value_set[:version], effective_date: effectiveDate, include_draft: false, profile: nlm_config["profile"])
             else
-              # If value set has a specified version, pass it in to the API call.
-              # Cannot include draft when looking for a specific version
-              if value_set[:version]
-                vs_data = api.get_valueset(value_set[:oid], version: value_set[:version], effective_date: effectiveDate, include_draft: false, profile: nlm_config["profile"])
-              else
-                # If no value set version exists, just pass in the oid.
-                vs_data = api.get_valueset(value_set[:oid], effective_date: effectiveDate, include_draft: includeDraft, profile: nlm_config["profile"])
-              end
-              vs_data.force_encoding("utf-8") # there are some funky unicodes coming out of the vs response that are not in ASCII as the string reports to be
-              from_vsac += 1
-              File.open(cached_service_result, 'w') {|f| f.write(vs_data) } unless overwrite
+              # If no value set version exists, just pass in the oid.
+              vs_data = api.get_valueset(value_set[:oid], effective_date: effectiveDate, include_draft: includeDraft, profile: nlm_config["profile"])
             end
-            
+            vs_data.force_encoding("utf-8") # there are some funky unicodes coming out of the vs response that are not in ASCII as the string reports to be
+            from_vsac += 1
+            File.open(cached_service_result, 'w') {|f| f.write(vs_data) } unless overwrite
+          
             doc = Nokogiri::XML(vs_data)
 
             doc.root.add_namespace_definition("vs","urn:ihe:iti:svs:2008")
