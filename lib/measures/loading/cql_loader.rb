@@ -21,7 +21,7 @@ module Measures
       end
     end
      
-    def self.load_mat_cql_exports(user, zip_file, out_dir, measure_details, vsac_user, vsac_password, overwrite_valuesets=true, cache=false, effectiveDate=nil, includeDraft=false, ticket_granting_ticket=nil)
+    def self.load_mat_cql_exports(user, zip_file, out_dir, measure_details, vsac_user, vsac_password, overwrite_valuesets=false, cache=false, effectiveDate=nil, includeDraft=false, ticket_granting_ticket=nil)
       measure = nil
       cql = nil
       hqmf_path = nil
@@ -76,6 +76,7 @@ module Measures
       measure
     end
 
+    # Manages all of the CQL processing that is not related to the HQMF.
     def self.process_cql(cql_libraries, main_cql_library, user, vsac_user=nil, vsac_password=nil, overwrite_valuesets=nil, cache=nil, effectiveDate=nil, includeDraft=nil, ticket_granting_ticket=nil)
       # Translate the cql to elm
       elms, elm_annotations = translate_cql_to_elm(cql_libraries)
@@ -141,10 +142,10 @@ module Measures
       single_code_references.each do |single_code|
         all_value_set_oids << single_code[:guid]
       end
-      
-      # Add a mapping to value set versions
+
+      # Add a list of value set oids and their versions
       value_set_oid_version_objects = get_value_set_oid_version_objects(value_set_models, single_code_references)
-      
+
       cql_artifacts = {:elms => elms,
                        :elm_annotations => elm_annotations,
                        :cql_definition_dependency_structure => cql_definition_dependency_structure,
@@ -153,7 +154,8 @@ module Measures
                        :single_code_references => single_code_references,
                        :all_codes_and_code_names => all_codes_and_code_names}
     end
-    
+
+    # returns a list of objects that include the valueset oids and their versions
     def self.get_value_set_oid_version_objects(value_sets, single_code_references)
       # [LDC] need to make this an array of objects instead of a hash because Mongo is
       # dumb and *let's you* have dots in keys on object creation but *doesn't let you*
