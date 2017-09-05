@@ -116,7 +116,6 @@ module Measures
     end
 
     def self.load_value_sets_from_vsac(value_sets, username, password, user=nil, overwrite=false, effectiveDate=nil, includeDraft=false, ticket_granting_ticket=nil)
-      debugger
       
       # TODO UNDO THIS BEFORE COMMITTING!!! 9/2/2017
       overwrite = false

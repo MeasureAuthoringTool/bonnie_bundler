@@ -65,7 +65,7 @@ module Measures
       measure
     end
 
-    def self.load_hqmf_cql_model_json(json, user, measure_oids, main_cql_library, cql_definition_dependency_structure, elm, elm_annotations, cql, measure_details=nil, value_set_oid_version_map)
+    def self.load_hqmf_cql_model_json(json, user, measure_oids, main_cql_library, cql_definition_dependency_structure, elm, elm_annotations, cql, measure_details=nil, value_set_oid_version_objects)
       measure = CqlMeasure.new
       measure.user = user if user
       measure.bundle = user.bundle if (user && user.respond_to?(:bundle))
@@ -83,7 +83,7 @@ module Measures
       measure.measure_attributes = json["attributes"]
       measure.populations = json['populations']
       measure.value_set_oids = measure_oids
-      measure.value_set_oid_version_map = value_set_oid_version_map
+      measure.value_set_oid_version_objects = value_set_oid_version_objects
 
       # Set CQL specific information
       measure.cql = cql

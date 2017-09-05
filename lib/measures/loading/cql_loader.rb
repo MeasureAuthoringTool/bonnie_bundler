@@ -38,6 +38,45 @@ module Measures
       # Remove spaces in functions in all libraries, including observations.
       cql_libraries, hqmf_model = remove_spaces_in_functions(cql_libraries, hqmf_model)
 
+      cql_artifacts = process_cql(cql_libraries, main_cql_library, user, vsac_user, vsac_password, overwrite_valuesets, cache, effectiveDate, includeDraft, ticket_granting_ticket)
+
+      # Create CQL Measure
+      hqmf_model.backfill_patient_characteristics_with_codes(cql_artifacts[:all_codes_and_code_names])
+      json = hqmf_model.to_json
+      json.convert_keys_to_strings
+
+      # Loop over data criteria to search for data criteria that is using a single reference code.
+      # Once found set the Data Criteria's 'code_list_id' to our fake oid. Do the same for source data criteria.
+      json['data_criteria'].each do |data_criteria_name, data_criteria|
+        # We do not want to replace an existing code_list_id. Skip.
+        unless data_criteria['code_list_id']
+          if data_criteria['inline_code_list']
+            # Check to see if inline_code_list contains the correct code_system and code for a direct reference code.
+            data_criteria['inline_code_list'].each do |code_system, code_list|
+              # Loop over all single code reference objects.
+              cql_artifacts[:single_code_references].each do |single_code_object|
+                # If Data Criteria contains a matching code system, check if the correct code exists in the data critera values.
+                # If both values match, set the Data Criteria's 'code_list_id' to the single_code_object_guid.
+                if code_system == single_code_object[:code_system_name] && code_list.include?(single_code_object[:code])
+                  data_criteria['code_list_id'] = single_code_object[:guid]
+                  # Modify the matching source data criteria
+                  json['source_data_criteria'][data_criteria_name + "_source"]['code_list_id'] = single_code_object[:guid]
+                end
+              end
+            end
+          end
+        end
+      end
+
+      # Create CQL Measure
+      measure = Measures::Loader.load_hqmf_cql_model_json(json, user, cql_artifacts[:all_value_set_oids], main_cql_library, cql_artifacts[:cql_definition_dependency_structure], 
+                                                          cql_artifacts[:elms], cql_artifacts[:elm_annotations], cql_libraries, nil, cql_artifacts[:value_set_oid_version_objects])
+      measure['episode_of_care'] = measure_details['episode_of_care']
+      measure['type'] = measure_details['type']
+      measure
+    end
+
+    def self.process_cql(cql_libraries, main_cql_library, user, vsac_user=nil, vsac_password=nil, overwrite_valuesets=nil, cache=nil, effectiveDate=nil, includeDraft=nil, ticket_granting_ticket=nil)
       # Translate the cql to elm
       elms, elm_annotations = translate_cql_to_elm(cql_libraries)
 
@@ -59,12 +98,31 @@ module Measures
           end
         end
       end
+      elm_value_sets
 
       # Get Value Sets
-      begin
-        value_set_models =  Measures::ValueSetLoader.load_value_sets_from_vsac(elm_value_sets, vsac_user, vsac_password, user, overwrite_valuesets, effectiveDate, includeDraft, ticket_granting_ticket)
-      rescue Exception => e
-        raise VSACException.new "Error Loading Value Sets from VSAC: #{e.message}"
+      value_set_models = []
+      if vsac_user && vsac_password
+        begin
+          value_set_models =  Measures::ValueSetLoader.load_value_sets_from_vsac(elm_value_sets, vsac_user, vsac_password, user, overwrite_valuesets, effectiveDate, includeDraft, ticket_granting_ticket)
+        rescue Exception => e
+          raise VSACException.new "Error Loading Value Sets from VSAC: #{e.message}"
+        end
+      else
+        # if VSAC credentials aren't provided, find the value sets in the database
+        elm_value_sets.each do |elm_value_set|
+          version = elm_value_set[:version] || "N/A" # 'N/A' is what is stored in the DB for value sets without versions
+          value_set = HealthDataStandards::SVS::ValueSet.where({user_id: user.id, oid: elm_value_set[:oid], version: version}).first()
+          if value_set
+            value_set_models << value_set
+          elsif version == "N/A"
+            # if the version is "N/A" and a value set doesn't exist with that version, just grab the existing value set
+            value_set = HealthDataStandards::SVS::ValueSet.where({user_id: user.id, oid: elm_value_set[:oid]}).first()
+            if value_set
+              value_set_models << value_set
+            end
+          end
+        end
       end
 
       # Get code systems and codes for all value sets in the elm.
@@ -78,56 +136,36 @@ module Measures
       # Generate single reference code objects and a complete list of code systems and codes for the measure.
       single_code_references, all_codes_and_code_names = generate_single_code_references(elms, all_codes_and_code_names, user)
 
-      # Create CQL Measure
-      hqmf_model.backfill_patient_characteristics_with_codes(all_codes_and_code_names)
-      json = hqmf_model.to_json
-      json.convert_keys_to_strings
-
-      # Loop over data criteria to search for data criteria that is using a single reference code.
-      # Once found set the Data Criteria's 'code_list_id' to our fake oid. Do the same for source data criteria.
-      json['data_criteria'].each do |data_criteria_name, data_criteria|
-        # We do not want to replace an existing code_list_id. Skip.
-        unless data_criteria['code_list_id']
-          if data_criteria['inline_code_list']
-            # Check to see if inline_code_list contains the correct code_system and code for a direct reference code.
-            data_criteria['inline_code_list'].each do |code_system, code_list|
-              # Loop over all single code reference objects.
-              single_code_references.each do |single_code_object|
-                # If Data Criteria contains a matching code system, check if the correct code exists in the data critera values.
-                # If both values match, set the Data Criteria's 'code_list_id' to the single_code_object_guid.
-                if code_system == single_code_object[:code_system_name] && code_list.include?(single_code_object[:code])
-                  data_criteria['code_list_id'] = single_code_object[:guid]
-                  # Modify the matching source data criteria
-                  json['source_data_criteria'][data_criteria_name + "_source"]['code_list_id'] = single_code_object[:guid]
-                end
-              end
-            end
-          end
-        end
-      end
-
       # Add our new fake oids to measure value sets.
-      # LDY: HERE!!!
-      debugger
       all_value_set_oids = value_set_models.collect{|vs| vs.oid}
       single_code_references.each do |single_code|
         all_value_set_oids << single_code[:guid]
       end
       
       # Add a mapping to value set versions
-      value_set_oid_version_map = {}
-      value_set_models.each do |vs|
-        value_set_oid_version_map[vs.oid] = vs.version
+      value_set_oid_version_objects = get_value_set_oid_version_objects(value_set_models, single_code_references)
+      
+      cql_artifacts = {:elms => elms,
+                       :elm_annotations => elm_annotations,
+                       :cql_definition_dependency_structure => cql_definition_dependency_structure,
+                       :all_value_set_oids => all_value_set_oids,
+                       :value_set_oid_version_objects => value_set_oid_version_objects,
+                       :single_code_references => single_code_references,
+                       :all_codes_and_code_names => all_codes_and_code_names}
+    end
+    
+    def self.get_value_set_oid_version_objects(value_sets, single_code_references)
+      # [LDC] need to make this an array of objects instead of a hash because Mongo is
+      # dumb and *let's you* have dots in keys on object creation but *doesn't let you*
+      # have dots in keys on object update or retrieve....
+      value_set_oid_version_objects = []
+      value_sets.each do |vs|
+        value_set_oid_version_objects << {:oid => vs.oid, :version => vs.version}
       end
       single_code_references.each do |single_code|
-        value_set_oid_version_map[single_code[:guid]] = ""
+        value_set_oid_version_objects << {:oid => [single_code[:guid]], :version => nil}
       end
-
-      # Create CQL Measure
-      measure = Measures::Loader.load_hqmf_cql_model_json(json, user, all_value_set_oids, main_cql_library, cql_definition_dependency_structure, elms, elm_annotations, cql_libraries, nil, value_set_oid_version_map)
-      measure['episode_of_care'] = measure_details['episode_of_care']
-      measure['type'] = measure_details['type']
-      measure
+      value_set_oid_version_objects
     end
 
     # Replace all the code system ids that are oids with the friendly name of the code system
