@@ -160,7 +160,6 @@ module Measures
             end
             vs_data.force_encoding("utf-8") # there are some funky unicodes coming out of the vs response that are not in ASCII as the string reports to be
             from_vsac += 1
-            File.open(cached_service_result, 'w') {|f| f.write(vs_data) } unless overwrite
           
             doc = Nokogiri::XML(vs_data)
 
