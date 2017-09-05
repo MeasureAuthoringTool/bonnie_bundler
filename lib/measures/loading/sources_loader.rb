@@ -51,8 +51,7 @@ module Measures
         model.all_code_set_oids.each do |oid|
           value_sets << {oid: oid, version: nil}
         end
-
-        value_set_models =  Measures::ValueSetLoader.load_value_sets_from_vsac(value_sets, vsac_user, vsac_password, user, overwrite_valuesets, effectiveDate, includeDraft, ticket_granting_ticket)
+        value_set_models =  Measures::ValueSetLoader.load_value_sets_from_vsac(value_sets, vsac_user, vsac_password, user, overwrite_valuesets, effectiveDate, includeDraft, ticket_granting_ticket, cache)
       rescue Exception => e
         raise VSACException.new "Error Loading Value Sets from VSAC: #{e.message}" 
       end

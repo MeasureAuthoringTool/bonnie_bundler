@@ -115,7 +115,7 @@ module Measures
 
     end
 
-    def self.load_value_sets_from_vsac(value_sets, username, password, user=nil, overwrite=false, effectiveDate=nil, includeDraft=false, ticket_granting_ticket=nil)
+    def self.load_value_sets_from_vsac(value_sets, username, password, user=nil, overwrite=false, effectiveDate=nil, includeDraft=false, ticket_granting_ticket=nil, use_cache=false)
       # Get a list of just the oids
       value_set_oids = value_sets.map {|value_set| value_set[:oid]}
 
@@ -123,43 +123,56 @@ module Measures
       from_vsac = 0
       
       existing_value_set_map = {}
-
       begin
         backup_vs = []
         if overwrite
           backup_vs = get_existing_vs(user, value_set_oids).to_a
           delete_existing_vs(user, value_set_oids)
         end
-        
         nlm_config = APP_CONFIG["nlm"]
 
         errors = {}
         api = HealthDataStandards::Util::VSApiV2.new(nlm_config["ticket_url"],nlm_config["api_url"],username, password, ticket_granting_ticket)
         
-        codeset_base_dir = Measures::Loader::VALUE_SET_PATH
-        FileUtils.mkdir_p(codeset_base_dir) unless overwrite
+        if use_cache
+          codeset_base_dir = Measures::Loader::VALUE_SET_PATH
+          FileUtils.mkdir_p(codeset_base_dir)
+        end
 
         RestClient.proxy = ENV["http_proxy"]
         value_sets.each do |value_set|
-
           value_set_version = value_set[:version] ? value_set[:version] : "N/A"
-          set = HealthDataStandards::SVS::ValueSet.where({user_id: user.id, oid: value_set[:oid], version: value_set_version}).first()
+          # only access the database if we don't intend on using cached values
+          set = HealthDataStandards::SVS::ValueSet.where({user_id: user.id, oid: value_set[:oid], version: value_set_version}).first() unless use_cache
 
           if (set)
             existing_value_set_map[set.oid] = set
           else
             vs_data = nil
-            
-            # If value set has a specified version, pass it in to the API call.
-            # Cannot include draft when looking for a specific version
-            if value_set[:version]
-              vs_data = api.get_valueset(value_set[:oid], version: value_set[:version], effective_date: effectiveDate, include_draft: false, profile: nlm_config["profile"])
+
+            # try to access the cached result for the value set if it exists.
+            cached_service_result = File.join(codeset_base_dir,"#{value_set[:oid]}.xml") if use_cache
+            if (cached_service_result && File.exists?(cached_service_result))
+              vs_data = File.read cached_service_result
             else
-              # If no value set version exists, just pass in the oid.
-              vs_data = api.get_valueset(value_set[:oid], effective_date: effectiveDate, include_draft: includeDraft, profile: nlm_config["profile"])
+              # If value set has a specified version, pass it in to the API call.
+              # Cannot include draft when looking for a specific version
+              if value_set[:version]
+                # TODO: When modifying this so that we pay attention to "include_draft", we need to store the "include_draft" state and use
+                # this in our rebuild elm rake task so that we retrieve the appropriate value sets.
+                # It is currently not an issue because we ignore include_draft when a version is specified and when a version is not specified,
+                # it is set to "N/A" and continues to be referenced in that way.
+                vs_data = api.get_valueset(value_set[:oid], version: value_set[:version], effective_date: effectiveDate, include_draft: false, profile: nlm_config["profile"])
+              else
+                # If no value set version exists, just pass in the oid.
+                vs_data = api.get_valueset(value_set[:oid], effective_date: effectiveDate, include_draft: includeDraft, profile: nlm_config["profile"])
+              end
             end
             vs_data.force_encoding("utf-8") # there are some funky unicodes coming out of the vs response that are not in ASCII as the string reports to be
             from_vsac += 1
+
+            # write all valueset data retrieved if using a cache
+            File.open(cached_service_result, 'w') {|f| f.write(vs_data) } if use_cache
           
             doc = Nokogiri::XML(vs_data)
 
