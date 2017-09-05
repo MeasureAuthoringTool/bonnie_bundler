@@ -165,7 +165,7 @@ module Measures
         value_set_oid_version_objects << {:oid => vs.oid, :version => vs.version}
       end
       single_code_references.each do |single_code|
-        value_set_oid_version_objects << {:oid => [single_code[:guid]], :version => nil}
+        value_set_oid_version_objects << {:oid => single_code[:guid], :version => ""}
       end
       value_set_oid_version_objects
     end
