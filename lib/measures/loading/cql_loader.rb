@@ -112,7 +112,7 @@ module Measures
         # if VSAC credentials aren't provided, find the value sets in the database
         elm_value_sets.each do |elm_value_set|
           version = elm_value_set[:version] || "N/A" # 'N/A' is what is stored in the DB for value sets without versions
-          query_params = {user_id: user.id, oid: oid: elm_value_set[:oid]}
+          query_params = {user_id: user.id, oid: elm_value_set[:oid]}
           
           if (elm_value_set[:profile])
             query_params[:profile] = elm_value_set[:profile]
