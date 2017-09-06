@@ -45,6 +45,7 @@ class CqlMeasure
   field :observations, type: Array
 
   field :value_set_oids, type: Array, default: []
+  field :value_set_oid_version_objects, type: Array, default: []
 
   field :complexity, type: Hash
 
