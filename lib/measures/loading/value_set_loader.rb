@@ -194,6 +194,8 @@ module Measures
               #bundle id for user should always be the same 1 user to 1 bundle
               #using this to allow cat I generation without extensive modification to HDS
               set.bundle = user.bundle if (user && user.respond_to?(:bundle))
+              # As of t9/7/2017, when valuesets are retrieved from VSAC via profile, their version defaults to N/A
+              # As such, we set the version to the profile with an indicator.
               if value_set[:profile]
                 set.version = "Profile:#{value_set_profile}"
               end
