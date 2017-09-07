@@ -145,7 +145,7 @@ module Measures
           value_set_profile = (value_set[:profile] && !includeDraft) ? value_set[:profile] : nlm_config["profile"]
           vs_query_params = {user_id: user.id, oid: value_set[:oid]}
           if value_set[:profile]
-            vs_query_params[:profile] = value_set_profile
+            vs_query_params[:version] = value_set_profile
           else
             vs_query_params[:version] = value_set_version 
           end
@@ -195,9 +195,7 @@ module Measures
               #using this to allow cat I generation without extensive modification to HDS
               set.bundle = user.bundle if (user && user.respond_to?(:bundle))
               if value_set[:profile]
-                set.profile = value_set[:profile]
-              else
-                set.profile = nlm_config["profile"]
+                set.version = value_set_profile
               end
               set.save!
               existing_value_set_map[set.oid] = set
