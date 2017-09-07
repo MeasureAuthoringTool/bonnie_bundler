@@ -195,7 +195,7 @@ module Measures
               #using this to allow cat I generation without extensive modification to HDS
               set.bundle = user.bundle if (user && user.respond_to?(:bundle))
               if value_set[:profile]
-                set.version = value_set_profile
+                set.version = "Profile:#{value_set_profile}"
               end
               set.save!
               existing_value_set_map[set.oid] = set
