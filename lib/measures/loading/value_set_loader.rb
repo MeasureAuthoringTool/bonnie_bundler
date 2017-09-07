@@ -142,9 +142,15 @@ module Measures
         RestClient.proxy = ENV["http_proxy"]
         value_sets.each do |value_set|
           value_set_version = value_set[:version] ? value_set[:version] : "N/A"
+          value_set_profile = (value_set[:profile] && !includeDraft) ? value_set[:profile] : nlm_config["profile"]
+          vs_query_params = {user_id: user.id, oid: value_set[:oid]}
+          if value_set[:profile]
+            vs_query_params[:profile] = value_set_profile
+          else
+            vs_query_params[:version] = value_set_version 
+          end
           # only access the database if we don't intend on using cached values
-          set = HealthDataStandards::SVS::ValueSet.where({user_id: user.id, oid: value_set[:oid], version: value_set_version}).first() unless use_cache
-
+          set = HealthDataStandards::SVS::ValueSet.where(vs_query_params).first() unless use_cache
           if (set)
             existing_value_set_map[set.oid] = set
           else
@@ -172,7 +178,6 @@ module Measures
             end
             vs_data.force_encoding("utf-8") # there are some funky unicodes coming out of the vs response that are not in ASCII as the string reports to be
             from_vsac += 1
-
             # write all valueset data retrieved if using a cache
             File.open(cached_service_result, 'w') {|f| f.write(vs_data) } if use_cache
           

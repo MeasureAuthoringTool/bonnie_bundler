@@ -21,7 +21,7 @@ module Measures
       end
     end
      
-    def self.load_mat_cql_exports(user, zip_file, out_dir, measure_details, vsac_user, vsac_password, overwrite_valuesets=false, cache=false, effectiveDate=nil, includeDraft=false, ticket_granting_ticket=nil)
+    def self.load_mat_cql_exports(user, zip_file, out_dir, measure_details, vsac_user, vsac_password, overwrite_valuesets=false, cache=false, includeDraft=false, ticket_granting_ticket=nil)
       measure = nil
       cql = nil
       hqmf_path = nil
@@ -37,8 +37,7 @@ module Measures
 
       # Remove spaces in functions in all libraries, including observations.
       cql_libraries, hqmf_model = remove_spaces_in_functions(cql_libraries, hqmf_model)
-
-      cql_artifacts = process_cql(cql_libraries, main_cql_library, user, vsac_user, vsac_password, overwrite_valuesets, cache, effectiveDate, includeDraft, ticket_granting_ticket)
+      cql_artifacts = process_cql(cql_libraries, main_cql_library, user, vsac_user, vsac_password, overwrite_valuesets, cache, includeDraft, ticket_granting_ticket)
 
       # Create CQL Measure
       hqmf_model.backfill_patient_characteristics_with_codes(cql_artifacts[:all_codes_and_code_names])
@@ -77,7 +76,7 @@ module Measures
     end
 
     # Manages all of the CQL processing that is not related to the HQMF.
-    def self.process_cql(cql_libraries, main_cql_library, user, vsac_user=nil, vsac_password=nil, overwrite_valuesets=nil, cache=nil, effectiveDate=nil, includeDraft=nil, ticket_granting_ticket=nil)
+    def self.process_cql(cql_libraries, main_cql_library, user, vsac_user=nil, vsac_password=nil, overwrite_valuesets=nil, cache=nil, includeDraft=nil, ticket_granting_ticket=nil)
       # Translate the cql to elm
       elms, elm_annotations = translate_cql_to_elm(cql_libraries)
 
@@ -99,7 +98,6 @@ module Measures
           end
         end
       end
-
       # Get Value Sets
       value_set_models = []
       if (vsac_user && vsac_password) || ticket_granting_ticket
@@ -132,6 +130,7 @@ module Measures
           end
         end
       end
+
 
       # Get code systems and codes for all value sets in the elm.
       all_codes_and_code_names = HQMF2JS::Generator::CodesToJson.from_value_sets(value_set_models)
@@ -210,7 +209,6 @@ module Measures
         end
       end
     end
-
     # Add single code references by finding the codes from the elm and creating new ValueSet objects
     # With a generated GUID as a fake oid.
     def self.generate_single_code_references(elms, all_codes_and_code_names, user)
