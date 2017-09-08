@@ -118,10 +118,8 @@ module Measures
     def self.load_value_sets_from_vsac(value_sets, username, password, user=nil, overwrite=false, includeDraft=false, ticket_granting_ticket=nil, use_cache=false)
       # Get a list of just the oids
       value_set_oids = value_sets.map {|value_set| value_set[:oid]}
-
       value_set_models = []
       from_vsac = 0
-      
       existing_value_set_map = {}
       begin
         backup_vs = []
@@ -147,14 +145,14 @@ module Measures
           #However, a value_set can have a version and profile that are identical, as such the versions that are profiles are denoted as such.
           value_set_profile = (value_set[:profile] && !includeDraft) ? value_set[:profile] : nlm_config["profile"]
           value_set_profile = "Profile:#{value_set_profile}"
-          vs_query_params = {user_id: user.id, oid: value_set[:oid]}
+          query_version = ""
           if value_set[:profile]
-            vs_query_params[:version] = value_set_profile
+            query_version = value_set_profile
           else
-            vs_query_params[:version] = value_set_version 
+            query_version = value_set_version
           end
           # only access the database if we don't intend on using cached values
-          set = HealthDataStandards::SVS::ValueSet.where(vs_query_params).first() unless use_cache
+          set = HealthDataStandards::SVS::ValueSet.where({user_id: user.id, oid: value_set[:oid], version: query_version}).first() unless use_cache
           if (set)
             existing_value_set_map[set.oid] = set
           else
