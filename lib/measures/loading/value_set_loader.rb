@@ -142,7 +142,11 @@ module Measures
         RestClient.proxy = ENV["http_proxy"]
         value_sets.each do |value_set|
           value_set_version = value_set[:version] ? value_set[:version] : "N/A"
+          #When querying vsac via profile, the version is always set to N/A
+          #As such, we can set the version to the profile.
+          #However, a value_set can have a version and profile that are identical, as such the versions that are profiles are denoted as such.
           value_set_profile = (value_set[:profile] && !includeDraft) ? value_set[:profile] : nlm_config["profile"]
+          value_set_profile = "Profile:#{value_set_profile}"
           vs_query_params = {user_id: user.id, oid: value_set[:oid]}
           if value_set[:profile]
             vs_query_params[:version] = value_set_profile
@@ -168,6 +172,7 @@ module Measures
                 # this in our rebuild elm rake task so that we retrieve the appropriate value sets.
                 # It is currently not an issue because we ignore include_draft when a version is specified and when a version is not specified,
                 # it is set to "N/A" and continues to be referenced in that way.
+                # Future rake task will also need to be able to distinguish between versions and profile versions.
                 vs_data = api.get_valueset(value_set[:oid], version: value_set[:version], include_draft: false, profile: nlm_config["profile"])
               elsif value_set[:profile] && !includeDraft
                 vs_data = api.get_valueset(value_set[:oid], include_draft: false, profile: value_set[:profile])
@@ -197,7 +202,7 @@ module Measures
               # As of t9/7/2017, when valuesets are retrieved from VSAC via profile, their version defaults to N/A
               # As such, we set the version to the profile with an indicator.
               if value_set[:profile]
-                set.version = "Profile:#{value_set_profile}"
+                set.version = value_set_profile
               end
               set.save!
               existing_value_set_map[set.oid] = set
