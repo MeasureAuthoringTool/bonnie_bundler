@@ -171,7 +171,7 @@ module Measures
                 # It is currently not an issue because we ignore include_draft when a version is specified and when a version is not specified,
                 # it is set to "N/A" and continues to be referenced in that way.
                 # Future rake task will also need to be able to distinguish between versions and profile versions.
-                vs_data = api.get_valueset(value_set[:oid], version: value_set[:version], include_draft: false, profile: nlm_config["profile"])
+                vs_data = api.get_valueset(value_set[:oid], version: value_set[:version])
               elsif value_set[:profile] && !includeDraft
                 vs_data = api.get_valueset(value_set[:oid], include_draft: false, profile: value_set[:profile])
               else
