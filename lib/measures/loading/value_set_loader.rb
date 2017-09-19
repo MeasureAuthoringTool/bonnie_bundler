@@ -165,18 +165,13 @@ module Measures
             else
               # If value set has a specified version, pass it in to the API call.
               # Cannot include draft when looking for a specific version
-              if value_set[:version]
-                # TODO: When modifying this so that we pay attention to "include_draft", we need to store the "include_draft" state and use
-                # this in our rebuild elm rake task so that we retrieve the appropriate value sets.
-                # It is currently not an issue because we ignore include_draft when a version is specified and when a version is not specified,
-                # it is set to "N/A" and continues to be referenced in that way.
-                # Future rake task will also need to be able to distinguish between versions and profile versions.
-                vs_data = api.get_valueset(value_set[:oid], version: value_set[:version], include_draft: false, profile: nlm_config["profile"])
-              elsif value_set[:profile] && !includeDraft
-                vs_data = api.get_valueset(value_set[:oid], include_draft: false, profile: value_set[:profile])
+              if value_set[:version] && !includeDraft
+                vs_data = api.get_valueset(value_set[:oid], version: value_set[:version])
               else
-                # If no value set version exists, just pass in the oid.
-                vs_data = api.get_valueset(value_set[:oid], include_draft: includeDraft, profile: nlm_config["profile"])
+                # If no version, call with profile.
+                # If a profile is specified, use it.  Otherwise, use default.
+                profile = value_set[:profile] ? value_set[:profile] : nlm_config["profile"]
+                vs_data = api.get_valueset(value_set[:oid], include_draft: includeDraft, profile: profile)
               end
             end
             vs_data.force_encoding("utf-8") # there are some funky unicodes coming out of the vs response that are not in ASCII as the string reports to be
