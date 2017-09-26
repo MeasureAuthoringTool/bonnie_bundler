@@ -163,15 +163,16 @@ module Measures
             if (cached_service_result && File.exists?(cached_service_result))
               vs_data = File.read cached_service_result
             else
-              # If value set has a specified version, pass it in to the API call.
-              # Cannot include draft when looking for a specific version
-              if value_set[:version] && !includeDraft
+              # If includeDraft is true the latest vs are required, so the latest profile should be used.
+              if includeDraft
+                vs_data = api.get_valueset(value_set[:oid], include_draft: includeDraft, profile: nlm_config["profile"])
+              elsif value_set[:version]
                 vs_data = api.get_valueset(value_set[:oid], version: value_set[:version])
               else
                 # If no version, call with profile.
                 # If a profile is specified, use it.  Otherwise, use default.
                 profile = value_set[:profile] ? value_set[:profile] : nlm_config["profile"]
-                vs_data = api.get_valueset(value_set[:oid], include_draft: includeDraft, profile: profile)
+                vs_data = api.get_valueset(value_set[:oid], profile: profile)
               end
             end
             vs_data.force_encoding("utf-8") # there are some funky unicodes coming out of the vs response that are not in ASCII as the string reports to be
