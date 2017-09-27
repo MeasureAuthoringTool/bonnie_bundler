@@ -115,7 +115,7 @@ module Measures
 
     end
 
-    def self.load_value_sets_from_vsac(value_sets, username, password, user=nil, overwrite=false, includeDraft=false, ticket_granting_ticket=nil, use_cache=false)
+    def self.load_value_sets_from_vsac(value_sets, username, password, user=nil, overwrite=false, includeDraft=false, ticket_granting_ticket=nil, use_cache=false, measure_id=nil)
       # Get a list of just the oids
       value_set_oids = value_sets.map {|value_set| value_set[:oid]}
       value_set_models = []
@@ -145,14 +145,17 @@ module Measures
           #However, a value_set can have a version and profile that are identical, as such the versions that are profiles are denoted as such.
           value_set_profile = (value_set[:profile] && !includeDraft) ? value_set[:profile] : nlm_config["profile"]
           value_set_profile = "Profile:#{value_set_profile}"
+          
           query_version = ""
-          if value_set[:profile]
+          if includeDraft
+            query_version = "Draft-#{measure_id}"
+          elsif value_set[:profile]
             query_version = value_set_profile
           else
             query_version = value_set_version
           end
           # only access the database if we don't intend on using cached values
-          set = HealthDataStandards::SVS::ValueSet.where({user_id: user.id, oid: value_set[:oid], version: query_version}).first() unless use_cache
+          set = HealthDataStandards::SVS::ValueSet.where({user_id: user.id, oid: value_set[:oid], version: query_version}).first() unless use_cache || includeDraft
           if (set)
             existing_value_set_map[set.oid] = set
           else
@@ -195,9 +198,7 @@ module Measures
               set.bundle = user.bundle if (user && user.respond_to?(:bundle))
               # As of t9/7/2017, when valuesets are retrieved from VSAC via profile, their version defaults to N/A
               # As such, we set the version to the profile with an indicator.
-              if value_set[:profile]
-                set.version = value_set_profile
-              end
+              set.version = query_version
               set.save!
               existing_value_set_map[set.oid] = set
             else

@@ -25,7 +25,7 @@ module Measures
 
       measure_details = measure_details_hash[hqmf_set_id]
 
-      measure = load_measure_xml(xml_path, user, vsac_user, vsac_password, measure_details, false, true)
+      measure = load_measure_xml(xml_path, user, vsac_user, vsac_password, measure_details, false, true, nil, hqmf_set_id)
 
       Measures::Loader.save_sources(measure, xml_path, html_path)
 
@@ -37,7 +37,7 @@ module Measures
       measure
     end
 
-    def self.load_measure_xml(xml_path, user, vsac_user, vsac_password, measure_details, overwrite_valuesets=true, cache=false, includeDraft=false, ticket_granting_ticket=nil)
+    def self.load_measure_xml(xml_path, user, vsac_user, vsac_password, measure_details, overwrite_valuesets=true, cache=false, includeDraft=false, ticket_granting_ticket=nil, measure_id)
       # Load the model from the document
       begin
         model = Measures::Loader.parse_hqmf_model(xml_path)
@@ -51,7 +51,7 @@ module Measures
         model.all_code_set_oids.each do |oid|
           value_sets << {oid: oid, version: nil}
         end
-        value_set_models =  Measures::ValueSetLoader.load_value_sets_from_vsac(value_sets, vsac_user, vsac_password, user, overwrite_valuesets, includeDraft, ticket_granting_ticket, cache)
+        value_set_models =  Measures::ValueSetLoader.load_value_sets_from_vsac(value_sets, vsac_user, vsac_password, user, overwrite_valuesets, includeDraft, ticket_granting_ticket, cache, measure_id)
       rescue Exception => e
         raise VSACException.new "Error Loading Value Sets from VSAC: #{e.message}" 
       end
