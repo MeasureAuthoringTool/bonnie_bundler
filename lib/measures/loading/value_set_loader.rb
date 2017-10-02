@@ -157,7 +157,8 @@ module Measures
           # only access the database if we don't intend on using cached values
           set = HealthDataStandards::SVS::ValueSet.where({user_id: user.id, oid: value_set[:oid], version: query_version}).first() unless use_cache
           if (includeDraft && set)
-            set.delete!
+            set.delete
+            set = nil
           end
           if (set)
             existing_value_set_map[set.oid] = set
