@@ -148,4 +148,9 @@ class CqlMeasure
     self.complexity
   end
 
+  # Compute a simplified diff hash for Complexity Dashboard usage; stored within measure.latest_diff
+  def diff(other)
+    HQMF::Measure::LogicExtractor.get_measure_logic_diff(self,other,true)
+  end
+
 end
