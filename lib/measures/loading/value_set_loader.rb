@@ -1,121 +1,25 @@
 module Measures
-  
+
   # Utility class for loading value sets
-  class ValueSetLoader 
+  class ValueSetLoader
 
     def self.save_value_sets(value_set_models, user = nil)
       #loaded_value_sets = HealthDataStandards::SVS::ValueSet.all.map(&:oid)
       value_set_models.each do |vsm|
-        HealthDataStandards::SVS::ValueSet.by_user(user).where(oid: vsm.oid).delete_all() 
+        HealthDataStandards::SVS::ValueSet.by_user(user).where(oid: vsm.oid).delete_all()
         vsm.user = user
         #bundle id for user should always be the same 1 user to 1 bundle
         #using this to allow cat I generation without extensive modification to HDS
         vsm.bundle = user.bundle if (user && user.respond_to?(:bundle))
-        vsm.save! 
+        vsm.save!
       end
     end
-
 
     def self.get_value_set_models(value_set_oids, user=nil)
       HealthDataStandards::SVS::ValueSet.by_user(user).in(oid: value_set_oids)
     end
 
-    def self.load_value_sets_from_xls(value_set_path)
-      value_set_parser = HQMF::ValueSet::Parser.new()
-      value_sets = value_set_parser.parse(value_set_path)
-      raise ValueSetException.new "No ValueSets found" if value_sets.length == 0
-      value_sets
-    end
-
-    def self.clear_white_black_list(user=nil)
-      white_delete_count = 0
-      black_delete_count = 0
-      HealthDataStandards::SVS::ValueSet.by_user(user).each do |vs|
-        concepts = vs.concepts
-        match = false
-        concepts.each do |c| 
-          if (c.white_list || c.black_list)
-            white_delete_count += 1 if c.white_list
-            black_delete_count += 1 if c.black_list
-            c.white_list=false
-            c.black_list=false
-            match=true
-          end
-        end
-        if match
-          vs.concepts = concepts
-          vs.save!
-        end
-      end
-      puts "deleted #{white_delete_count} white / #{black_delete_count} black list entries"
-    end
-
-    def self.load_white_list(white_list_path, user =nil)
-      parser = HQMF::ValueSet::Parser.new()
-      value_sets = parser.parse(white_list_path)
-      child_oids = parser.child_oids
-      white_list_total = 0
-      value_sets.each do |value_set|
-        existing = HealthDataStandards::SVS::ValueSet.by_user(user).where(oid: value_set.oid).first
-        if !existing && child_oids.include?(value_set.oid)
-          next
-        elsif !existing
-          puts "\tMissing: #{value_set.oid}"
-          next
-        end
-
-        white_list_count = value_set.concepts.length
-        white_list_map = value_set.concepts.reduce({}) {|hash, concept| hash[concept.code_system_name]||=Set.new; hash[concept.code_system_name] << concept.code; hash}
-
-        matched_count = 0
-        concepts = existing.concepts
-        concepts.each do |concept|
-          if white_list_map[concept.code_system_name] && white_list_map[concept.code_system_name].include?(concept.code)
-            concept.white_list=true
-            matched_count+=1
-          end
-        end
-
-        puts "white list code missing for oid: #{value_set.oid}" unless matched_count == white_list_count
-        white_list_total += matched_count
-
-        existing.concepts = concepts
-        existing.save!
-
-      end
-      puts "loaded: #{white_list_total} white list entries"
-
-    end
-
-    def self.load_black_list(black_list_path, user = nil)
-      parser = HQMF::BlackList::Parser.new()
-      black_list = parser.parse(black_list_path)
-
-      black_list_map = black_list.reduce({}) {|hash, concept| hash[concept[:code_system_name]]||=Set.new; hash[concept[:code_system_name]] << concept[:code]; hash}
-
-      black_list_count = 0
-      HealthDataStandards::SVS::ValueSet.by_user(user).each do |vs|
-        concepts = vs.concepts
-        match = false
-        concepts.each do |concept|
-          if black_list_map[concept.code_system_name] && black_list_map[concept.code_system_name].include?(concept.code)
-            match = true
-            concept.black_list=true
-            puts "\twhite list code blacklisted: #{vs.oid}" if concept.white_list
-            black_list_count+=1
-          end
-        end
-        if (match)
-          vs.concepts = concepts
-          vs.save!
-        end
-      end
-
-      puts "loaded: #{black_list_count} black list entries"
-
-    end
-
-    def self.load_value_sets_from_vsac(value_sets, username, password, user=nil, overwrite=false, includeDraft=false, ticket_granting_ticket=nil, use_cache=false, measure_id=nil)
+    def self.load_value_sets_from_vsac(value_sets, username, password, user=nil, overwrite=false, includeDraft=false, ticket_granting_ticket=nil, use_cache=false)
       # Get a list of just the oids
       value_set_oids = value_sets.map {|value_set| value_set[:oid]}
       value_set_models = []
@@ -131,7 +35,7 @@ module Measures
 
         errors = {}
         api = HealthDataStandards::Util::VSApiV2.new(nlm_config["ticket_url"],nlm_config["api_url"],username, password, ticket_granting_ticket)
-        
+
         if use_cache
           codeset_base_dir = Measures::Loader::VALUE_SET_PATH
           FileUtils.mkdir_p(codeset_base_dir)
@@ -145,7 +49,7 @@ module Measures
           #However, a value_set can have a version and profile that are identical, as such the versions that are profiles are denoted as such.
           value_set_profile = (value_set[:profile] && !includeDraft) ? value_set[:profile] : nlm_config["profile"]
           value_set_profile = "Profile:#{value_set_profile}"
-          
+
           query_version = ""
           if includeDraft
             query_version = "Draft-#{measure_id}"
@@ -186,11 +90,11 @@ module Measures
             from_vsac += 1
             # write all valueset data retrieved if using a cache
             File.open(cached_service_result, 'w') {|f| f.write(vs_data) } if use_cache
-          
+
             doc = Nokogiri::XML(vs_data)
 
             doc.root.add_namespace_definition("vs","urn:ihe:iti:svs:2008")
-            
+
             vs_element = doc.at_xpath("/vs:RetrieveValueSetResponse/vs:ValueSet|/vs:RetrieveMultipleValueSetsResponse/vs:DescribedValueSet")
 
             if vs_element && vs_element['ID'] == value_set[:oid]
@@ -215,7 +119,7 @@ module Measures
           delete_existing_vs(user, value_set_oids)
           backup_vs.each {|vs| HealthDataStandards::SVS::ValueSet.new(vs.attributes).save }
         end
-        raise VSACException.new "Error Loading Value Sets from VSAC: #{e.message}" 
+        raise VSACException.new "Error Loading Value Sets from VSAC: #{e.message}"
       end
 
       puts "\tloaded #{from_vsac} value sets from vsac" if from_vsac > 0
