@@ -1,7 +1,7 @@
 GIT
   remote: https://github.com/projectcypress/health-data-standards.git
-  revision: 9baa6a949af622d0d8c585c1f6478b77c6aa8c9b
-  branch: mongoid5
+  revision: 16ea79082475fbae173be45682baf6d0cadd77cc
+  branch: cql4bonnie_on_mongoid5_adam
   specs:
     health-data-standards (3.6.1)
       activesupport (~> 4.2.0)
@@ -12,7 +12,7 @@ GIT
       memoist (~> 0.9.1)
       mongoid (~> 5.0.0)
       mongoid-tree (~> 2.0.0)
-      nokogiri (~> 1.7.1)
+      nokogiri (~> 1.8.1)
       protected_attributes (~> 1.0.5)
       rest-client (~> 1.8.0)
       rubyzip (~> 1.2.1)
@@ -140,7 +140,7 @@ GEM
     memoist (0.9.3)
     method_source (0.8.2)
     mime-types (2.99.3)
-    mini_portile2 (2.1.0)
+    mini_portile2 (2.3.0)
     minitest (5.10.2)
     mongo (2.4.2)
       bson (>= 4.2.1, < 5.0.0)
@@ -156,8 +156,8 @@ GEM
       mongoid (>= 4.0, < 6.0)
     multi_json (1.11.2)
     netrc (0.11.0)
-    nokogiri (1.7.2)
-      mini_portile2 (~> 2.1.0)
+    nokogiri (1.8.1)
+      mini_portile2 (~> 2.3.0)
     origin (2.3.1)
     protected_attributes (1.0.9)
       activemodel (>= 4.0.1, < 5.0)
