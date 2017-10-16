@@ -9,6 +9,10 @@ module Measures
         cql_entry = zip_file.glob(File.join('**','**.cql')).select {|x| !x.name.starts_with?('__MACOSX') }.first
         human_readable_entry = zip_file.glob(File.join('**','**.html')).select { |x| !x.name.starts_with?('__MACOSX') }.first
         
+        # TODO: (JSON/XML) need to check for the JSON/XML here
+        # TODO: (JSON/XML) need to have clear error message for packages that don't include the JSON or XML.
+        # Should say to re-export from MAT but also note what the missing artifacts are
+        
         # Grab all xml files in the zip.
         zip_xml_files = zip_file.glob(File.join('**','**.xml')).select {|x| !x.name.starts_with?('__MACOSX') }
         
@@ -27,6 +31,7 @@ module Measures
       hqmf_path = nil
 
       # Grabs the cql file contents and the hqmf file path
+      # TODO: (JSON/XML) should pass back all XML related items and let this function figure out which ones to use. Will also need to include the JSON
       cql_libraries, hqmf_path = get_files_from_zip(zip_file, out_dir)
 
       # Load hqmf into HQMF Parser
@@ -36,6 +41,7 @@ module Measures
       main_cql_library = hqmf_model.cql_measure_library
 
       # Remove spaces in functions in all libraries, including observations.
+      # TODO: (JSON/XML) remove this call. Need to add support in the execution engine for this
       cql_libraries, hqmf_model = remove_spaces_in_functions(cql_libraries, hqmf_model)
       cql_artifacts = process_cql(cql_libraries, main_cql_library, user, vsac_user, vsac_password, overwrite_valuesets, cache, includeDraft, ticket_granting_ticket, hqmf_model.hqmf_set_id)
 
@@ -254,6 +260,8 @@ module Measures
         cql_entries = file.glob(File.join('**','**.cql')).select {|x| !x.name.starts_with?('__MACOSX') }
         zip_xml_files = file.glob(File.join('**','**.xml')).select {|x| !x.name.starts_with?('__MACOSX') }
         
+        # TODO: (JSON/XML) need to get the JSON/XML here
+        
         begin
           cql_paths = []
           cql_entries.each do |cql_file|
@@ -267,6 +275,7 @@ module Measures
           
           xml_file_paths = extract_xml_files(file, zip_xml_files, out_dir)
 
+          # TODO: (JSON/XML) only grabbing the HQMF XML. Will want to also grab the ELM XMLs
           return cql_contents, xml_file_paths[:HQMF_XML]
         rescue Exception => e
           raise MeasureLoadingException.new "Error Parsing Measure Logic: #{e.message}"
@@ -277,6 +286,7 @@ module Measures
     # Translates the cql to elm json using a post request to CQLTranslation Jar.
     # Returns an array of ELM.
     def self.translate_cql_to_elm(cql)
+      # TODO: (JSON/XML) remove the request
       begin
         request = RestClient::Request.new(
           :method => :post,
@@ -290,8 +300,10 @@ module Measures
         )
 
         elm_json = request.execute
+        # TODO: (JSON/XML) will need to retain everything below here
         elm_json.gsub! 'urn:oid:', '' # Removes 'urn:oid:' from ELM for Bonnie
         
+        # TODO: (JSON/XML) remove request
         # now get the XML ELM
         request = RestClient::Request.new(
           :method => :post,
@@ -307,6 +319,7 @@ module Measures
           }
         )
         elm_xmls = request.execute
+        # TODO: (JSON/XML) will need to retain everything below here
         elm_annotations = parse_elm_annotations_response(elm_xmls)
 
         return parse_elm_response(elm_json), elm_annotations
@@ -392,6 +405,7 @@ module Measures
     end
 
     def self.parse_elm_annotations_response(response)
+      # TODO: (JSON/XML) will need to pass the array of files here instead of parse multi-part response
       xmls = parse_multipart_response(response)
       elm_annotations = {}
       xmls.each do |xml_lib|
