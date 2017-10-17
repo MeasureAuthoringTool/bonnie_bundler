@@ -4,33 +4,18 @@ require 'vcr_setup.rb'
 class LoadMATExportTest < ActiveSupport::TestCase
 
   setup do
-    @mat_export = File.new File.join('test','fixtures','07_ExclusiveBreastMilkFeeding_Artifacts.zip')
     @cql_mat_export = File.new File.join('test', 'fixtures', 'BCS_v5_0_Artifacts.zip')
-    @cql_mat_5_4_export = File.new File.join('test', 'fixtures', 'Test134_v5_4_Artifacts.zip')
+    @cql_mat_5_4_export = File.new File.join('test', 'fixtures', 'CMS158_v5_4_Artifacts.zip')
     @cql_multi_library_mat_export = File.new File.join('test', 'fixtures', 'bonnienesting01_fixed.zip')
   end
 
-  test "Loading a MAT export zip file" do
-    dump_db
-    Measures::MATLoader.load(@mat_export, nil, {})
-    assert_equal 1, Measure.all.count
-    measure = Measure.all.first
-    assert_equal "Exclusive Breast Milk Feeding", measure.title
-    assert_equal "40280381-3D27-5493-013D-4DC3477E6961", measure.hqmf_id
-    assert_equal 2, measure.populations.size
-    assert_equal 10, measure.population_criteria.keys.count
-  end
-
   test "Loading a CQL Mat export zip file, with VSAC credentials" do
-    # NOTE: If this needs to be re-recorded, make sure to replace the password in the yml with <VSAC_PASSWORD>
-    # The filter doesn't seem to be working.
     VCR.use_cassette("valid_vsac_response") do
       dump_db
       user = User.new
       user.save
-      
       measure_details = { 'episode_of_care'=> false }
-      Measures::MATLoader.load(@cql_mat_export, user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD']).save
+      Measures::CqlLoader.load(@cql_mat_export, user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD']).save
       assert_equal 1, CqlMeasure.all.count
       measure = CqlMeasure.all.first
       assert_equal "BCSTest", measure.title
@@ -39,34 +24,34 @@ class LoadMATExportTest < ActiveSupport::TestCase
       assert_equal 4, measure.population_criteria.keys.count
     end
   end
-  
+
   test "Loading a MAT 5.4 CQL export zip file with VSAC credentials" do
-    VCR.use_cassette("mat_5-4_cql_export_vsac_response") do
+    VCR.use_cassette("valid_vsac_response_158") do
       dump_db
       user = User.new
       user.save
-      
+
       measure_details = { 'episode_of_care'=> false }
-      Measures::MATLoader.load(@cql_mat_5_4_export, user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD']).save
+      Measures::CqlLoader.load(@cql_mat_5_4_export, user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD']).save
       assert_equal 1, CqlMeasure.all.count
       measure = CqlMeasure.all.first
-      assert_equal "Test CMS 134", measure.title
-      assert_equal "40280582-5C27-8179-015C-308B1F99003B", measure.hqmf_id
-      assert_equal "7B2A9277-43DA-4D99-9BEE-6AC271A07747", measure.hqmf_set_id
+      assert_equal "Test 158", measure.title
+      assert_equal "40280582-5801-9EE4-0158-310E539D0327", measure.hqmf_id
+      assert_equal "8F010DBB-CB52-47CD-8FE8-03A4F223D87F", measure.hqmf_set_id
       assert_equal 1, measure.populations.size
       assert_equal 4, measure.population_criteria.keys.count
       assert_equal 1, measure.elm.size
     end
   end
-  
+
   test "Loading a CQL Mat export with multiple libraries, with VSAC credentials" do
     VCR.use_cassette("multi_library_webcalls") do
       dump_db
       user = User.new
       user.save
-      
+
       measure_details = { 'episode_of_care'=> false }
-      Measures::MATLoader.load(@cql_multi_library_mat_export, user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD']).save
+      Measures::CqlLoader.load(@cql_multi_library_mat_export, user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD']).save
       assert_equal 1, CqlMeasure.all.count
       measure = CqlMeasure.all.first
       assert_equal (measure.elm.instance_of? Array), true
@@ -83,29 +68,33 @@ class LoadMATExportTest < ActiveSupport::TestCase
 
   test "Scoping by user" do
     dump_db
-    u = User.new
-    u.save
+    cql_mat_export = File.new File.join('test','fixtures','CMS158_v5_4_Artifacts.zip')
+    user = User.new
+    user2 = User.new
+    user2.save
+    VCR.use_cassette("valid_vsac_response_158") do
+      Measures::CqlLoader.load(cql_mat_export, user, {}).save
+    end
+
+    measure = CqlMeasure.all.by_user(user).first
     # make sure that we can load a package and that the meause and valuesets are scoped to the user
-    measure = Measures::MATLoader.load(@mat_export, u, {})
-    assert_equal 1, Measure.by_user(u).count
+    assert_equal 1, CqlMeasure.all.by_user(user).count
     vs_count = HealthDataStandards::SVS::ValueSet.count()
-    assert_equal vs_count, HealthDataStandards::SVS::ValueSet.by_user(u).count()
-    vs = HealthDataStandards::SVS::ValueSet.by_user(u).first
-    vsets = HealthDataStandards::SVS::ValueSet.by_user(u).to_a
+    assert_equal vs_count, HealthDataStandards::SVS::ValueSet.by_user(user).count()
+    vs = HealthDataStandards::SVS::ValueSet.by_user(user).first
+    vsets = HealthDataStandards::SVS::ValueSet.by_user(user).to_a
 
     # Add the same measure not associated with a user, there should be 2 measures and
     # and twice as many value sets in the db after loading
-    Measures::MATLoader.load(@mat_export, nil, {})
-    assert_equal 1, Measure.by_user(u).count
-    assert_equal 2, Measure.count
-    assert_equal vs_count, HealthDataStandards::SVS::ValueSet.by_user(u).count()
+    VCR.use_cassette("valid_vsac_response_158") do
+      Measures::CqlLoader.load(cql_mat_export, user2, {}).save
+    end
+    measure2 = CqlMeasure.all.by_user(user2).first
+    assert_equal 1, CqlMeasure.by_user(user).count
+    assert_equal 2, CqlMeasure.count
+    assert_equal vs_count, HealthDataStandards::SVS::ValueSet.by_user(user).count()
     assert_equal vs_count * 2, HealthDataStandards::SVS::ValueSet.count
-
-    u_count = Measures::ValueSetLoader.get_value_set_models(measure.value_set_oids,u).count()
-    assert_equal u_count, Measures::ValueSetLoader.get_value_set_models(measure.value_set_oids,nil).count
-
-
+    u_count = Measures::ValueSetLoader.get_value_set_models(measure.value_set_oids, user).count()
+    assert_equal u_count, Measures::ValueSetLoader.get_value_set_models(measure2.value_set_oids, user2).count
   end
-
-
 end

@@ -8,11 +8,11 @@ module Measures
         # Check for CQL, HQMF, ELM and Human Readable
         cql_entry = zip_file.glob(File.join('**','**.cql')).select {|x| !x.name.starts_with?('__MACOSX') }.first
         human_readable_entry = zip_file.glob(File.join('**','**.html')).select { |x| !x.name.starts_with?('__MACOSX') }.first
-        
+
         # Grab all xml files in the zip.
         zip_xml_files = zip_file.glob(File.join('**','**.xml')).select {|x| !x.name.starts_with?('__MACOSX') }
-        
-        if zip_xml_files.count > 0 
+
+        if zip_xml_files.count > 0
           xml_files_hash = extract_xml_files(zip_file, zip_xml_files)
           !cql_entry.nil? && !human_readable_entry.nil? && !xml_files_hash[:HQMF_XML].nil? && !xml_files_hash[:ELM_XML].nil?
         else
@@ -20,7 +20,7 @@ module Measures
         end
       end
     end
-     
+
     def self.load_mat_cql_exports(user, zip_file, out_dir, measure_details, vsac_user, vsac_password, overwrite_valuesets=false, cache=false, includeDraft=false, ticket_granting_ticket=nil)
       measure = nil
       cql = nil
@@ -37,7 +37,7 @@ module Measures
 
       # Remove spaces in functions in all libraries, including observations.
       cql_libraries, hqmf_model = remove_spaces_in_functions(cql_libraries, hqmf_model)
-      cql_artifacts = process_cql(cql_libraries, main_cql_library, user, vsac_user, vsac_password, overwrite_valuesets, cache, includeDraft, ticket_granting_ticket, hqmf_model.hqmf_set_id)
+      cql_artifacts = process_cql(cql_libraries, main_cql_library, user, vsac_user, vsac_password, overwrite_valuesets, cache, includeDraft, ticket_granting_ticket)
 
       # Create CQL Measure
       hqmf_model.backfill_patient_characteristics_with_codes(cql_artifacts[:all_codes_and_code_names])
@@ -68,15 +68,23 @@ module Measures
       end
 
       # Create CQL Measure
-      measure = Measures::Loader.load_hqmf_cql_model_json(json, user, cql_artifacts[:all_value_set_oids], main_cql_library, cql_artifacts[:cql_definition_dependency_structure], 
+      measure = Measures::Loader.load_hqmf_cql_model_json(json, user, cql_artifacts[:all_value_set_oids], main_cql_library, cql_artifacts[:cql_definition_dependency_structure],
                                                           cql_artifacts[:elms], cql_artifacts[:elm_annotations], cql_libraries, nil, cql_artifacts[:value_set_oid_version_objects])
       measure['episode_of_care'] = measure_details['episode_of_care']
       measure['type'] = measure_details['type']
       measure
     end
 
+    def self.load(file, user, measure_details, vsac_user=nil, vsac_password=nil, overwrite_valuesets=false, cache=false, includeDraft=false, ticket_granting_ticket=nil)
+      measure = nil
+      Dir.mktmpdir do |dir|
+        measure = load_mat_cql_exports(user, file, dir, measure_details, vsac_user, vsac_password, overwrite_valuesets, cache, includeDraft, ticket_granting_ticket)
+      end
+      measure
+    end
+
     # Manages all of the CQL processing that is not related to the HQMF.
-    def self.process_cql(cql_libraries, main_cql_library, user, vsac_user=nil, vsac_password=nil, overwrite_valuesets=nil, cache=nil, includeDraft=nil, ticket_granting_ticket=nil, measure_id=nil)
+    def self.process_cql(cql_libraries, main_cql_library, user, vsac_user=nil, vsac_password=nil, overwrite_valuesets=nil, cache=nil, includeDraft=nil, ticket_granting_ticket=nil)
       # Translate the cql to elm
       elms, elm_annotations = translate_cql_to_elm(cql_libraries)
 
@@ -102,7 +110,7 @@ module Measures
       value_set_models = []
       if (vsac_user && vsac_password) || ticket_granting_ticket
         begin
-          value_set_models =  Measures::ValueSetLoader.load_value_sets_from_vsac(elm_value_sets, vsac_user, vsac_password, user, overwrite_valuesets, includeDraft, ticket_granting_ticket, cache, measure_id)
+          value_set_models =  Measures::ValueSetLoader.load_value_sets_from_vsac(elm_value_sets, vsac_user, vsac_password, user, overwrite_valuesets, includeDraft, ticket_granting_ticket)
         rescue Exception => e
           raise VSACException.new "Error Loading Value Sets from VSAC: #{e.message}"
         end
@@ -111,13 +119,13 @@ module Measures
         elm_value_sets.each do |elm_value_set|
           version = elm_value_set[:version] || "N/A" # 'N/A' is what is stored in the DB for value sets without versions
           query_params = {user_id: user.id, oid: elm_value_set[:oid]}
-          
+
           if (elm_value_set[:profile])
             query_params[:profile] = elm_value_set[:profile]
-          else 
+          else
             query_params[:version] = version
           end
-          
+
           value_set = HealthDataStandards::SVS::ValueSet.where(query_params).first()
           if value_set
             value_set_models << value_set
@@ -134,7 +142,6 @@ module Measures
 
       # Get code systems and codes for all value sets in the elm.
       all_codes_and_code_names = HQMF2JS::Generator::CodesToJson.from_value_sets(value_set_models)
-
       # Replace code system oids with friendly names
       # TODO: preferred solution would be to continue using OIDs in the ELM and enable Bonnie to supply those OIDs
       #   to the calculation engine in patient data and value sets.
@@ -231,7 +238,6 @@ module Measures
             code_sets[code_system_name] << code_reference['id']
             # Generate a unique number as our fake "oid"
             code_guid = SecureRandom.uuid
-
             # Keep a list of generated_guids and a hash of guids with code system names and codes.
             single_code_references << { guid: code_guid, code_system_name: code_system_name, code: code_reference['id'] }
 
@@ -253,7 +259,7 @@ module Measures
       Zip::ZipFile.open(zip_file.path) do |file|
         cql_entries = file.glob(File.join('**','**.cql')).select {|x| !x.name.starts_with?('__MACOSX') }
         zip_xml_files = file.glob(File.join('**','**.xml')).select {|x| !x.name.starts_with?('__MACOSX') }
-        
+
         begin
           cql_paths = []
           cql_entries.each do |cql_file|
@@ -264,7 +270,7 @@ module Measures
           cql_paths.each do |cql_path|
             cql_contents << open(cql_path).read
           end
-          
+
           xml_file_paths = extract_xml_files(file, zip_xml_files, out_dir)
 
           return cql_contents, xml_file_paths[:HQMF_XML]
@@ -291,7 +297,7 @@ module Measures
 
         elm_json = request.execute
         elm_json.gsub! 'urn:oid:', '' # Removes 'urn:oid:' from ELM for Bonnie
-        
+
         # now get the XML ELM
         request = RestClient::Request.new(
           :method => :post,
@@ -325,7 +331,7 @@ module Measures
     end
 
     private
-    
+
     # Parses CQL to remove spaces in functions and all references to those functions in other libraries
     def self.remove_spaces_in_functions(cql_libraries, model)
       # Track original and new function names
@@ -333,7 +339,7 @@ module Measures
 
       # Adjust the names of all CQL functions so that they execute properly
       # as JavaScript functions.
-      cql_libraries.each do |cql| 
+      cql_libraries.each do |cql|
         cql.scan(/define function (".*?")/).flatten.each do |func_name|
           # Generate a replacement function name by transliterating to ASCII, and
           # remove any spaces.
@@ -358,7 +364,7 @@ module Measures
           end
         end
       end
-      
+
       # Iterate over cql_libraries to replace the function references in other librariers.
       function_name_changes.each do |original_name, new_name|
         cql_libraries.each do |cql|
@@ -446,12 +452,12 @@ module Measures
       all_results = []
       if statement.is_a? String
         statement = retrieve_sub_statement_for_expression_name(statement, elms)
-      end      
+      end
       sub_statement_names = retrieve_expressions_from_statement(statement)
       # Currently if sub_statement_name is another Population we do not remove it.
       if sub_statement_names.length > 0
         sub_statement_names.each do |sub_statement_name|
-          # Check if the statement is not a built in expression 
+          # Check if the statement is not a built in expression
           sub_library_name, sub_statement = retrieve_sub_statement_for_expression_name(sub_statement_name, elms)
           if sub_statement
             all_results << { library_name: sub_library_name, statement_name: sub_statement_name }
@@ -492,10 +498,10 @@ module Measures
       expressions
     end
 
-    # Loops over keys of the given hash and loops over the list of statements 
+    # Loops over keys of the given hash and loops over the list of statements
     # Original structure of hash is {IPP => ["In Demographics", Measurement Period Encounters"], NUMER => ["Tonsillitis"]}
     def self.populate_used_library_dependencies(starting_hash, main_cql_library, elms)
-      # Starting_hash gets updated with the create_hash_for_all call. 
+      # Starting_hash gets updated with the create_hash_for_all call.
       starting_hash[main_cql_library].keys.each do |key|
         starting_hash[main_cql_library][key].each do |statement|
           create_hash_for_all(starting_hash, statement, elms)
@@ -508,7 +514,7 @@ module Measures
     # If key is already in place, skip.
     def self.create_hash_for_all(starting_hash, key_statement, elms)
       # If key already exists, return hash
-      if (starting_hash.has_key?(key_statement[:library_name]) && 
+      if (starting_hash.has_key?(key_statement[:library_name]) &&
         starting_hash[key_statement[:library_name]].has_key?(key_statement[:statement_name]))
         return starting_hash
       # Create new hash key and retrieve all sub statements
