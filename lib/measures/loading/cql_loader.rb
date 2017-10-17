@@ -75,6 +75,11 @@ module Measures
                                                           cql_artifacts[:elms], cql_artifacts[:elm_annotations], files[:CQL], nil, cql_artifacts[:value_set_oid_version_objects])
       measure['episode_of_care'] = measure_details['episode_of_care']
       measure['type'] = measure_details['type']
+
+      # Create, associate and save the measure package.
+      measure.package = CqlMeasurePackage.new(file: BSON::Binary.new(zip_file.read()))
+      measure.package.save
+
       measure
     end
 
