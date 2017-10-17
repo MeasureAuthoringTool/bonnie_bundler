@@ -7,9 +7,9 @@ module Measures
       Zip::ZipFile.open(zip_file.path) do |zip_file|
         # Check for CQL, HQMF, ELM and Human Readable
         cql_entry = zip_file.glob(File.join('**','**.cql')).select {|x| !x.name.starts_with?('__MACOSX') }.first
+        elm_json = zip_file.glob(File.join('**','**.json')).select {|x| !x.name.starts_with?('__MACOSX') }.first
         human_readable_entry = zip_file.glob(File.join('**','**.html')).select { |x| !x.name.starts_with?('__MACOSX') }.first
         
-        # TODO: (JSON/XML) need to check for the JSON/XML here
         # TODO: (JSON/XML) need to have clear error message for packages that don't include the JSON or XML.
         # Should say to re-export from MAT but also note what the missing artifacts are
         
@@ -18,7 +18,7 @@ module Measures
         
         if zip_xml_files.count > 0 
           xml_files_hash = extract_xml_files(zip_file, zip_xml_files)
-          !cql_entry.nil? && !human_readable_entry.nil? && !xml_files_hash[:HQMF_XML].nil? && !xml_files_hash[:ELM_XML].nil?
+          !cql_entry.nil? && !elm_json.nil? && !human_readable_entry.nil? && !xml_files_hash[:HQMF_XML].nil? && !xml_files_hash[:ELM_XML].nil?
         else
           false
         end
@@ -29,21 +29,18 @@ module Measures
       measure = nil
       cql = nil
       hqmf_path = nil
-
-      # Grabs the cql file contents and the hqmf file path
-      # TODO: (JSON/XML) should pass back all XML related items and let this function figure out which ones to use. Will also need to include the JSON
-      cql_libraries, hqmf_path = get_files_from_zip(zip_file, out_dir)
+      # TODO: (JSON/XML) store everything grabbed from original zip. Or do we store just the zip?
+      # Grabs the cql file contents, the elm_xml contents, elm_json contents and the hqmf file path
+      files = get_files_from_zip(zip_file, out_dir)
 
       # Load hqmf into HQMF Parser
-      hqmf_model = Measures::Loader.parse_hqmf_model(hqmf_path)
+      hqmf_model = Measures::Loader.parse_hqmf_model(files[:HQMF_XML_PATH])
 
       # Get main measure from hqmf parser
       main_cql_library = hqmf_model.cql_measure_library
 
       # Remove spaces in functions in all libraries, including observations.
-      # TODO: (JSON/XML) remove this call. Need to add support in the execution engine for this
-      cql_libraries, hqmf_model = remove_spaces_in_functions(cql_libraries, hqmf_model)
-      cql_artifacts = process_cql(cql_libraries, main_cql_library, user, vsac_user, vsac_password, overwrite_valuesets, cache, includeDraft, ticket_granting_ticket, hqmf_model.hqmf_set_id)
+      cql_artifacts = process_cql(files, main_cql_library, user, vsac_user, vsac_password, overwrite_valuesets, cache, includeDraft, ticket_granting_ticket, hqmf_model.hqmf_set_id)
 
       # Create CQL Measure
       hqmf_model.backfill_patient_characteristics_with_codes(cql_artifacts[:all_codes_and_code_names])
@@ -75,16 +72,19 @@ module Measures
 
       # Create CQL Measure
       measure = Measures::Loader.load_hqmf_cql_model_json(json, user, cql_artifacts[:all_value_set_oids], main_cql_library, cql_artifacts[:cql_definition_dependency_structure], 
-                                                          cql_artifacts[:elms], cql_artifacts[:elm_annotations], cql_libraries, nil, cql_artifacts[:value_set_oid_version_objects])
+                                                          cql_artifacts[:elms], cql_artifacts[:elm_annotations], files[:CQL], nil, cql_artifacts[:value_set_oid_version_objects])
       measure['episode_of_care'] = measure_details['episode_of_care']
       measure['type'] = measure_details['type']
       measure
     end
 
     # Manages all of the CQL processing that is not related to the HQMF.
-    def self.process_cql(cql_libraries, main_cql_library, user, vsac_user=nil, vsac_password=nil, overwrite_valuesets=nil, cache=nil, includeDraft=nil, ticket_granting_ticket=nil, measure_id=nil)
-      # Translate the cql to elm
-      elms, elm_annotations = translate_cql_to_elm(cql_libraries)
+    def self.process_cql(files, main_cql_library, user, vsac_user=nil, vsac_password=nil, overwrite_valuesets=nil, cache=nil, includeDraft=nil, ticket_granting_ticket=nil, measure_id=nil)
+      elm_strings = files[:ELM_JSON]
+      # Removes 'urn:oid:' from ELM for Bonnie and Parse the JSON
+      elm_strings.each { |elm_string| elm_string.gsub! 'urn:oid:', '' }
+      elms = elm_strings.map{ |elm| JSON.parse(elm, :max_nesting=>1000)}
+      elm_annotations = parse_elm_annotations(files[:ELM_XML])
 
       # Hash of define statements to which define statements they use.
       cql_definition_dependency_structure = populate_cql_definition_dependency_structure(main_cql_library, elms)
@@ -254,192 +254,58 @@ module Measures
       return single_code_references, all_codes_and_code_names
     end
 
-    # Opens the zip and grabs the cql file contents and hqmf_path. Returns both items.
+    # Opens the zip and grabs the cql file contents, the ELM contents (XML and JSON) and hqmf_path.
     def self.get_files_from_zip(zip_file, out_dir)
       Zip::ZipFile.open(zip_file.path) do |file|
         cql_entries = file.glob(File.join('**','**.cql')).select {|x| !x.name.starts_with?('__MACOSX') }
         zip_xml_files = file.glob(File.join('**','**.xml')).select {|x| !x.name.starts_with?('__MACOSX') }
-        
-        # TODO: (JSON/XML) need to get the JSON/XML here
+        elm_json_entries = file.glob(File.join('**','**.json')).select {|x| !x.name.starts_with?('__MACOSX') }
         
         begin
           cql_paths = []
           cql_entries.each do |cql_file|
             cql_paths << extract(file, cql_file, out_dir) if cql_file.size > 0
           end
-
           cql_contents = []
           cql_paths.each do |cql_path|
             cql_contents << open(cql_path).read
           end
+
+          elm_json_paths = []
+          elm_json_entries.each do |json_file|
+            elm_json_paths << extract(file, json_file, out_dir) if json_file.size > 0
+          end
+          elm_json = []
+          elm_json_paths.each do |elm_json_path|
+            elm_json << open(elm_json_path).read
+          end
           
           xml_file_paths = extract_xml_files(file, zip_xml_files, out_dir)
+          elm_xml_paths = xml_file_paths[:ELM_XML]
+          elm_xml = []
+          elm_xml_paths.each do |elm_xml_path|
+            elm_xml << open(elm_xml_path).read
+          end
 
-          # TODO: (JSON/XML) only grabbing the HQMF XML. Will want to also grab the ELM XMLs
-          return cql_contents, xml_file_paths[:HQMF_XML]
+          files = { :HQMF_XML_PATH => xml_file_paths[:HQMF_XML],
+                    :ELM_JSON => elm_json,
+                    :CQL => cql_contents,
+                    :ELM_XML => elm_xml }
+          return files
         rescue Exception => e
           raise MeasureLoadingException.new "Error Parsing Measure Logic: #{e.message}"
         end
       end
     end
 
-    # Translates the cql to elm json using a post request to CQLTranslation Jar.
-    # Returns an array of ELM.
-    def self.translate_cql_to_elm(cql)
-      # TODO: (JSON/XML) remove the request
-      begin
-        request = RestClient::Request.new(
-          :method => :post,
-          :accept => :json,
-          :content_type => :json,
-          :url => 'http://localhost:8080/cql/translator',
-          :payload => {
-            :multipart => true,
-            :file => cql
-          }
-        )
-
-        elm_json = request.execute
-        # TODO: (JSON/XML) will need to retain everything below here
-        elm_json.gsub! 'urn:oid:', '' # Removes 'urn:oid:' from ELM for Bonnie
-        
-        # TODO: (JSON/XML) remove request
-        # now get the XML ELM
-        request = RestClient::Request.new(
-          :method => :post,
-          :headers => {
-            :accept => 'multipart/form-data',
-            'X-TargetFormat' => 'application/elm+xml'
-          },
-          :content_type => 'multipart/form-data',
-          :url => 'http://localhost:8080/cql/translator',
-          :payload => {
-            :multipart => true,
-            :file => cql
-          }
-        )
-        elm_xmls = request.execute
-        # TODO: (JSON/XML) will need to retain everything below here
-        elm_annotations = parse_elm_annotations_response(elm_xmls)
-
-        return parse_elm_response(elm_json), elm_annotations
-      rescue RestClient::BadRequest => e
-        begin
-          # If there is a response, include it in the error else just include the error message
-          cqlError = JSON.parse(e.response)
-          errorMsg = JSON.pretty_generate(cqlError).to_s
-        rescue
-          errorMsg = e.message
-        end
-        # The error text will be written to a load_error file and will not be displayed in the error dialog displayed to the user since
-        # measures_controller.rb does not handle this type of exception
-        raise MeasureLoadingException.new "Error Translating CQL to ELM: " + errorMsg
-      end
-    end
-
     private
-    
-    # Parses CQL to remove spaces in functions and all references to those functions in other libraries
-    def self.remove_spaces_in_functions(cql_libraries, model)
-      # Track original and new function names
-      function_name_changes = {}
-
-      # Adjust the names of all CQL functions so that they execute properly
-      # as JavaScript functions.
-      cql_libraries.each do |cql| 
-        cql.scan(/define function (".*?")/).flatten.each do |func_name|
-          # Generate a replacement function name by transliterating to ASCII, and
-          # remove any spaces.
-          repl_name = ActiveSupport::Inflector.transliterate(func_name.delete('"')).gsub(/[[:space:]]/, '')
-
-          # If necessary, prepend a '_' in order to thwart function names that
-          # could potentially be reserved JavaScript keywords.
-          repl_name = '_' + repl_name if is_javascript_keyword(repl_name)
-
-          # Avoid potential name collisions.
-          repl_name = '_' + repl_name while cql.include?(repl_name) && func_name[1..-2] != repl_name
-
-          # Store the original function name and the new name
-          function_name_changes[func_name] = repl_name
-
-          # Replace the function name in CQL
-          cql.gsub!(func_name, '"' + repl_name + '"')
-
-          # Replace the function name in measure observations
-          model.observations.each do |obs|
-            obs[:function_name] = repl_name if obs[:function_name] == func_name[1..-2] # Ignore quotes
-          end
-        end
-      end
-      
-      # Iterate over cql_libraries to replace the function references in other librariers.
-      function_name_changes.each do |original_name, new_name|
-        cql_libraries.each do |cql|
-          cql.scan(/#{original_name}/).flatten.each do |func_name|
-            cql.gsub!(func_name, '"' + new_name + '"')
-          end
-        end
-      end
-      return cql_libraries, model
-    end
-
-    # Checks if the given string is a reserved keyword in JavaScript. Useful
-    # for sanitizing potential user input from imported CQL code.
-    def self.is_javascript_keyword(string)
-      ['do', 'if', 'in', 'for', 'let', 'new', 'try', 'var', 'case', 'else', 'enum', 'eval', 'false', 'null', 'this', 'true', 'void', 'with', 'break', 'catch', 'class', 'const', 'super', 'throw', 'while', 'yield', 'delete', 'export', 'import', 'public', 'return', 'static', 'switch', 'typeof', 'default', 'extends', 'finally', 'package', 'private', 'continue', 'debugger', 'function', 'arguments', 'interface', 'protected', 'implements', 'instanceof'].include? string
-    end
-
-    # Parse the JSON response into an array of json objects (one for each library)
-    def self.parse_elm_response(response)
-      # Not the same delimiter in the response as we specify ourselves in the request,
-      # so we have to extract it.
-      delimiter = response.split("\r\n")[0].strip
-      parts = response.split(delimiter)
-      # The first part will always be an empty string. Just remove it.
-      parts.shift
-      # The last part will be the "--". Just remove it.
-      parts.pop
-      # Collects the response body as json. Grabs everything from the first '{' to the last '}'
-      results = parts.map{ |part| JSON.parse(part.match(/{.+}/m).to_s, :max_nesting=>1000)}
-      results
-    end
-
-    def self.parse_elm_annotations_response(response)
-      # TODO: (JSON/XML) will need to pass the array of files here instead of parse multi-part response
-      xmls = parse_multipart_response(response)
+    def self.parse_elm_annotations(xmls)
       elm_annotations = {}
       xmls.each do |xml_lib|
         lib_annotations = CqlElm::Parser.parse(xml_lib)
         elm_annotations[lib_annotations[:identifier][:id]] = lib_annotations
       end
       elm_annotations
-    end
-
-    def self.parse_multipart_response(response)
-      # Not the same delimiter in the response as we specify ourselves in the request,
-      # so we have to extract it.
-      delimiter = response.split("\r\n")[0].strip
-      parts = response.split(delimiter)
-      # The first part will always be an empty string. Just remove it.
-      parts.shift
-      # The last part will be the "--". Just remove it.
-      parts.pop
-
-      parsed_parts = []
-      parts.each do |part|
-        lines = part.split("\r\n")
-        # The first line will always be empty string
-        lines.shift
-
-        # find the end of the http headers
-        headerEndIndex = lines.find_index { |line| line == '' }
-
-        # Remove the headers and reassemble
-        lines.shift(headerEndIndex+1)
-        parsed_parts << lines.join("\r\n")
-      end
-
-      parsed_parts
     end
 
     # Loops over the populations and retrieves the define statements that are nested within it.

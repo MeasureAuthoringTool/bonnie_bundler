@@ -35,6 +35,7 @@ module Measures
     # {file_type => file_path}
     def self.extract_to_temporary_location(zip_file, files, output_directory)
       file_paths_hash = {}
+      file_paths_hash[:ELM_XML] = []
       begin
         # Iterate over all files passed in, extract file to temporary directory.
         files.each do |xml_file|
@@ -46,11 +47,7 @@ module Measures
             if doc.root.name == 'QualityMeasureDocument' # Root node for HQMF XML
               file_paths_hash[:HQMF_XML] = xml_file_path
             elsif doc.root.name == 'library' # Root node for ELM XML
-              # TODO: (JSON/XML) this is not storing all of the ELM XML files - only one. These are getting overwritte. Need to store all for multi-library.
-              file_paths_hash[:ELM_XML] = xml_file_path
-            elsif doc.root.name == 'measure' # Root node for Simple XML
-              # TODO: (JSON/XML) can we get rid of this now?
-              file_paths_hash[:SIMPLE_XML] = xml_file_path
+              file_paths_hash[:ELM_XML] << xml_file_path
             end
           end
         end     
