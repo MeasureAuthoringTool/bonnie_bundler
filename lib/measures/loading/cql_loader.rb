@@ -38,7 +38,7 @@ module Measures
       # Get main measure from hqmf parser
       main_cql_library = hqmf_model.cql_measure_library
 
-      cql_artifacts = process_cql(files, main_cql_library, user, vsac_user, vsac_password, overwrite_valuesets, cache, includeDraft, ticket_granting_ticket, hqmf_model.hqmf_set_id)
+      cql_artifacts = process_cql(files, main_cql_library, user, vsac_user, vsac_password, overwrite_valuesets, cache, includeDraft, ticket_granting_ticket)
 
       # Create CQL Measure
       hqmf_model.backfill_patient_characteristics_with_codes(cql_artifacts[:all_codes_and_code_names])
