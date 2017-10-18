@@ -56,7 +56,7 @@ class MeasureDiffTest < ActiveSupport::TestCase
       Measures::CqlLoader.load(@updated_measure, user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD']).save
     end
     assert_equal 2, CqlMeasure.all.count
-    updated = CqlMeasure.all.last
+    updated = CqlMeasure.order_by(created_at: :asc).last
     assert_not_equal previous.title, updated.title
   end
 
