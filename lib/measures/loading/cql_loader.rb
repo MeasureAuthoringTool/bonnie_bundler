@@ -29,7 +29,6 @@ module Measures
       measure = nil
       cql = nil
       hqmf_path = nil
-      # TODO: (JSON/XML) store everything grabbed from original zip. Or do we store just the zip?
       # Grabs the cql file contents, the elm_xml contents, elm_json contents and the hqmf file path
       files = get_files_from_zip(zip_file, out_dir)
 
@@ -39,8 +38,7 @@ module Measures
       # Get main measure from hqmf parser
       main_cql_library = hqmf_model.cql_measure_library
 
-      # Remove spaces in functions in all libraries, including observations.
-      cql_artifacts = process_cql(files, main_cql_library, user, vsac_user, vsac_password, overwrite_valuesets, cache, includeDraft, ticket_granting_ticket)
+      cql_artifacts = process_cql(files, main_cql_library, user, vsac_user, vsac_password, overwrite_valuesets, cache, includeDraft, ticket_granting_ticket, hqmf_model.hqmf_set_id)
 
       # Create CQL Measure
       hqmf_model.backfill_patient_characteristics_with_codes(cql_artifacts[:all_codes_and_code_names])
