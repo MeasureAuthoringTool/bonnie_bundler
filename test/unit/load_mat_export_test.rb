@@ -16,7 +16,11 @@ class LoadMATExportTest < ActiveSupport::TestCase
       user = User.new
       user.save
       measure_details = { 'episode_of_care'=> false }
-      Measures::CqlLoader.load(@cql_draft_measure_mat_export, user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD'], overwrite_valuesets=false, cache=false, includeDraft=true, ticket_granting_ticket=nil).save
+      overwrite_valuesets=false
+      cache=false
+      includeDraft=true
+      ticket_granting_ticket=nil
+      Measures::CqlLoader.load(@cql_draft_measure_mat_export, user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD'], overwrite_valuesets, cache, includeDraft, ticket_granting_ticket).save
       assert_equal 1, CqlMeasure.all.count
       measure = CqlMeasure.all.first
       assert_equal "Screening for Depression", measure.title
