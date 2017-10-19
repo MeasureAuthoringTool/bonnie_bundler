@@ -1,7 +1,5 @@
 require 'test_helper'
 require 'vcr_setup.rb'
-require 'pry'
-
 
 # Test ensures that the correct vsac requests are made when loading a measure.
 class ValueSetLoadingTest < ActiveSupport::TestCase
