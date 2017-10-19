@@ -37,7 +37,7 @@ module Measures
 
       # Remove spaces in functions in all libraries, including observations.
       cql_libraries, hqmf_model = remove_spaces_in_functions(cql_libraries, hqmf_model)
-      cql_artifacts = process_cql(cql_libraries, main_cql_library, user, vsac_user, vsac_password, overwrite_valuesets, cache, includeDraft, ticket_granting_ticket, hqmf_model.hqmf_set_id)
+      cql_artifacts = process_cql(cql_libraries, main_cql_library, user, vsac_user, vsac_password, overwrite_valuesets, cache, includeDraft, ticket_granting_ticket)
 
       # Create CQL Measure
       hqmf_model.backfill_patient_characteristics_with_codes(cql_artifacts[:all_codes_and_code_names])
@@ -75,8 +75,16 @@ module Measures
       measure
     end
 
+    def self.load(file, user, measure_details, vsac_user=nil, vsac_password=nil, overwrite_valuesets=false, cache=false, includeDraft=false, ticket_granting_ticket=nil)
+      measure = nil
+      Dir.mktmpdir do |dir|
+        measure = load_mat_cql_exports(user, file, dir, measure_details, vsac_user, vsac_password, overwrite_valuesets, cache, includeDraft, ticket_granting_ticket)
+      end
+      measure
+    end
+
     # Manages all of the CQL processing that is not related to the HQMF.
-    def self.process_cql(cql_libraries, main_cql_library, user, vsac_user=nil, vsac_password=nil, overwrite_valuesets=nil, cache=nil, includeDraft=nil, ticket_granting_ticket=nil, measure_id=nil)
+    def self.process_cql(cql_libraries, main_cql_library, user, vsac_user=nil, vsac_password=nil, overwrite_valuesets=nil, cache=nil, includeDraft=nil, ticket_granting_ticket=nil)
       # Translate the cql to elm
       elms, elm_annotations = translate_cql_to_elm(cql_libraries)
 
@@ -102,7 +110,7 @@ module Measures
       value_set_models = []
       if (vsac_user && vsac_password) || ticket_granting_ticket
         begin
-          value_set_models =  Measures::ValueSetLoader.load_value_sets_from_vsac(elm_value_sets, vsac_user, vsac_password, user, overwrite_valuesets, includeDraft, ticket_granting_ticket, cache, measure_id)
+          value_set_models =  Measures::ValueSetLoader.load_value_sets_from_vsac(elm_value_sets, vsac_user, vsac_password, user, overwrite_valuesets, includeDraft, ticket_granting_ticket)
         rescue Exception => e
           raise VSACException.new "Error Loading Value Sets from VSAC: #{e.message}"
         end
@@ -134,7 +142,6 @@ module Measures
 
       # Get code systems and codes for all value sets in the elm.
       all_codes_and_code_names = HQMF2JS::Generator::CodesToJson.from_value_sets(value_set_models)
-
       # Replace code system oids with friendly names
       # TODO: preferred solution would be to continue using OIDs in the ELM and enable Bonnie to supply those OIDs
       #   to the calculation engine in patient data and value sets.
@@ -231,7 +238,6 @@ module Measures
             code_sets[code_system_name] << code_reference['id']
             # Generate a unique number as our fake "oid"
             code_guid = SecureRandom.uuid
-
             # Keep a list of generated_guids and a hash of guids with code system names and codes.
             single_code_references << { guid: code_guid, code_system_name: code_system_name, code: code_reference['id'] }
 
