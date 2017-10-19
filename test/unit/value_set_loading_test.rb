@@ -17,7 +17,7 @@ class ValueSetLoadingTest < ActiveSupport::TestCase
     VCR.use_cassette("vs_loading_draft_no_profile_version") do
       mat_file = File.new File.join("test", "fixtures", "vs_loading", "DocofMeds_v5_1_Artifacts.zip")
       measure_details = {}
-      measure = Measures::MATLoader.load(mat_file, @user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD'], false, false, true)
+      measure = Measures::CqlLoader.load(mat_file, @user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD'], false, false, true)
       measure.value_sets.each do |vs|
         if vs.oid == "2.16.840.1.113883.3.600.1.1834"
           assert_equal 154, vs.concepts.count
@@ -31,7 +31,7 @@ class ValueSetLoadingTest < ActiveSupport::TestCase
     VCR.use_cassette("vs_loading_draft_profile") do
       mat_file = File.new File.join("test", "fixtures", "vs_loading", "DocofMeds_v5_1_Artifacts_With_Profiles.zip")
       measure_details = {}
-      measure = Measures::MATLoader.load(mat_file, @user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD'], false, false, true)
+      measure = Measures::CqlLoader.load(mat_file, @user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD'], false, false, true)
       measure.value_sets.each do |vs|
         if vs.oid == "2.16.840.1.113883.3.600.1.1834"
           assert_equal 154, vs.concepts.count
@@ -46,7 +46,7 @@ class ValueSetLoadingTest < ActiveSupport::TestCase
     VCR.use_cassette("vs_loading_draft_verion") do
       mat_file = File.new File.join("test", "fixtures", "vs_loading", "DocofMeds_v5_1_Artifacts_Version.zip")
       measure_details = {}
-      measure = Measures::MATLoader.load(mat_file, @user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD'], false, false, true)
+      measure = Measures::CqlLoader.load(mat_file, @user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD'], false, false, true)
       measure.value_sets.each do |vs|
         if vs.oid == "2.16.840.1.113883.3.600.1.1834"
           assert_equal 154, vs.concepts.count
@@ -60,7 +60,7 @@ class ValueSetLoadingTest < ActiveSupport::TestCase
     VCR.use_cassette("vs_loading_no_profile_version") do
       mat_file = File.new File.join("test", "fixtures", "vs_loading", "DocofMeds_v5_1_Artifacts.zip")
       measure_details = {}
-      measure = Measures::MATLoader.load(mat_file, @user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD'], false, false, false)
+      measure = Measures::CqlLoader.load(mat_file, @user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD'], false, false, false)
       measure.value_sets.each do |vs|
         if vs.oid == "2.16.840.1.113883.3.600.1.1834"
           assert_equal 154, vs.concepts.count
@@ -74,7 +74,7 @@ class ValueSetLoadingTest < ActiveSupport::TestCase
     VCR.use_cassette("vs_loading_profile") do
       mat_file = File.new File.join("test", "fixtures", "vs_loading", "DocofMeds_v5_1_Artifacts_With_Profiles.zip")
       measure_details = {}
-      measure = Measures::MATLoader.load(mat_file, @user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD'], false, false, false)
+      measure = Measures::CqlLoader.load(mat_file, @user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD'], false, false, false)
       measure.value_sets.each do |vs|
         if vs.oid == "2.16.840.1.113883.3.600.1.1834"
           assert_equal 152, vs.concepts.count
@@ -88,7 +88,7 @@ class ValueSetLoadingTest < ActiveSupport::TestCase
     VCR.use_cassette("vs_loading_version") do
       mat_file = File.new File.join("test", "fixtures", "vs_loading", "DocofMeds_v5_1_Artifacts_Version.zip")
       measure_details = {}
-      measure = Measures::MATLoader.load(mat_file, @user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD'], false, false, false)
+      measure = Measures::CqlLoader.load(mat_file, @user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD'], false, false, false)
       measure.value_sets.each do |vs|
         if vs.oid == "2.16.840.1.113883.3.600.1.1834"
           assert_equal 148, vs.concepts.count
