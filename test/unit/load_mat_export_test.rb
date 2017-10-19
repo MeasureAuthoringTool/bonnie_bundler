@@ -23,9 +23,10 @@ class LoadMATExportTest < ActiveSupport::TestCase
       assert_equal "40280582-5B4D-EE92-015B-827458050128", measure.hqmf_id
       assert_equal 1, measure.populations.size
       assert_equal 5, measure.population_criteria.keys.count
+      assert_equal "C1EA44B5-B922-49C5-B41C-6509A6A86158", measure.hqmf_set_id
       # Assert value_set versions are all "Draft-"
       for value_set in measure.value_sets
-        assert_equal "Draft-", value_set["version"]
+        assert_equal ("Draft-" + measure.hqmf_set_id), value_set["version"]
       end
     end
   end
