@@ -19,7 +19,7 @@ module Measures
       HealthDataStandards::SVS::ValueSet.by_user(user).in(oid: value_set_oids)
     end
 
-    def self.load_value_sets_from_vsac(value_sets, username, password, user=nil, overwrite=false, includeDraft=false, ticket_granting_ticket=nil, use_cache=false)
+    def self.load_value_sets_from_vsac(value_sets, username, password, user=nil, overwrite=false, includeDraft=false, ticket_granting_ticket=nil, use_cache=false, measure_id=nil)
       # Get a list of just the oids
       value_set_oids = value_sets.map {|value_set| value_set[:oid]}
       value_set_models = []
