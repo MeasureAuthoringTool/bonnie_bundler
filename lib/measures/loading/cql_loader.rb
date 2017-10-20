@@ -289,12 +289,12 @@ module Measures
           :accept => :json,
           :content_type => :json,
           :url => 'http://localhost:8080/cql/translator',
+          :disablePromotion => "true",
           :payload => {
             :multipart => true,
             :file => cql
           }
         )
-
         elm_json = request.execute
         elm_json.gsub! 'urn:oid:', '' # Removes 'urn:oid:' from ELM for Bonnie
 
@@ -307,6 +307,7 @@ module Measures
           },
           :content_type => 'multipart/form-data',
           :url => 'http://localhost:8080/cql/translator',
+          :disablePromotion => "true",
           :payload => {
             :multipart => true,
             :file => cql
