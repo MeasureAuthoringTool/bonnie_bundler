@@ -38,7 +38,7 @@ module Measures
       # Get main measure from hqmf parser
       main_cql_library = hqmf_model.cql_measure_library
 
-      cql_artifacts = process_cql(files, main_cql_library, user, vsac_user, vsac_password, overwrite_valuesets, cache, includeDraft, ticket_granting_ticket)
+      cql_artifacts = process_cql(files, main_cql_library, user, vsac_user, vsac_password, overwrite_valuesets, cache, includeDraft, ticket_granting_ticket, hqmf_model.hqmf_set_id)
 
       # Create CQL Measure
       hqmf_model.backfill_patient_characteristics_with_codes(cql_artifacts[:all_codes_and_code_names])
@@ -90,7 +90,7 @@ module Measures
     end
 
     # Manages all of the CQL processing that is not related to the HQMF.
-    def self.process_cql(files, main_cql_library, user, vsac_user=nil, vsac_password=nil, overwrite_valuesets=nil, cache=nil, includeDraft=nil, ticket_granting_ticket=nil)
+    def self.process_cql(files, main_cql_library, user, vsac_user=nil, vsac_password=nil, overwrite_valuesets=nil, cache=nil, includeDraft=nil, ticket_granting_ticket=nil, measure_id=nil)
       elm_strings = files[:ELM_JSON]
       # Removes 'urn:oid:' from ELM for Bonnie and Parse the JSON
       elm_strings.each { |elm_string| elm_string.gsub! 'urn:oid:', '' }
@@ -119,7 +119,7 @@ module Measures
       value_set_models = []
       if (vsac_user && vsac_password) || ticket_granting_ticket
         begin
-          value_set_models =  Measures::ValueSetLoader.load_value_sets_from_vsac(elm_value_sets, vsac_user, vsac_password, user, overwrite_valuesets, includeDraft, ticket_granting_ticket)
+          value_set_models =  Measures::ValueSetLoader.load_value_sets_from_vsac(elm_value_sets, vsac_user, vsac_password, user, overwrite_valuesets, includeDraft, ticket_granting_ticket, cache, measure_id)
         rescue Exception => e
           raise VSACException.new "Error Loading Value Sets from VSAC: #{e.message}"
         end

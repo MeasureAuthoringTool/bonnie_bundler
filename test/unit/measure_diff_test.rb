@@ -59,8 +59,8 @@ class MeasureDiffTest < ActiveSupport::TestCase
     end
     assert_equal 2, CqlMeasure.all.count
     assert_equal 2, CqlMeasurePackage.all.count
-    updated = CqlMeasure.all.last
-    updated_package = CqlMeasurePackage.all.last
+    updated = CqlMeasure.order_by(created_at: :asc).last
+    updated_package = CqlMeasurePackage.order_by(created_at: :asc).last
     assert_not_equal previous.title, updated.title
     assert_not_equal previous_package.measure_id, updated_package.measure_id
   end
