@@ -9,10 +9,7 @@ module Measures
         cql_entry = zip_file.glob(File.join('**','**.cql')).select {|x| !x.name.starts_with?('__MACOSX') }.first
         elm_json = zip_file.glob(File.join('**','**.json')).select {|x| !x.name.starts_with?('__MACOSX') }.first
         human_readable_entry = zip_file.glob(File.join('**','**.html')).select { |x| !x.name.starts_with?('__MACOSX') }.first
-        
-        # TODO: (JSON/XML) need to have clear error message for packages that don't include the JSON or XML.
-        # Should say to re-export from MAT but also note what the missing artifacts are
-        
+
         # Grab all xml files in the zip.
         zip_xml_files = zip_file.glob(File.join('**','**.xml')).select {|x| !x.name.starts_with?('__MACOSX') }
 
