@@ -35,6 +35,25 @@ class LoadMATExportTest < ActiveSupport::TestCase
     end
   end
 
+  test "Using the cql-to-elm helper translation service" do
+    dump_db
+    user = User.new
+    user.save
+
+    VCR.use_cassette("valid_vsac_response") do
+      measure_details = { 'episode_of_care'=> false }
+      Measures::CqlLoader.load(@cql_mat_export, user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD']).save
+      assert_equal 1, CqlMeasure.all.count
+    end
+
+    VCR.use_cassette("valid_translation_response") do
+      measure = CqlMeasure.first
+      elm_json, elm_xml = CqlElm::CqlToElmHelper.translate_cql_to_elm(measure[:cql])
+      assert_equal 1, elm_json.count
+      assert_equal 1, elm_xml.count
+    end
+  end
+
   test "Loading a CQL Mat export zip file, with VSAC credentials" do
     VCR.use_cassette("valid_vsac_response") do
       dump_db
