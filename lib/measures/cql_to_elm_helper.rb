@@ -51,29 +51,14 @@ module CqlElm
       private
       # Parse the JSON response into an array of json objects (one for each library)
       def self.parse_elm_response(response)
-        # Not the same delimiter in the response as we specify ourselves in the request,
-        # so we have to extract it.
-        delimiter = response.split("\r\n")[0].strip
-        parts = response.split(delimiter)
-        # The first part will always be an empty string. Just remove it.
-        parts.shift
-        # The last part will be the "--". Just remove it.
-        parts.pop
+        parts = pre_process_response(response)
         # Grabs everything from the first '{' to the last '}'
         results = parts.map{ |part| part.match(/{.+}/m).to_s }
         results
       end
   
       def self.parse_multipart_response(response)
-        # Not the same delimiter in the response as we specify ourselves in the request,
-        # so we have to extract it.
-        delimiter = response.split("\r\n")[0].strip
-        parts = response.split(delimiter)
-        # The first part will always be an empty string. Just remove it.
-        parts.shift
-        # The last part will be the "--". Just remove it.
-        parts.pop
-  
+        parts = pre_process_response(response)
         parsed_parts = []
         parts.each do |part|
           lines = part.split("\r\n")
@@ -90,5 +75,16 @@ module CqlElm
         parsed_parts
       end
 
+      def self.pre_process_response(response)
+        # Not the same delimiter in the response as we specify ourselves in the request,
+        # so we have to extract it.
+        delimiter = response.split("\r\n")[0].strip
+        parts = response.split(delimiter)
+        # The first part will always be an empty string. Just remove it.
+        parts.shift
+        # The last part will be the "--". Just remove it.
+        parts.pop
+        parts
+      end
   end
 end
