@@ -1,8 +1,10 @@
 language: ruby
 rvm:
-  - "2.0.0"
+  - "2.3.5"
 services: mongodb
-script: bundle exec rake
+script:
+  - bundle exec bundle-audit check --update
+  - bundle exec rake
 notifications:
   email:
     recipients:

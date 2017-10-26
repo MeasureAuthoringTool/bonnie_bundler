@@ -52,6 +52,7 @@ class CqlMeasure
   belongs_to :user
   belongs_to :bundle, class_name: "HealthDataStandards::CQM::Bundle"
   has_and_belongs_to_many :records, :inverse_of => nil
+  has_one :package, class_name: "CqlMeasurePackage", inverse_of: :measure, dependent: :delete
 
   scope :by_measure_id, ->(id) { where({'measure_id'=>id }) }
   scope :by_type, ->(type) { where({'type'=>type}) }
@@ -148,4 +149,12 @@ class CqlMeasure
     self.complexity
   end
 
+end
+
+class CqlMeasurePackage
+  include Mongoid::Document
+  include Mongoid::Timestamps
+
+  field :file, type: BSON::Binary
+  belongs_to :measure, class_name: "CqlMeasure", inverse_of: :package
 end

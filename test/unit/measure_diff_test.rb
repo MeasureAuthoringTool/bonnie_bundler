@@ -47,7 +47,9 @@ class MeasureDiffTest < ActiveSupport::TestCase
       Measures::CqlLoader.load(@previous_measure, user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD']).save
     end
     assert_equal 1, CqlMeasure.all.count
+    assert_equal 1, CqlMeasurePackage.all.count
     previous = CqlMeasure.all.first
+    previous_package = CqlMeasurePackage.all.first
     VCR.use_cassette("valid_vsac_response_158_update") do
       @updated_measure = File.new File.join('test','fixtures','CMS158_v5_4_Artifacts_Update.zip')
       user = User.new
@@ -56,8 +58,11 @@ class MeasureDiffTest < ActiveSupport::TestCase
       Measures::CqlLoader.load(@updated_measure, user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD']).save
     end
     assert_equal 2, CqlMeasure.all.count
-    updated = CqlMeasure.all.last
+    assert_equal 2, CqlMeasurePackage.all.count
+    updated = CqlMeasure.order_by(created_at: :asc).last
+    updated_package = CqlMeasurePackage.order_by(created_at: :asc).last
     assert_not_equal previous.title, updated.title
+    assert_not_equal previous_package.measure_id, updated_package.measure_id
   end
 
 end
