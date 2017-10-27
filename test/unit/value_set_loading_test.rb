@@ -66,6 +66,18 @@ class ValueSetLoadingTest < ActiveSupport::TestCase
       end
     end
   end
+
+  test 'VSAC Error Exception Handling' do
+    # Expects that default profile will be used
+    VCR.use_cassette("vs_loading_no_profile_version") do
+      mat_file = File.new File.join("test", "fixtures", "vs_loading", "DocofMeds_v5_1_Artifacts.zip")
+      measure_details = {}
+      exception = assert_raise Measures::VSACException do
+        measure = Measures::CqlLoader.load(mat_file, "fake user", measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD'], false, false, false)
+      end
+      assert_equal 'Error Loading Value Sets from VSAC: undefined method `id\' for "fake user":String', exception.message
+    end
+  end
   
   test 'Loading without IncludeDraft and a Profile' do
     # Expects that given profile will be used
