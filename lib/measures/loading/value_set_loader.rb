@@ -119,7 +119,7 @@ module Measures
           delete_existing_vs(user, value_set_oids)
           backup_vs.each {|vs| HealthDataStandards::SVS::ValueSet.new(vs.attributes).save }
         end
-        raise VSACException.new "Error Loading Value Sets from VSAC: #{e.message}"
+        raise VSACException.new "#{e.message}"
       end
 
       puts "\tloaded #{from_vsac} value sets from vsac" if from_vsac > 0
