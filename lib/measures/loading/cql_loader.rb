@@ -181,10 +181,10 @@ module Measures
       # have dots in keys on object update or retrieve....
       value_set_oid_version_objects = []
       value_sets.each do |vs|
-        value_set_oid_version_objects << {:oid => vs.oid, :version => vs.version}
+        value_set_oid_version_objects << {:oid => vs.oid, :version => vs.version, :direct_reference => false}
       end
       single_code_references.each do |single_code|
-        value_set_oid_version_objects << {:oid => single_code[:guid], :version => ""}
+        value_set_oid_version_objects << {:oid => single_code[:guid], :version => "", :direct_reference => true}
       end
       value_set_oid_version_objects
     end
