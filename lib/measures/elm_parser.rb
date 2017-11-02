@@ -43,7 +43,7 @@ module CqlElm
           node[:node_type] = node_type  unless node_type.nil?
           node[:ref_id] = child['r'] unless child['r'].nil?
           define_name = child_define_name unless child_define_name.nil? 
-          ret[:children] << node
+          ret[:children] << node unless node[:children] == []
         else
           #Cull pure whitespace nodes.
           if (/^\n\s+$/ =~ child.to_html).nil?
@@ -56,7 +56,7 @@ module CqlElm
             clause = {
               text: child.to_html
             }
-            add_whitespace(clause)
+            clause[:text].gsub!("\t", "  ")
             clause[:ref_id] = child['r'] unless child['r'].nil?
             ret[:children] << clause
           end
@@ -77,17 +77,6 @@ module CqlElm
       node_type
     end
     
-    def self.add_whitespace(clause)
-      #TODO: This is ugly, hopefully the stuff we get from the translation service will give good data
-      #Improving this will most likely be based on Bryn's addition of pretty-print support to the next
-      #itteration of the translation jar
-      if @previousNoTrailingSpaceNotPeriod && (/\.$/ =~ clause[:text]).nil? && (/^\s/ =~ clause[:text]).nil?
-        clause[:text] = " " + clause[:text]
-      end
-      @previousNoTrailingSpaceNotPeriod = false
-      if (/\s$/ =~ clause[:text]).nil? && (/\.$/ =~ clause[:text]).nil?
-        @previousNoTrailingSpaceNotPeriod = true
-      end
-    end
+    
   end
 end
