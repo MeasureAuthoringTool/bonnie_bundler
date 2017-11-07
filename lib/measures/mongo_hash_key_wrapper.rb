@@ -16,7 +16,7 @@ module Measures
       newKeys.each { |old, new| theHash[new] = theHash.delete old}
       # now recurse on any contained hashes
       theHash.each do |key,value|
-        if value.class == Hash
+        if value.respond_to?(:key)
           wrapKeys(value)
         end
       end
@@ -34,7 +34,7 @@ module Measures
       newKeys.each { |old, new| theHash[new] = theHash.delete old}
       # now recurse on any contained hashes
       theHash.each do |key,value|
-        if value.class == Hash
+        if value.respond_to?(:key)
           unwrapKeys(value)
         end
       end
