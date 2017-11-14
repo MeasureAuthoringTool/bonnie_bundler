@@ -9,7 +9,7 @@ module CqlElm
         statements: [],
         identifier: {}
       }
-      @doc = Nokogiri::XML(elm_xml)
+      @doc = Nokogiri::XML(elm_xml) {|d| d.noblanks}
       #extract library identifier data
       ret[:identifier][:id] = @doc.css("identifier").attr("id").value()
       ret[:identifier][:version] = @doc.css("identifier").attr("version").value()
@@ -45,21 +45,14 @@ module CqlElm
           define_name = child_define_name unless child_define_name.nil? 
           ret[:children] << node
         else
-          #Cull pure whitespace nodes.
-          if (/^\n\s+$/ =~ child.to_html).nil?
-            #Determine if the current leaf is the one that contains the define name
-            #If so, start bubbling it up.
-            #There will only be a single define node in the tree.
-            if (/^define/ =~ child.to_html)
-              define_name = child.to_html.split("\"")[1]
-            end
-            clause = {
-              text: child.to_html
-            }
-            add_whitespace(clause)
-            clause[:ref_id] = child['r'] unless child['r'].nil?
-            ret[:children] << clause
+          if (/^define/ =~ child.to_html)
+            define_name = child.to_html.split("\"")[1]
           end
+          clause = {
+            text: child.to_html.gsub(/\t/, "  ")
+          }
+          clause[:ref_id] = child['r'] unless child['r'].nil?
+          ret[:children] << clause
         end
       end
       return ret, define_name
@@ -76,18 +69,6 @@ module CqlElm
       node_type = ref_node['xsi:type'] unless ref_node.nil?
       node_type
     end
-    
-    def self.add_whitespace(clause)
-      #TODO: This is ugly, hopefully the stuff we get from the translation service will give good data
-      #Improving this will most likely be based on Bryn's addition of pretty-print support to the next
-      #itteration of the translation jar
-      if @previousNoTrailingSpaceNotPeriod && (/\.$/ =~ clause[:text]).nil? && (/^\s/ =~ clause[:text]).nil?
-        clause[:text] = " " + clause[:text]
-      end
-      @previousNoTrailingSpaceNotPeriod = false
-      if (/\s$/ =~ clause[:text]).nil? && (/\.$/ =~ clause[:text]).nil?
-        @previousNoTrailingSpaceNotPeriod = true
-      end
-    end
+
   end
 end
