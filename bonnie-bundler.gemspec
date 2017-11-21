@@ -20,7 +20,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'mongoid', '~> 5.0'
   s.add_dependency 'rubyzip', '~> 1.2', '>= 1.2.1'
   s.add_dependency 'zip-zip', '~> 0.3'
-  s.add_dependency 'diffy', '~> 3.0'
+  s.add_dependency 'diffy', '~> 3.0.0'
 
   # needed for parsing value sets (we need to use roo rather than rubyxl because the value sets are in xls rather than xlsx)
   s.add_dependency 'roo', '~> 1.13'
