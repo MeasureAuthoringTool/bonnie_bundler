@@ -324,42 +324,74 @@ module Measures
 
       cql_statement_depencency_map[main_cql_library] = {}
       main_library_elm['library']['statements']['def'].each { |statement|
-        cql_statement_depencency_map[main_cql_library][statement['name']] = retrieve_all_statements_in_population(statement, elms)
+        cql_statement_depencency_map[main_cql_library][statement['name']] = retrieve_all_statements_in_population(statement, main_library_elm, elms)
       }
       cql_statement_depencency_map
     end
 
     # Given a starting define statement, a starting library and all of the libraries,
     # this will return an array of all nested define statements.
-    def self.retrieve_all_statements_in_population(statement, elms)
+    def self.retrieve_all_statements_in_population(statement, statement_library, elms, statement_library_name=nil)
       all_results = []
       if statement.is_a? String
-        statement = retrieve_sub_statement_for_expression_name(statement, elms)
+        statement = retrieve_sub_statement_for_expression_name(statement, elms, statement_library_name)
       end
       sub_statement_names = retrieve_expressions_from_statement(statement)
       # Currently if sub_statement_name is another Population we do not remove it.
       if sub_statement_names.length > 0
         sub_statement_names.each do |sub_statement_name|
           # Check if the statement is not a built in expression
-          sub_library_name, sub_statement = retrieve_sub_statement_for_expression_name(sub_statement_name, elms)
-          if sub_statement
-            all_results << { library_name: sub_library_name, statement_name: sub_statement_name }
+          if sub_statement_name[:name]
+            sub_statement_name[:library] = alias_to_library_name(sub_statement_name[:library], statement_library)
+            all_results << { library_name: sub_statement_name[:library], statement_name: sub_statement_name[:name] }
           end
         end
       end
       all_results
     end
 
+    # Converts a Library alias to the actual Library name
+    # If no library_alias is provided, return the name of the library that is passed in
+    def self.alias_to_library_name(library_alias, statement_library)
+      if library_alias == nil
+        return statement_library['library']['identifier']['id']
+      end
+
+      if statement_library['library']['includes']
+        statement_library['library']['includes']['def'].each do |library_hash|
+          if library_alias == library_hash['localIdentifier']
+            return library_hash['path']
+          end
+        end
+      end
+      library_alias
+    end
+
     # Finds which library the given define statement exists in.
     # Returns the JSON statement that contains the given name.
     # If given statement name is a built in expression, return nil.
-    def self.retrieve_sub_statement_for_expression_name(name, elms)
+    def self.retrieve_sub_statement_for_expression_name(name, elms, library_name=nil)
+      # If a library_name is provided, search for elm with that name to look for definitions in.
+      if library_name
+        library_elm = elms.find { |elm| elm['library']['identifier']['id'] == library_name }
+        statement_definition = find_definition_in_elm(library_elm, name)
+        return statement_definition if statement_definition
+      end
+
+      # If no library name is provided or a statement can't be found in the provided elm library,
+      # loop over all elms and return the first instance.
       elms.each do | parsed_elm |
-        parsed_elm['library']['statements']['def'].each do |statement|
-          return [parsed_elm['library']['identifier']['id'], statement] if statement['name'] == name
-        end
+        statement_definition = find_definition_in_elm(parsed_elm, name)
+        return statement_definition if statement_definition
       end
       nil
+    end
+
+    # Given an elm structure and a statment_name return the statement JSON structure.
+    def self.find_definition_in_elm(elm, statement_name)
+      elm['library']['statements']['def'].each do |statement|
+        return [elm['library']['identifier']['id'], statement] if statement['name'] == statement_name
+      end
     end
 
     # Traverses the given statement and returns all of the potential additional statements.
@@ -374,7 +406,7 @@ module Measures
         else
           if k == 'type' && (v == 'ExpressionRef' || v == 'FunctionRef')
             # We ignore the Patient expression because it isn't an actual define statment in the cql
-            expressions << statement['name'] unless statement['name'] == 'Patient'
+            expressions.push({name: statement['name'], library: statement['libraryName']}) unless statement['name'] == 'Patient'
           end
         end
       end
@@ -406,7 +438,8 @@ module Measures
         if !starting_hash.has_key?(key_statement[:library_name])
           starting_hash[key_statement[:library_name]] = {}
         end
-        starting_hash[key_statement[:library_name]][key_statement[:statement_name]] = retrieve_all_statements_in_population(key_statement[:statement_name], elms).uniq
+        library_elm = elms.find { |elm| elm['library']['identifier']['id'] == key_statement[:library_name] }
+        starting_hash[key_statement[:library_name]][key_statement[:statement_name]] = retrieve_all_statements_in_population(key_statement[:statement_name], library_elm, elms, key_statement[:library_name]).uniq
         # If there are no statements return hash
         return starting_hash if starting_hash[key_statement[:library_name]][key_statement[:statement_name]].empty?
         # Loop over array of sub statements and build out hash keys for each.
