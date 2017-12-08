@@ -370,18 +370,11 @@ module Measures
     # Finds which library the given define statement exists in.
     # Returns the JSON statement that contains the given name.
     # If given statement name is a built in expression, return nil.
-    def self.retrieve_sub_statement_for_expression_name(name, elms, library_name=nil)
-      # If a library_name is provided, search for elm with that name to look for definitions in.
+    def self.retrieve_sub_statement_for_expression_name(name, elms, library_name)
+      # Search for elm with that name to look for definitions in.
       if library_name
         library_elm = elms.find { |elm| elm['library']['identifier']['id'] == library_name }
         statement_definition = find_definition_in_elm(library_elm, name)
-        return statement_definition if statement_definition
-      end
-
-      # If no library name is provided or a statement can't be found in the provided elm library,
-      # loop over all elms and return the first instance.
-      elms.each do | parsed_elm |
-        statement_definition = find_definition_in_elm(parsed_elm, name)
         return statement_definition if statement_definition
       end
       nil
