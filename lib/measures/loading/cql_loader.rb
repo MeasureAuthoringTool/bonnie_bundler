@@ -364,7 +364,7 @@ module Measures
           end
         end
       end
-      library_alias
+      raise MeasureLoadingException.new 'Unexpected statement library structure encountered.'
     end
 
     # Finds which library the given define statement exists in.
