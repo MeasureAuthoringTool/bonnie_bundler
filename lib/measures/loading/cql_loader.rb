@@ -99,7 +99,8 @@ module Measures
       # Go back for the library statements
       cql_definition_dependency_structure = populate_used_library_dependencies(cql_definition_dependency_structure, main_cql_library, elms)
 
-      # fix up statement names in cql_statement_dependencies to not use periods
+      # fix up statement names in cql_statement_dependencies to not use periods <<WRAP 1>>
+      # this is matched with an UNWRAP in MeasuresController in the bonnie project
       Measures::MongoHashKeyWrapper::wrapKeys cql_definition_dependency_structure
 
       # Depening on the value of the value set version, change it to null, strip out a substring or leave it alone.
