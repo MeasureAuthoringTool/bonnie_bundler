@@ -42,11 +42,28 @@ module Measures
       json = hqmf_model.to_json
       json.convert_keys_to_strings
 
+      # Set the code list ids of data criteria and source data criteria that use direct reference codes to GUIDS.
+      json['source_data_criteria'], json['data_criteria'] = set_data_criteria_code_list_ids(json, cql_artifacts)
+
+      # Create CQL Measure
+      measure = Measures::Loader.load_hqmf_cql_model_json(json, user, cql_artifacts[:all_value_set_oids], main_cql_library, cql_artifacts[:cql_definition_dependency_structure],
+                                                          cql_artifacts[:elms], cql_artifacts[:elm_annotations], files[:CQL], nil, cql_artifacts[:value_set_oid_version_objects])
+      measure['episode_of_care'] = measure_details['episode_of_care']
+      measure['type'] = measure_details['type']
+
+      # Create, associate and save the measure package.
+      measure.package = CqlMeasurePackage.new(file: BSON::Binary.new(zip_file.read()))
+      measure.package.save
+
+      measure
+    end
+
+    def self.set_data_criteria_code_list_ids(json, cql_artifacts)
       # Loop over data criteria to search for data criteria that is using a single reference code.
       # Once found set the Data Criteria's 'code_list_id' to our fake oid. Do the same for source data criteria.
       json['data_criteria'].each do |data_criteria_name, data_criteria|
-        # We do not want to replace an existing code_list_id. Skip.
-        unless data_criteria['code_list_id']
+        # We do not want to replace an existing code_list_id. Skip it, unless it is a GUID.
+        if !data_criteria.key?('code_list_id') || (data_criteria['code_list_id'] && data_criteria['code_list_id'].include?('-'))
           if data_criteria['inline_code_list']
             # Check to see if inline_code_list contains the correct code_system and code for a direct reference code.
             data_criteria['inline_code_list'].each do |code_system, code_list|
@@ -64,18 +81,7 @@ module Measures
           end
         end
       end
-
-      # Create CQL Measure
-      measure = Measures::Loader.load_hqmf_cql_model_json(json, user, cql_artifacts[:all_value_set_oids], main_cql_library, cql_artifacts[:cql_definition_dependency_structure], 
-                                                          cql_artifacts[:elms], cql_artifacts[:elm_annotations], files[:CQL], nil, cql_artifacts[:value_set_oid_version_objects])
-      measure['episode_of_care'] = measure_details['episode_of_care']
-      measure['type'] = measure_details['type']
-
-      # Create, associate and save the measure package.
-      measure.package = CqlMeasurePackage.new(file: BSON::Binary.new(zip_file.read()))
-      measure.package.save
-
-      measure
+      return json['source_data_criteria'], json['data_criteria']
     end
 
     def self.load(file, user, measure_details, vsac_user=nil, vsac_password=nil, overwrite_valuesets=false, cache=false, includeDraft=false, ticket_granting_ticket=nil)
