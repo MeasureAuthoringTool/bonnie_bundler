@@ -256,7 +256,7 @@ module Measures
             single_code_references << { guid: code_guid, code_system_name: code_system_name, code: code_reference['id'] }
             all_codes_and_code_names[code_guid] = code_sets
             # Code_guids are unique hashes, there's no sense in adding duplicates to the ValueSet collection
-            if !HealthDataStandards::SVS::ValueSet.all().where(oid: code_guid).first()
+            if !HealthDataStandards::SVS::ValueSet.all().where(oid: code_guid, user_id: user.id).first()
               # Create a new "ValueSet" and "Concept" object and save.
               valueSet = HealthDataStandards::SVS::ValueSet.new({oid: code_guid, display_name: code_reference['name'], version: '' ,concepts: [], user_id: user.id})
               concept = HealthDataStandards::SVS::Concept.new({code: code_reference['id'], code_system_name: code_system_name, code_system_version: code_system_version, display_name: code_reference['name']})
