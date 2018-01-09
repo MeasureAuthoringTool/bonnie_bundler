@@ -49,4 +49,11 @@ class ValueSetParserTest < ActiveSupport::TestCase
     assert_equal 'Perforation of uterus (disorder)', value_sets.first.concepts.first.display_name
   end
 
+  test "Parsing a value set file with a missing child OID" do
+    parser = HQMF::ValueSet::Parser.new
+    assert_raise Measures::ValueSetException do
+      value_sets = parser.parse File.join('test', 'fixtures', 'value_sets', 'ValueSetsMissingChildOID.xls')
+    end
+  end
+
 end

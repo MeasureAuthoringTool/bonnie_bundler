@@ -221,8 +221,8 @@ module HQMF
             if @value_set_models[c.code]
               @value_set_models[c.code].concepts
             else
-              puts "\tParent #{parent_oid} is missing child oid: #{c.code}"
-              []
+              error_message = "value set #{c.code} is referenced by parent value set #{parent_oid} but not present"
+              raise Measures::ValueSetException.new "Error Parsing Value Sets: #{error_message}"
             end
           end
           parent_vs.concepts = concepts.flatten!
