@@ -63,7 +63,7 @@ module Measures
       # Once found set the Data Criteria's 'code_list_id' to our fake oid. Do the same for source data criteria.
       json['data_criteria'].each do |data_criteria_name, data_criteria|
         # We do not want to replace an existing code_list_id. Skip it, unless it is a GUID.
-        if !data_criteria.key?('code_list_id') || (data_criteria['code_list_id'] && data_criteria['code_list_id'].include?('-'))
+        unless data_criteria['code_list_id']
           if data_criteria['inline_code_list']
             # Check to see if inline_code_list contains the correct code_system and code for a direct reference code.
             data_criteria['inline_code_list'].each do |code_system, code_list|
@@ -252,13 +252,13 @@ module Measures
             code_sets[code_system_name] ||= []
             code_sets[code_system_name] << code_reference['id']
             # Generate a unique number as our fake "oid" based on parameters that identify the DRC
-            code_guid = "drc-" + Digest::SHA2.hexdigest("#{code_system_name} #{code_reference['id']} #{code_reference['name']}")            # Keep a list of generated_guids and a hash of guids with code system names and codes.
-            single_code_references << { guid: code_guid, code_system_name: code_system_name, code: code_reference['id'] }
-            all_codes_and_code_names[code_guid] = code_sets
-            # Code_guids are unique hashes, there's no sense in adding duplicates to the ValueSet collection
-            if !HealthDataStandards::SVS::ValueSet.all().where(oid: code_guid, user_id: user.id).first()
+            code_hash = "drc-" + Digest::SHA2.hexdigest("#{code_system_name} #{code_reference['id']} #{code_reference['name']} #{code_system_version}")            # Keep a list of generated_guids and a hash of guids with code system names and codes.
+            single_code_references << { guid: code_hash, code_system_name: code_system_name, code: code_reference['id'] }
+            all_codes_and_code_names[code_hash] = code_sets
+            # code_hashs are unique hashes, there's no sense in adding duplicates to the ValueSet collection
+            if !HealthDataStandards::SVS::ValueSet.all().where(oid: code_hash, user_id: user.id).first()
               # Create a new "ValueSet" and "Concept" object and save.
-              valueSet = HealthDataStandards::SVS::ValueSet.new({oid: code_guid, display_name: code_reference['name'], version: '' ,concepts: [], user_id: user.id})
+              valueSet = HealthDataStandards::SVS::ValueSet.new({oid: code_hash, display_name: code_reference['name'], version: '' ,concepts: [], user_id: user.id})
               concept = HealthDataStandards::SVS::Concept.new({code: code_reference['id'], code_system_name: code_system_name, code_system_version: code_system_version, display_name: code_reference['name']})
               valueSet.concepts << concept
               valueSet.save!
