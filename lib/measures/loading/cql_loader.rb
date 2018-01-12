@@ -62,7 +62,6 @@ module Measures
       # Loop over data criteria to search for data criteria that is using a single reference code.
       # Once found set the Data Criteria's 'code_list_id' to our fake oid. Do the same for source data criteria.
       json['data_criteria'].each do |data_criteria_name, data_criteria|
-        # We do not want to replace an existing code_list_id. Skip it, unless it is a GUID.
         unless data_criteria['code_list_id']
           if data_criteria['inline_code_list']
             # Check to see if inline_code_list contains the correct code_system and code for a direct reference code.
