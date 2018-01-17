@@ -37,8 +37,8 @@ class CQLLoaderTest < ActiveSupport::TestCase
       Measures::CqlLoader.load(direct_reference_mat_export, user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD']).save
       assert_equal 1, CqlMeasure.all.count
       measure = CqlMeasure.all.first
-      # Confirm that the source data criteria with the direct reference code starts with 'drc-'
-
+  
+      # Confirm that the source data criteria with the direct reference code is equal to the expected hash
       assert_equal measure['source_data_criteria']['prefix_5195_3_LaboratoryTestPerformed_70C9F083_14BD_4331_99D7_201F8589059D_source']['code_list_id'], "drc-986ea3d52eddc4927e63b3769b5efbaf38b76b35a9164e447fcde2e4dfd31a0c"
       assert_equal measure['data_criteria']['prefix_5195_3_LaboratoryTestPerformed_70C9F083_14BD_4331_99D7_201F8589059D']['code_list_id'], "drc-986ea3d52eddc4927e63b3769b5efbaf38b76b35a9164e447fcde2e4dfd31a0c"
 
