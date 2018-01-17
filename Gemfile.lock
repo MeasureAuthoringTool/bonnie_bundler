@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    bonnie_bundler (2.0.1)
+    bonnie_bundler (2.0.2)
       diffy (~> 3.0.0)
       health-data-standards (~> 4.0)
       hqmf2js (~> 1.4)
