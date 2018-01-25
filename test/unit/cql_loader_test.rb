@@ -51,4 +51,31 @@ class CQLLoaderTest < ActiveSupport::TestCase
       assert_equal measures[0]['data_criteria']['prefix_5195_3_LaboratoryTestPerformed_70C9F083_14BD_4331_99D7_201F8589059D']['code_list_id'], measures[1]['data_criteria']['prefix_5195_3_LaboratoryTestPerformed_70C9F083_14BD_4331_99D7_201F8589059D']['code_list_id']
     end
   end
+
+  test 'Re-loading a measure with no VSAC credentials' do
+    direct_reference_mat_export = File.new File.join('test', 'fixtures', 'CMS158_v5_4_Artifacts_Update.zip')
+    VCR.use_cassette('valid_vsac_response_158_update') do
+      dump_db
+      user = User.new
+      user.save
+
+      measure_details = { 'episode_of_care'=> false }
+      Measures::CqlLoader.load(direct_reference_mat_export, user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD']).save
+      assert_equal 1, CqlMeasure.all.count
+      measure = CqlMeasure.all.first
+      before_value_sets = measure.value_set_oids
+      before_value_set_version_object = measure.value_set_oid_version_objects
+
+      # Re-load the Measure without VSAC Credentials
+      Measures::CqlLoader.load(direct_reference_mat_export, user, measure_details, nil, nil).save
+      assert_equal 2, CqlMeasure.all.count
+      measures = CqlMeasure.all
+
+      # Assert the value sets were loaded properly when no VSAC credentials are provided
+      assert Digest::MD5.hexdigest(before_value_sets.to_json) == Digest::MD5.hexdigest(measures[0].value_set_oids.to_json)
+      assert Digest::MD5.hexdigest(before_value_set_version_object.to_json) == Digest::MD5.hexdigest(measures[0].value_set_oid_version_objects.to_json)
+      assert Digest::MD5.hexdigest(before_value_sets.to_json) == Digest::MD5.hexdigest(measures[1].value_set_oids.to_json)
+      assert Digest::MD5.hexdigest(before_value_set_version_object.to_json) == Digest::MD5.hexdigest(measures[1].value_set_oid_version_objects.to_json)
+    end
+  end
 end
