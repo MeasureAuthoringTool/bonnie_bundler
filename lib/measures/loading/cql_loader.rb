@@ -129,30 +129,19 @@ module Measures
           raise VSACException.new "Error Loading Value Sets from VSAC: #{e.message}"
         end
       else
-        # if VSAC credentials aren't provided, find the value sets in the database
-        elm_value_sets.each do |elm_value_set|
-          version = elm_value_set[:version] || "N/A" # 'N/A' is what is stored in the DB for value sets without versions
-          query_params = {user_id: user.id, oid: elm_value_set[:oid]}
-
-          if (elm_value_set[:profile])
-            query_params[:profile] = elm_value_set[:profile]
-          else
-            query_params[:version] = version
-          end
-
-          value_set = HealthDataStandards::SVS::ValueSet.where(query_params).first()
-          if value_set
-            value_set_models << value_set
-          elsif version == "N/A"
-            # if the version is "N/A" and a value set doesn't exist with that version, just grab the existing value set
-            value_set = HealthDataStandards::SVS::ValueSet.where({user_id: user.id, oid: elm_value_set[:oid]}).first()
+        # No vsac credentials were provided grab the valueset and valueset versions from the 'value_set_oid_version_object' on the existing measure
+        db_measure = CqlMeasure.by_user(user).where(hqmf_set_id: measure_id).first
+        unless db_measure.nil?
+          measure_value_set_version_map = db_measure.value_set_oid_version_objects
+          measure_value_set_version_map.each do |value_set|
+            query_params = {user_id: user.id, oid: value_set['oid'], version: value_set['version']}
+            value_set = HealthDataStandards::SVS::ValueSet.where(query_params).first()
             if value_set
               value_set_models << value_set
             end
           end
         end
       end
-
 
       # Get code systems and codes for all value sets in the elm.
       all_codes_and_code_names = HQMF2JS::Generator::CodesToJson.from_value_sets(value_set_models)
@@ -167,7 +156,10 @@ module Measures
       # Add our new fake oids to measure value sets.
       all_value_set_oids = value_set_models.collect{|vs| vs.oid}
       single_code_references.each do |single_code|
-        all_value_set_oids << single_code[:guid]
+        # Only add unique Direct Reference Codes
+        unless all_value_set_oids.include?(single_code[:guid])
+          all_value_set_oids << single_code[:guid]
+        end
       end
 
       # Add a list of value set oids and their versions
@@ -192,8 +184,12 @@ module Measures
         value_set_oid_version_objects << {:oid => vs.oid, :version => vs.version}
       end
       single_code_references.each do |single_code|
-        value_set_oid_version_objects << {:oid => single_code[:guid], :version => ""}
+        # Only add unique Direct Reference Codes to the object
+        unless value_set_oid_version_objects.include?({:oid => single_code[:guid], :version => ""})
+          value_set_oid_version_objects << {:oid => single_code[:guid], :version => ""}
+        end
       end
+      # Return a list of unique objects only
       value_set_oid_version_objects
     end
 
