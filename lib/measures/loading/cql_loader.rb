@@ -138,6 +138,8 @@ module Measures
             value_set = HealthDataStandards::SVS::ValueSet.where(query_params).first()
             if value_set
               value_set_models << value_set
+            else
+              raise MeasureLoadingException.new "Value Set not found in database: #{query_params}"
             end
           end
         end
