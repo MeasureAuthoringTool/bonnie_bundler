@@ -65,17 +65,24 @@ class CQLLoaderTest < ActiveSupport::TestCase
       measure = CqlMeasure.all.first
       before_value_sets = measure.value_set_oids
       before_value_set_version_object = measure.value_set_oid_version_objects
+      before_data_criteria = measure.data_criteria
+      before_source_data_criteria = measure.source_data_criteria
 
       # Re-load the Measure without VSAC Credentials
       Measures::CqlLoader.load(direct_reference_mat_export, user, measure_details, nil, nil).save
       assert_equal 2, CqlMeasure.all.count
       measures = CqlMeasure.all
 
-      # Assert the value sets were loaded properly when no VSAC credentials are provided
+      # Assert the value sets were loaded properly when no VSAC credentials are provided for both instances of the measure
       assert Digest::MD5.hexdigest(before_value_sets.to_json) == Digest::MD5.hexdigest(measures[0].value_set_oids.to_json)
       assert Digest::MD5.hexdigest(before_value_set_version_object.to_json) == Digest::MD5.hexdigest(measures[0].value_set_oid_version_objects.to_json)
+      assert Digest::MD5.hexdigest(before_data_criteria.to_json) == Digest::MD5.hexdigest(measures[0].data_criteria.to_json)
+      assert Digest::MD5.hexdigest(before_source_data_criteria.to_json) == Digest::MD5.hexdigest(measures[0].source_data_criteria.to_json)
+
       assert Digest::MD5.hexdigest(before_value_sets.to_json) == Digest::MD5.hexdigest(measures[1].value_set_oids.to_json)
       assert Digest::MD5.hexdigest(before_value_set_version_object.to_json) == Digest::MD5.hexdigest(measures[1].value_set_oid_version_objects.to_json)
+      assert Digest::MD5.hexdigest(before_data_criteria.to_json) == Digest::MD5.hexdigest(measures[1].data_criteria.to_json)
+      assert Digest::MD5.hexdigest(before_source_data_criteria.to_json) == Digest::MD5.hexdigest(measures[1].source_data_criteria.to_json)
     end
   end
 end
