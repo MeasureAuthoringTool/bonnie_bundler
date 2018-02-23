@@ -84,7 +84,7 @@ GEM
     globalid (0.4.1)
       activesupport (>= 4.2.0)
     hashdiff (0.3.6)
-    health-data-standards (4.0.2)
+    health-data-standards (4.0.3)
       activesupport (~> 4.2.0)
       builder (~> 3.1)
       erubis (~> 2.7.0)
