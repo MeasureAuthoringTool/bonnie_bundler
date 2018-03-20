@@ -103,6 +103,8 @@ module Measures
       cql_definition_dependency_structure = populate_cql_definition_dependency_structure(main_cql_library, elms)
       # Go back for the library statements
       cql_definition_dependency_structure = populate_used_library_dependencies(cql_definition_dependency_structure, main_cql_library, elms)
+      # Add unused libraries to structure and set the value to empty hash
+      cql_definition_dependency_structure = populate_unused_included_libraries(cql_definition_dependency_structure, elms)
 
       # fix up statement names in cql_statement_dependencies to not use periods <<WRAP 1>>
       # this is matched with an UNWRAP in MeasuresController in the bonnie project
@@ -421,6 +423,19 @@ module Measures
         end
       end
       starting_hash
+    end
+
+    # add the unused libraries and set them to have empty hashes.
+    def self.populate_unused_included_libraries(cql_definition_dependency_structure, elms)
+      if elms.count > cql_definition_dependency_structure.keys.count
+        elms.each do |elm|
+          # If the number of libraries included in the elm is greater than
+          # the number of libraries included in the dependency structure
+          library_name = elm['library']['identifier']['id']
+          cql_definition_dependency_structure[library_name] = {} if cql_definition_dependency_structure[library_name].nil?
+        end
+      end
+      cql_definition_dependency_structure
     end
 
     # Traverse list, create keys and drill down for each key.

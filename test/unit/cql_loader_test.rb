@@ -52,6 +52,26 @@ class CQLLoaderTest < ActiveSupport::TestCase
     end
   end
 
+
+  test 'Loading a measure with support libraries that dont have their define definitions used are still included in the dependencty structure as empty hashes' do
+    unused_library_mat_export = File.new File.join('test', 'fixtures', 'PVC2_v5_4_Unused_Support_Libraries.zip')
+    VCR.use_cassette('valid_vsac_response_pvc_unused_libraries') do
+      dump_db
+      user = User.new
+      user.save
+
+      measure_details = { 'episode_of_care'=> false }
+      Measures::CqlLoader.load(unused_library_mat_export, user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD'], false, false, true, nil).save
+      assert_equal 1, CqlMeasure.all.count
+      measure = CqlMeasure.all.first
+
+      # Confirm that the source data criteria with the direct reference code is equal to the expected hash
+      assert_equal measure.cql_statement_dependencies.count, measure.elm.count
+      # Confirm the support library is an empty hash
+      assert measure.cql_statement_dependencies['Hospice'].empty?
+    end
+  end
+
   test 'Re-loading a measure with no VSAC credentials' do
     direct_reference_mat_export = File.new File.join('test', 'fixtures', 'CMS158_v5_4_Artifacts_Update.zip')
     VCR.use_cassette('valid_vsac_response_158_update') do
