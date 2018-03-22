@@ -35,7 +35,7 @@ module Measures
         if username != nil
           vsac_options[:username] = username
           vsac_options[:password] = password
-        else
+        elsif ticket_granting_ticket != nil
           # we have to assume expiration time for now
           vsac_options[:ticket_granting_ticket] = { ticket: ticket_granting_ticket, expires: Time.now + 30.minutes }
         end
