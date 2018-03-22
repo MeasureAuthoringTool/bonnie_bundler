@@ -24,6 +24,7 @@ require_relative 'ext/valueset.rb'
 require_relative 'measures/elm_parser.rb'
 require_relative 'measures/cql_to_elm_helper.rb'
 require_relative '../config/initializers/mongo.rb'
+require_relative 'util/vsac_api.rb'
 
 module BonnieBundler
   class << self

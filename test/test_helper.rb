@@ -5,10 +5,10 @@ require 'rails'
 require 'rails/test_help'
 require 'hquery-patient-api'
 require 'diffy'
-APP_CONFIG = {'nlm'=> {'ticket_url'=> 'https://vsac.nlm.nih.gov/vsac/ws/Ticket',
-      'api_url' => 'https://vsac.nlm.nih.gov/vsac/svs/RetrieveMultipleValueSets',
-      'profiles_url' => 'https://vsac.nlm.nih.gov/vsac/profiles',
-      'profile' => 'MU2 Update 2016-04-01'}}
+APP_CONFIG = {'vsac'=> {'auth_url'=> 'https://vsac.nlm.nih.gov/vsac/ws',
+      'content_url' => 'https://vsac.nlm.nih.gov/vsac/svs',
+      'utility_url' => 'https://vsac.nlm.nih.gov/vsac',
+      'default_profile' => 'MU2 Update 2016-04-01'}}
 
 PROJECT_ROOT = File.expand_path("../../", __FILE__)
 require File.join(PROJECT_ROOT, 'lib', 'bonnie_bundler')

@@ -31,10 +31,16 @@ module Measures
           backup_vs = get_existing_vs(user, value_set_oids).to_a
           delete_existing_vs(user, value_set_oids)
         end
-        nlm_config = APP_CONFIG["nlm"]
-
+        vsac_options = { config: APP_CONFIG['vsac'] }
+        if username != nil
+          vsac_options[:username] = username
+          vsac_options[:password] = password
+        else
+          # we have to assume expiration time for now
+          vsac_options[:ticket_granting_ticket] = { ticket: ticket_granting_ticket, expires: Time.now + 30.minutes }
+        end
         errors = {}
-        api = HealthDataStandards::Util::VSApiV2.new(nlm_config["ticket_url"],nlm_config["api_url"],username, password, ticket_granting_ticket)
+        api = Util::VSAC::VSACAPI.new(vsac_options)
 
         if use_cache
           codeset_base_dir = Measures::Loader::VALUE_SET_PATH
@@ -47,7 +53,7 @@ module Measures
           #When querying vsac via profile, the version is always set to N/A
           #As such, we can set the version to the profile.
           #However, a value_set can have a version and profile that are identical, as such the versions that are profiles are denoted as such.
-          value_set_profile = (value_set[:profile] && !includeDraft) ? value_set[:profile] : nlm_config["profile"]
+          value_set_profile = (value_set[:profile] && !includeDraft) ? value_set[:profile] : APP_CONFIG['vsac']['default_profile']
           value_set_profile = "Profile:#{value_set_profile}"
 
           query_version = ""
@@ -76,13 +82,13 @@ module Measures
             else
               # If includeDraft is true the latest vs are required, so the latest profile should be used.
               if includeDraft
-                vs_data = api.get_valueset(value_set[:oid], include_draft: includeDraft, profile: nlm_config["profile"])
+                vs_data = api.get_valueset(value_set[:oid], include_draft: includeDraft, profile: APP_CONFIG['vsac']['default_profile'])
               elsif value_set[:version]
                 vs_data = api.get_valueset(value_set[:oid], version: value_set[:version])
               else
                 # If no version, call with profile.
                 # If a profile is specified, use it.  Otherwise, use default.
-                profile = value_set[:profile] ? value_set[:profile] : nlm_config["profile"]
+                profile = value_set[:profile] ? value_set[:profile] : APP_CONFIG['vsac']['default_profile']
                 vs_data = api.get_valueset(value_set[:oid], profile: profile)
               end
             end
