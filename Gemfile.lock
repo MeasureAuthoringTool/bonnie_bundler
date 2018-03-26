@@ -32,8 +32,8 @@ GIT
 
 GIT
   remote: https://github.com/projecttacoma/hqmf2js.git
-  revision: b1b14c09410f2dbf1ad07f5648e5d5c84471154b
-  branch: bonnie-prior_1302_nokogiri_fix
+  revision: 6f841d9b5734520f35aec13c15f08f31023b7a36
+  branch: bonnie-prior
   specs:
     hqmf2js (1.3.0)
       health-data-standards (~> 3.7)
