@@ -28,14 +28,23 @@ module Util
 
     # Raised when the ticket granting ticket has expired.
     class VSACTicketExpiredError < VSACError
+      def initialize
+        super('VSAC session expired. Please re-enter credentials and try again.')
+      end
     end
 
     # Raised when the user credentials were invalid.
-    class VASCInvalidCredentials < VSACError
+    class VSACInvalidCredentialsError < VSACError
+      def initialize
+        super('VSAC ULMS credentials are invalid.')
+      end
     end
 
     # Raised when a call requiring auth is attempted when no ticket_granting_ticket or credentials were provided.
-    class VASCNoCredentials < VSACError
+    class VSACNoCredentialsError < VSACError
+      def initialize
+        super('VSAC ULMS credentials were not provided.')
+      end
     end
 
     # Raised when the arguments passed in are bad.
@@ -69,6 +78,7 @@ module Util
         end
 
         # if a ticket_granting_ticket was passed in, check it and raise errors if found
+        # username and password will be ignored
         if options.has_key?(:ticket_granting_ticket)
           tgt = options[:ticket_granting_ticket]
           if !(tgt.has_key?(:ticket) && tgt.has_key?(:expires))
@@ -82,10 +92,9 @@ module Util
 
           # ticket granting ticket looks good
           @ticket_granting_ticket = { ticket: tgt[:ticket], expires: tgt[:expires] }
-        end
 
-        # if username and password were provided use them to get a ticket granting ticket now
-        if options.has_key?(:username) && options.has_key?(:password)
+        # if username and password were provided use them to get a ticket granting ticket
+        elsif !options[:username].nil? && !options[:password].nil?
           @ticket_granting_ticket = get_ticket_granting_ticket(options[:username], options[:password])
         end
       end
@@ -197,7 +206,7 @@ module Util
 
       def get_ticket
         # if there is no ticket granting ticket then we should raise an error
-        raise VSACNoCredentials.new unless @ticket_granting_ticket
+        raise VSACNoCredentialsError.new unless @ticket_granting_ticket
         # if the ticket granting ticket has expired, throw an error
         raise VSACTicketExpiredError.new if Time.now > @ticket_granting_ticket[:expires]
 
@@ -216,7 +225,7 @@ module Util
           ticket = RestClient.post("#{@config[:auth_url]}/Ticket", username: username, password: password)
           return { ticket: ticket, expires: Time.now + 8.hours }
         rescue RestClient::Unauthorized
-          raise VSACInvalidCredentials.new
+          raise VSACInvalidCredentialsError.new
         end
       end
 

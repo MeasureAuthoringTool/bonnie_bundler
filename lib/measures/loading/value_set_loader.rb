@@ -32,12 +32,12 @@ module Measures
           delete_existing_vs(user, value_set_oids)
         end
         vsac_options = { config: APP_CONFIG['vsac'] }
-        if username != nil
+        if ticket_granting_ticket != nil
+          # we have to assume expiration time for now
+          vsac_options[:ticket_granting_ticket] = ticket_granting_ticket
+        elsif username != nil
           vsac_options[:username] = username
           vsac_options[:password] = password
-        elsif ticket_granting_ticket != nil
-          # we have to assume expiration time for now
-          vsac_options[:ticket_granting_ticket] = { ticket: ticket_granting_ticket, expires: Time.now + 30.minutes }
         end
         errors = {}
         api = Util::VSAC::VSACAPI.new(vsac_options)
