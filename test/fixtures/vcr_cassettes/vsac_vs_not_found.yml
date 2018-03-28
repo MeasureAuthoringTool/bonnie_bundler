@@ -1,0 +1,164 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: https://vsac.nlm.nih.gov/vsac/ws/Ticket
+    body:
+      encoding: UTF-8
+      string: username=<VSAC_USERNAME>&password=<VSAC_PASSWORD>
+    headers:
+      Accept:
+      - "*/*; q=0.5, application/xml"
+      Accept-Encoding:
+      - gzip, deflate
+      Content-Length:
+      - '38'
+      Content-Type:
+      - application/x-www-form-urlencoded
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: ''
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Pragma:
+      - no-cache
+      Expires:
+      - '0'
+      X-Xss-Protection:
+      - 1; mode=block
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Content-Type-Options:
+      - nosniff
+      Content-Type:
+      - text/plain;charset=utf-8
+      Content-Length:
+      - '63'
+      Date:
+      - Wed, 28 Mar 2018 21:40:40 GMT
+      Set-Cookie:
+      - BIGipServervsacweb_p=!f5yeTlVXbaEQvlPm9OGvBt4MxRMcjiD2inz+emHLnfEB8e9Vl800g4lYHDAwyrSkFuwAZWlMdbUS5L4=;
+        expires=Wed, 28-Mar-2018 23:40:41 GMT; path=/; Httponly; Secure
+      X-Vip-Info:
+      - 130.14.16.40:443
+      X-Pool-Info:
+      - "/Common/vsacweb_p 10.1.5.111 8080"
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+    body:
+      encoding: UTF-8
+      string: TGT-2797-mZ7g6UrEe6aAQEMpItBHb6Dep0mXgqiA7kjiwUL2g7wBVQgavc-cas
+    http_version: 
+  recorded_at: Wed, 28 Mar 2018 21:40:41 GMT
+- request:
+    method: post
+    uri: https://vsac.nlm.nih.gov/vsac/ws/Ticket/TGT-2797-mZ7g6UrEe6aAQEMpItBHb6Dep0mXgqiA7kjiwUL2g7wBVQgavc-cas
+    body:
+      encoding: UTF-8
+      string: service=http%3A%2F%2Fumlsks.nlm.nih.gov
+    headers:
+      Accept:
+      - "*/*; q=0.5, application/xml"
+      Accept-Encoding:
+      - gzip, deflate
+      Content-Length:
+      - '39'
+      Content-Type:
+      - application/x-www-form-urlencoded
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: ''
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Pragma:
+      - no-cache
+      Expires:
+      - '0'
+      X-Xss-Protection:
+      - 1; mode=block
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Content-Type-Options:
+      - nosniff
+      Content-Type:
+      - text/plain;charset=utf-8
+      Content-Length:
+      - '33'
+      Date:
+      - Wed, 28 Mar 2018 21:40:40 GMT
+      Set-Cookie:
+      - BIGipServervsacweb_p=!m+LvAtfS6giOmKfm9OGvBt4MxRMcjpfMcZiW9Amy83hau1MnMDZNearft6fvk3XP3XxPf/dArncqLzY=;
+        expires=Wed, 28-Mar-2018 23:40:41 GMT; path=/; Httponly; Secure
+      X-Vip-Info:
+      - 130.14.16.40:443
+      X-Pool-Info:
+      - "/Common/vsacweb_p 10.1.5.111 8080"
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+    body:
+      encoding: UTF-8
+      string: ST-48952-ycSjqqBqMUFwdmdxBuuW-cas
+    http_version: 
+  recorded_at: Wed, 28 Mar 2018 21:40:41 GMT
+- request:
+    method: get
+    uri: https://vsac.nlm.nih.gov/vsac/svs/RetrieveMultipleValueSets?id=bad.oid&ticket=ST-48952-ycSjqqBqMUFwdmdxBuuW-cas
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept:
+      - "*/*; q=0.5, application/xml"
+      Accept-Encoding:
+      - gzip, deflate
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 404
+      message: ''
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Pragma:
+      - no-cache
+      Expires:
+      - '0'
+      X-Xss-Protection:
+      - 1; mode=block
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Content-Type-Options:
+      - nosniff
+      Set-Cookie:
+      - BIGipServervsacweb_p=!PIF78v0A/9DbUAbm9OGvBt4MxRMcjqZjE7djwmtdpBsGL6U/OckA2NJ6iHVa4mOubO9abpmr4S760cA=;
+        expires=Wed, 28-Mar-2018 23:40:42 GMT; path=/; Httponly; Secure
+      - JSESSIONID=B553C9E48BE3BEDA6A5829E51CB1A046;path=/vsac;HttpOnly;Secure
+      Warning:
+      - '111 NAV: Unknown value set'
+      Content-Type:
+      - text/xml;charset=utf-8
+      Content-Length:
+      - '0'
+      Date:
+      - Wed, 28 Mar 2018 21:40:42 GMT
+      X-Vip-Info:
+      - 130.14.16.40:443
+      X-Pool-Info:
+      - "/Common/vsacweb_p 10.1.5.111 8080"
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+    body:
+      encoding: UTF-8
+      string: ''
+    http_version: 
+  recorded_at: Wed, 28 Mar 2018 21:40:42 GMT
+recorded_with: VCR 3.0.3

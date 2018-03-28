@@ -11,8 +11,8 @@ module Util
     # Error represnting a not found response from the API. Includes OID for reporting to user.
     class VSNotFoundError < VSACError
       attr_reader :oid
-      def initialize(message, oid)
-        super(message)
+      def initialize(oid)
+        super("Value Set (#{oid}) was not found.")
         @oid = oid
       end
     end
@@ -20,8 +20,8 @@ module Util
     # Error represnting a response from the API that had no concepts.
     class VSEmptyError < VSACError
       attr_reader :oid
-      def initialize(message, oid)
-        super(message)
+      def initialize(oid)
+        super("Value Set (#{oid}) is empty.")
         @oid = oid
       end
     end
@@ -66,7 +66,7 @@ module Util
       # * config -
       def initialize(options)
         # check that :config exists and has needed fields
-        if !options.has_key?(:config) || options[:config] == nil
+        if options[:config].nil?
           raise VSACArgumentError.new("Required param :config is missing or empty.")
         else
           symbolized_config = options[:config].symbolize_keys
@@ -79,7 +79,7 @@ module Util
 
         # if a ticket_granting_ticket was passed in, check it and raise errors if found
         # username and password will be ignored
-        if options.has_key?(:ticket_granting_ticket)
+        if !options[:ticket_granting_ticket].nil?
           tgt = options[:ticket_granting_ticket]
           if !(tgt.has_key?(:ticket) && tgt.has_key?(:expires))
             raise VSACArgumentError.new("Optional param :ticket_granting_ticket is missing :ticket or :expires")
@@ -172,7 +172,9 @@ module Util
         params = { id: oid }
 
         # release parameter, should be used moving forward
-        params[:release] = options[:release] if options.has_key?(:release)
+        if !options[:release].nil?
+          params[:release] = options[:release]
+        end
 
         # profile parameter, may be needed for getting draft value sets
         if options.has_key?(:profile)
@@ -198,7 +200,7 @@ module Util
         begin
           value_set_response = RestClient.get("#{@config[:content_url]}/RetrieveMultipleValueSets", params: params)
         rescue RestClient::ResourceNotFound
-          raise VSNotFoundError.new("Value set not found.", oid)
+          raise VSNotFoundError.new(oid)
         end
       end
 
@@ -213,7 +215,7 @@ module Util
         # attempt to get a ticket
         begin
           ticket = RestClient.post("#{@config[:auth_url]}/Ticket/#{@ticket_granting_ticket[:ticket]}", service: "http://umlsks.nlm.nih.gov")
-          return ticket
+          return ticket.to_s
         rescue RestClient::Unauthorized
           @ticket_granting_ticket[:expires] = Time.now
           raise VSACTicketExpiredError.new
@@ -223,7 +225,7 @@ module Util
       def get_ticket_granting_ticket(username, password)
         begin
           ticket = RestClient.post("#{@config[:auth_url]}/Ticket", username: username, password: password)
-          return { ticket: ticket, expires: Time.now + 8.hours }
+          return { ticket: String.new(ticket), expires: Time.now + 8.hours }
         rescue RestClient::Unauthorized
           raise VSACInvalidCredentialsError.new
         end
