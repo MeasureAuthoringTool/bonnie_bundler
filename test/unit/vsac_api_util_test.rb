@@ -71,6 +71,14 @@ class VSACAPIUtilTest < ActiveSupport::TestCase
     end
   end
 
+  test 'get_program_details for invalid program' do
+    VCR.use_cassette("vsac_util_get_program_details_invalid") do
+      assert_raise Util::VSAC::VSACProgramNotFoundError do
+        @api.get_program_details('Fake Program')
+      end
+    end
+  end
+
   test 'get_releases_for_program with default constant program' do
     VCR.use_cassette("vsac_util_get_program_details_CMS_eCQM") do
       expected_releases = ["eCQM Update 2018-05-04",
@@ -118,6 +126,14 @@ class VSACAPIUtilTest < ActiveSupport::TestCase
       releases = @api.get_releases_for_program('HL7 C-CDA')
 
       assert_equal expected_releases, releases
+    end
+  end
+
+  test 'get_releases_for_program for invalid program' do
+    VCR.use_cassette("vsac_util_get_program_details_invalid") do
+      assert_raise Util::VSAC::VSACProgramNotFoundError do
+        @api.get_releases_for_program('Fake Program')
+      end
     end
   end
 end

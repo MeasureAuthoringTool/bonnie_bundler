@@ -17,6 +17,14 @@ module Util
       end
     end
 
+    # Error represnting a program not found response from the API.
+    class VSACProgramNotFoundError < VSACError
+      attr_reader :oid
+      def initialize(program)
+        super("VSAC Program #{program} does not exist.")
+      end
+    end
+
     # Error represnting a response from the API that had no concepts.
     class VSEmptyError < VSACError
       attr_reader :oid
@@ -52,7 +60,13 @@ module Util
     end
 
     class VSACAPI
+      # The default program to use for get_program_details and get_releases_for_program calls.
+      # This can be overriden by providing a :program in the config or by the single optional parameter for those
+      # methods.
       DEFAULT_PROGRAM = "CMS eCQM"
+
+      # This is the value of the service parameter passed when getting a ticket. This never changes.
+      TICKET_SERVICE_PARAM = "http://umlsks.nlm.nih.gov"
 
       # The ticket granting that will be obtained if needed. Accessible so it may be stored in user session.
       # Is a hash of the :ticket and time it :expires.
@@ -80,18 +94,19 @@ module Util
         # if a ticket_granting_ticket was passed in, check it and raise errors if found
         # username and password will be ignored
         if !options[:ticket_granting_ticket].nil?
-          tgt = options[:ticket_granting_ticket]
-          if !(tgt.has_key?(:ticket) && tgt.has_key?(:expires))
+          provided_ticket_granting_ticket = options[:ticket_granting_ticket]
+          if provided_ticket_granting_ticket[:ticket].nil? || provided_ticket_granting_ticket[:expires].nil?
             raise VSACArgumentError.new("Optional param :ticket_granting_ticket is missing :ticket or :expires")
           end
 
           # check if it has expired
-          if Time.now > tgt[:expires]
+          if Time.now > provided_ticket_granting_ticket[:expires]
             raise VSACTicketExpiredError.new
           end
 
           # ticket granting ticket looks good
-          @ticket_granting_ticket = { ticket: tgt[:ticket], expires: tgt[:expires] }
+          @ticket_granting_ticket = { ticket: provided_ticket_granting_ticket[:ticket],
+            expires: provided_ticket_granting_ticket[:expires] }
 
         # if username and password were provided use them to get a ticket granting ticket
         elsif !options[:username].nil? && !options[:password].nil?
@@ -102,7 +117,7 @@ module Util
       ##
       # Gets the list of profiles. This may be used without credentials.
       #
-      # Returns a list of profile names.
+      # Returns a list of profile names. These are kept in the order that VSAC provides them in.
       def get_profiles
         profiles_response = RestClient.get("#{@config[:utility_url]}/profiles")
         profiles = []
@@ -120,7 +135,7 @@ module Util
       ##
       # Gets the list of programs. This may be used without credentials.
       #
-      # Returns a list of program names.
+      # Returns a list of program names. These are kept in the order that VSAC provides them in.
       def get_programs
         programs_response = RestClient.get("#{@config[:utility_url]}/programs")
         program_names = []
@@ -144,14 +159,18 @@ module Util
           program = @config.fetch(:program, DEFAULT_PROGRAM)
         end
 
-        # parse json response and return it
-        return JSON.parse(RestClient.get("#{@config[:utility_url]}/program/#{URI.escape(program)}"))
+        begin
+          # parse json response and return it
+          return JSON.parse(RestClient.get("#{@config[:utility_url]}/program/#{URI.escape(program)}"))
+        rescue RestClient::ResourceNotFound
+          raise VSACProgramNotFoundError.new(program)
+        end
       end
 
       ##
       # Gets the releases for a program. This may be used without credentials.
       #
-      # Returns a list of releases in a program.
+      # Returns a list of releases in a program. These are kept in the order that VSAC provides them in.
       def get_releases_for_program(program = nil)
         program_details = get_program_details(program)
         releases = []
@@ -177,19 +196,19 @@ module Util
         end
 
         # profile parameter, may be needed for getting draft value sets
-        if options.has_key?(:profile)
+        if !options[:profile].nil?
           params[:profile] = options[:profile]
-          if options.has_key?(:include_draft)
+          if !options[:include_draft].nil?
             params[:includeDraft] = if !!options[:include_draft] then 'yes' else 'no' end
           end
         else
-          if options.has_key?(:include_draft)
+          if !options[:include_draft].nil?
             raise VSACArgumentError.new("Option :include_draft requires :profile to be provided.")
           end
         end
 
         # version parameter, rarely used
-        if options.has_key?(:version)
+        if !options[:version].nil?
           params[:version] = options[:version]
         end
 
@@ -214,7 +233,7 @@ module Util
 
         # attempt to get a ticket
         begin
-          ticket = RestClient.post("#{@config[:auth_url]}/Ticket/#{@ticket_granting_ticket[:ticket]}", service: "http://umlsks.nlm.nih.gov")
+          ticket = RestClient.post("#{@config[:auth_url]}/Ticket/#{@ticket_granting_ticket[:ticket]}", service: TICKET_SERVICE_PARAM)
           return ticket.to_s
         rescue RestClient::Unauthorized
           @ticket_granting_ticket[:expires] = Time.now
@@ -234,9 +253,9 @@ module Util
       # Checks to ensure the API config has all necessary fields
       def check_config(config)
         return config != nil &&
-               config.has_key?(:auth_url) &&
-               config.has_key?(:content_url) &&
-               config.has_key?(:utility_url)
+               !config[:auth_url].nil? &&
+               !config[:content_url].nil? &&
+               !config[:utility_url].nil?
       end
 
     end
