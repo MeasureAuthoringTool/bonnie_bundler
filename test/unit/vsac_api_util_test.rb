@@ -7,7 +7,7 @@ class VSACAPIUtilTest < ActiveSupport::TestCase
     @api = Util::VSAC::VSACAPI.new(config: APP_CONFIG['vsac'])
   end
 
-  test 'get_profiles' do
+  test 'get_profile_names' do
     VCR.use_cassette("vsac_util_get_profiles") do
       expected_profiles = ["Most Recent Code System Versions in VSAC",
         "eCQM Update 2018-05-04",
@@ -28,15 +28,15 @@ class VSACAPIUtilTest < ActiveSupport::TestCase
         "MU2 Update 2012-12-21",
         "MU2 Update 2012-10-25"]
 
-      assert_equal expected_profiles, @api.get_profiles
+      assert_equal expected_profiles, @api.get_profile_names
     end
   end
 
-  test 'get_programs' do
+  test 'get_program_names' do
     VCR.use_cassette("vsac_util_get_programs") do
       expected_programs = ["CMS Hybrid", "CMS eCQM", "HL7 C-CDA"]
 
-      assert_equal expected_programs, @api.get_programs
+      assert_equal expected_programs, @api.get_program_names
     end
   end
 
@@ -79,7 +79,7 @@ class VSACAPIUtilTest < ActiveSupport::TestCase
     end
   end
 
-  test 'get_releases_for_program with default constant program' do
+  test 'get_program_release_names with default constant program' do
     VCR.use_cassette("vsac_util_get_program_details_CMS_eCQM") do
       expected_releases = ["eCQM Update 2018-05-04",
         "eCQM Update 2018 EP-EC and EH",
@@ -96,13 +96,13 @@ class VSACAPIUtilTest < ActiveSupport::TestCase
         "MU2 Update 2012-12-21",
         "MU2 Update 2012-10-25"]
 
-      releases = @api.get_releases_for_program
+      releases = @api.get_program_release_names
 
       assert_equal expected_releases, releases
     end
   end
 
-  test 'get_releases_for_program with default config program' do
+  test 'get_program_release_names with default config program' do
     VCR.use_cassette("vsac_util_get_program_details_CMS_Hybrid") do
       # Clone the config and add a program that will be used as the default program
       config = APP_CONFIG['vsac'].clone
@@ -111,28 +111,28 @@ class VSACAPIUtilTest < ActiveSupport::TestCase
 
       expected_releases = ["CMS 2018 IQR Voluntary Hybrid Reporting"]
 
-      releases = configuredApi.get_releases_for_program
+      releases = configuredApi.get_program_release_names
 
       assert_equal expected_releases, releases
     end
   end
 
-  test 'get_releases_for_program with provided program' do
+  test 'get_program_release_names with provided program' do
     VCR.use_cassette("vsac_util_get_program_details_HL7_C-CDA") do
       expected_releases = ["C-CDA R2.1 2018-02-01",
         "C-CDA R2.1 2017-06-09",
         "C-CDA R1.1 2016-06-23"]
 
-      releases = @api.get_releases_for_program('HL7 C-CDA')
+      releases = @api.get_program_release_names('HL7 C-CDA')
 
       assert_equal expected_releases, releases
     end
   end
 
-  test 'get_releases_for_program for invalid program' do
+  test 'get_program_release_names for invalid program' do
     VCR.use_cassette("vsac_util_get_program_details_invalid") do
       assert_raise Util::VSAC::VSACProgramNotFoundError do
-        @api.get_releases_for_program('Fake Program')
+        @api.get_program_release_names('Fake Program')
       end
     end
   end

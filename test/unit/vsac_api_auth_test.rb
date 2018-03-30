@@ -35,6 +35,30 @@ class VSACAPIAuthTest < ActiveSupport::TestCase
     end
   end
 
+  test 'provided username but no password' do
+    api = nil
+    assert_nothing_raised do
+      api = Util::VSAC::VSACAPI.new(config: APP_CONFIG['vsac'], username: "vsacuser")
+    end
+
+    # now attempt to get a valueset
+    assert_raise Util::VSAC::VSACNoCredentialsError do
+      api.get_valueset('2.16.840.1.113762.1.4.1')
+    end
+  end
+
+  test 'provided password but no username' do
+    api = nil
+    assert_nothing_raised do
+      api = Util::VSAC::VSACAPI.new(config: APP_CONFIG['vsac'], username: "vsacuser")
+    end
+
+    # now attempt to get a valueset
+    assert_raise Util::VSAC::VSACNoCredentialsError do
+      api.get_valueset('2.16.840.1.113762.1.4.1')
+    end
+  end
+
   test 'valid ticket_granting_ticket provided and used' do
     VCR.use_cassette("vsac_auth_good_credentials_and_simple_call") do
       # first get a ticket_granting_ticket

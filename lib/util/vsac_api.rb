@@ -60,7 +60,7 @@ module Util
     end
 
     class VSACAPI
-      # The default program to use for get_program_details and get_releases_for_program calls.
+      # The default program to use for get_program_details and get_program_release_names calls.
       # This can be overriden by providing a :program in the config or by the single optional parameter for those
       # methods.
       DEFAULT_PROGRAM = "CMS eCQM"
@@ -118,7 +118,7 @@ module Util
       # Gets the list of profiles. This may be used without credentials.
       #
       # Returns a list of profile names. These are kept in the order that VSAC provides them in.
-      def get_profiles
+      def get_profile_names
         profiles_response = RestClient.get("#{@config[:utility_url]}/profiles")
         profiles = []
 
@@ -136,7 +136,7 @@ module Util
       # Gets the list of programs. This may be used without credentials.
       #
       # Returns a list of program names. These are kept in the order that VSAC provides them in.
-      def get_programs
+      def get_program_names
         programs_response = RestClient.get("#{@config[:utility_url]}/programs")
         program_names = []
 
@@ -152,16 +152,20 @@ module Util
       ##
       # Gets the details for a program. This may be used without credentials.
       #
+      # Optional parameter program is the program to request from the API. If it is not provided it will look for
+      # a :program in the config passed in during construction. If there is no :program in the config it will use 
+      # the DEFAULT_PROGRAM constant for the program.
+      #
       # Returns the JSON parsed response for program details.
       def get_program_details(program = nil)
         # if no program was provided use the one in the config or default in constant
-        if program == nil
+        if program.nil?
           program = @config.fetch(:program, DEFAULT_PROGRAM)
         end
 
         begin
           # parse json response and return it
-          return JSON.parse(RestClient.get("#{@config[:utility_url]}/program/#{URI.escape(program)}"))
+          return JSON.parse(RestClient.get("#{@config[:utility_url]}/program/#{ERB::Util.url_encode(program)}"))
         rescue RestClient::ResourceNotFound
           raise VSACProgramNotFoundError.new(program)
         end
@@ -170,8 +174,12 @@ module Util
       ##
       # Gets the releases for a program. This may be used without credentials.
       #
-      # Returns a list of releases in a program. These are kept in the order that VSAC provides them in.
-      def get_releases_for_program(program = nil)
+      # Optional parameter program is the program to request from the API. If it is not provided it will look for
+      # a :program in the config passed in during construction. If there is no :program in the config it will use
+      # the DEFAULT_PROGRAM constant for the program.
+      #
+      # Returns a list of release names in a program. These are kept in the order that VSAC provides them in.
+      def get_program_release_names(program = nil)
         program_details = get_program_details(program)
         releases = []
 
@@ -217,7 +225,7 @@ module Util
 
         # run request
         begin
-          value_set_response = RestClient.get("#{@config[:content_url]}/RetrieveMultipleValueSets", params: params)
+          return RestClient.get("#{@config[:content_url]}/RetrieveMultipleValueSets", params: params)
         rescue RestClient::ResourceNotFound
           raise VSNotFoundError.new(oid)
         end
