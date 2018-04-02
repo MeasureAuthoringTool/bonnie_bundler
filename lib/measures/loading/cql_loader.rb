@@ -22,7 +22,7 @@ module Measures
       end
     end
 
-    def self.load_mat_cql_exports(user, zip_file, out_dir, measure_details, vsac_user, vsac_password, overwrite_valuesets=false, cache=false, includeDraft=false, ticket_granting_ticket=nil)
+    def self.load_mat_cql_exports(user, zip_file, out_dir, measure_details, vsac_options, vsac_ticket_granting_ticket, overwrite_valuesets=false, cache=false)
       measure = nil
       cql = nil
       hqmf_path = nil
@@ -35,7 +35,7 @@ module Measures
       # Get main measure from hqmf parser
       main_cql_library = hqmf_model.cql_measure_library
 
-      cql_artifacts = process_cql(files, main_cql_library, user, vsac_user, vsac_password, overwrite_valuesets, cache, includeDraft, ticket_granting_ticket, hqmf_model.hqmf_set_id)
+      cql_artifacts = process_cql(files, main_cql_library, user, vsac_options, vsac_ticket_granting_ticket, overwrite_valuesets, cache, hqmf_model.hqmf_set_id)
 
       # Create CQL Measure
       hqmf_model.backfill_patient_characteristics_with_codes(cql_artifacts[:all_codes_and_code_names])
@@ -83,16 +83,16 @@ module Measures
       return json['source_data_criteria'], json['data_criteria']
     end
 
-    def self.load(file, user, measure_details, vsac_user=nil, vsac_password=nil, overwrite_valuesets=false, cache=false, includeDraft=false, ticket_granting_ticket=nil)
+    def self.load(file, user, measure_details, vsac_options, vsac_ticket_granting_ticket, overwrite_valuesets=false, cache=false)
       measure = nil
       Dir.mktmpdir do |dir|
-        measure = load_mat_cql_exports(user, file, dir, measure_details, vsac_user, vsac_password, overwrite_valuesets, cache, includeDraft, ticket_granting_ticket)
+        measure = load_mat_cql_exports(user, file, dir, measure_details, vsac_options, vsac_ticket_granting_ticket, overwrite_valuesets, cache)
       end
       measure
     end
 
     # Manages all of the CQL processing that is not related to the HQMF.
-    def self.process_cql(files, main_cql_library, user, vsac_user=nil, vsac_password=nil, overwrite_valuesets=nil, cache=nil, includeDraft=nil, ticket_granting_ticket=nil, measure_id=nil)
+    def self.process_cql(files, main_cql_library, user, vsac_options, vsac_ticket_granting_ticket, overwrite_valuesets=nil, cache=nil, measure_id=nil)
       elm_strings = files[:ELM_JSON]
       # Removes 'urn:oid:' from ELM for Bonnie and Parse the JSON
       elm_strings.each { |elm_string| elm_string.gsub! 'urn:oid:', '' }
@@ -125,9 +125,9 @@ module Measures
       end
       # Get Value Sets
       value_set_models = []
-      if (vsac_user && vsac_password) || ticket_granting_ticket
+      if vsac_ticket_granting_ticket
         begin
-          value_set_models =  Measures::ValueSetLoader.load_value_sets_from_vsac(elm_value_sets, vsac_user, vsac_password, user, overwrite_valuesets, includeDraft, ticket_granting_ticket, cache, measure_id)
+          value_set_models =  Measures::ValueSetLoader.load_value_sets_from_vsac(elm_value_sets, vsac_options, vsac_ticket_granting_ticket, user, overwrite_valuesets, cache, measure_id)
         rescue Exception => e
           raise VSACException.new "Error Loading Value Sets from VSAC: #{e.message}"
         end

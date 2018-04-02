@@ -22,6 +22,11 @@ def dump_db
   FileUtils.rm_r 'db' if File.exists? 'db'
 end
 
+def get_ticket_granting_ticket
+  api = Util::VSAC::VSACAPI.new(config: APP_CONFIG['vsac'], username: ENV['VSAC_USERNAME'], password: ENV['VSAC_PASSWORD'])
+  return api.ticket_granting_ticket
+end
+
 Mongoid.logger.level = Logger::INFO
 Mongo::Logger.logger.level = Logger::INFO
 dump_db

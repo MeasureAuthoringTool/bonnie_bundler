@@ -18,9 +18,11 @@ class LoadMATExportTest < ActiveSupport::TestCase
       measure_details = { 'episode_of_care'=> false }
       overwrite_valuesets=false
       cache=false
-      includeDraft=true
-      ticket_granting_ticket=nil
-      Measures::CqlLoader.load(@cql_draft_measure_mat_export, user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD'], overwrite_valuesets, cache, includeDraft, ticket_granting_ticket).save
+
+      api = Util::VSAC::VSACAPI.new(config: APP_CONFIG['vsac'], username: ENV['VSAC_USERNAME'], password: ENV['VSAC_PASSWORD'])
+      vsac_ticket_granting_ticket = api.ticket_granting_ticket
+
+      Measures::CqlLoader.load(@cql_draft_measure_mat_export, user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'], include_draft: true }, vsac_ticket_granting_ticket, overwrite_valuesets, cache).save
       assert_equal 1, CqlMeasure.all.count
       measure = CqlMeasure.all.first
       assert_equal "Screening for Depression", measure.title
@@ -42,7 +44,7 @@ class LoadMATExportTest < ActiveSupport::TestCase
 
     VCR.use_cassette("valid_vsac_response") do
       measure_details = { 'episode_of_care'=> false }
-      Measures::CqlLoader.load(@cql_mat_export, user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD']).save
+      Measures::CqlLoader.load(@cql_mat_export, user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket).save
       assert_equal 1, CqlMeasure.all.count
     end
 
@@ -60,7 +62,7 @@ class LoadMATExportTest < ActiveSupport::TestCase
       user = User.new
       user.save
       measure_details = { 'episode_of_care'=> false }
-      Measures::CqlLoader.load(@cql_mat_export, user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD']).save
+      Measures::CqlLoader.load(@cql_mat_export, user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket).save
       assert_equal 1, CqlMeasure.all.count
       measure = CqlMeasure.all.first
       assert_equal "BCSTest", measure.title
@@ -77,7 +79,7 @@ class LoadMATExportTest < ActiveSupport::TestCase
       user.save
 
       measure_details = { 'episode_of_care'=> false }
-      Measures::CqlLoader.load(@cql_mat_5_4_export, user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD']).save
+      Measures::CqlLoader.load(@cql_mat_5_4_export, user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket).save
       assert_equal 1, CqlMeasure.all.count
       measure = CqlMeasure.all.first
       assert_equal "Test 158", measure.title
@@ -96,7 +98,7 @@ class LoadMATExportTest < ActiveSupport::TestCase
       user.save
 
       measure_details = { 'episode_of_care'=> false }
-      Measures::CqlLoader.load(@cql_mat_5_4_export, user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD']).save
+      Measures::CqlLoader.load(@cql_mat_5_4_export, user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket).save
       assert_equal 1, CqlMeasure.all.count
       measure = CqlMeasure.all.first
       assert_equal "Test 158", measure.title
@@ -114,7 +116,7 @@ class LoadMATExportTest < ActiveSupport::TestCase
       user.save
 
       measure_details = { 'episode_of_care'=> false }
-      Measures::CqlLoader.load(@cql_mat_5_4_export, user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD']).save
+      Measures::CqlLoader.load(@cql_mat_5_4_export, user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket).save
       assert_equal 1, CqlMeasure.all.count
       measure = CqlMeasure.all.first
       assert_equal 1, CqlMeasurePackage.all.count
@@ -132,7 +134,7 @@ class LoadMATExportTest < ActiveSupport::TestCase
       user.save
 
       measure_details = { 'episode_of_care'=> false }
-      Measures::CqlLoader.load(@cql_multi_library_mat_export, user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD']).save
+      Measures::CqlLoader.load(@cql_multi_library_mat_export, user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket).save
       assert_equal 1, CqlMeasure.all.count
       measure = CqlMeasure.all.first
       assert_equal (measure.elm.instance_of? Array), true
@@ -154,7 +156,7 @@ class LoadMATExportTest < ActiveSupport::TestCase
     user2 = User.new
     user2.save
     VCR.use_cassette("valid_vsac_response_158") do
-      Measures::CqlLoader.load(cql_mat_export, user, {}).save
+      Measures::CqlLoader.load(cql_mat_export, user, {}, { profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket).save
     end
 
     measure = CqlMeasure.all.by_user(user).first
@@ -168,7 +170,7 @@ class LoadMATExportTest < ActiveSupport::TestCase
     # Add the same measure not associated with a user, there should be 2 measures and
     # and twice as many value sets in the db after loading
     VCR.use_cassette("valid_vsac_response_158") do
-      Measures::CqlLoader.load(cql_mat_export, user2, {}).save
+      Measures::CqlLoader.load(cql_mat_export, user2, {}, { profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket).save
     end
     measure2 = CqlMeasure.all.by_user(user2).first
     assert_equal 1, CqlMeasure.by_user(user).count

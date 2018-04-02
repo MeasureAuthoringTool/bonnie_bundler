@@ -19,7 +19,7 @@ module Measures
       HealthDataStandards::SVS::ValueSet.by_user(user).in(oid: value_set_oids)
     end
 
-    def self.load_value_sets_from_vsac(value_sets, username, password, user=nil, overwrite=false, includeDraft=false, ticket_granting_ticket=nil, use_cache=false, measure_id=nil)
+    def self.load_value_sets_from_vsac(value_sets, vsac_options, vsac_ticket_granting_ticket, user=nil, overwrite=false, use_cache=false, measure_id=nil)
       # Get a list of just the oids
       value_set_oids = value_sets.map {|value_set| value_set[:oid]}
       value_set_models = []
@@ -31,16 +31,9 @@ module Measures
           backup_vs = get_existing_vs(user, value_set_oids).to_a
           delete_existing_vs(user, value_set_oids)
         end
-        vsac_options = { config: APP_CONFIG['vsac'] }
-        if ticket_granting_ticket != nil
-          # we have to assume expiration time for now
-          vsac_options[:ticket_granting_ticket] = ticket_granting_ticket
-        elsif username != nil
-          vsac_options[:username] = username
-          vsac_options[:password] = password
-        end
+
         errors = {}
-        api = Util::VSAC::VSACAPI.new(vsac_options)
+        api = Util::VSAC::VSACAPI.new(config: APP_CONFIG['vsac'], ticket_granting_ticket: vsac_ticket_granting_ticket)
 
         if use_cache
           codeset_base_dir = Measures::Loader::VALUE_SET_PATH
@@ -49,27 +42,44 @@ module Measures
 
         RestClient.proxy = ENV["http_proxy"]
         value_sets.each do |value_set|
-          value_set_version = value_set[:version] ? value_set[:version] : "N/A"
-          #When querying vsac via profile, the version is always set to N/A
-          #As such, we can set the version to the profile.
-          #However, a value_set can have a version and profile that are identical, as such the versions that are profiles are denoted as such.
-          value_set_profile = (value_set[:profile] && !includeDraft) ? value_set[:profile] : APP_CONFIG['vsac']['default_profile']
-          value_set_profile = "Profile:#{value_set_profile}"
+          # The vsac_options that will be used for this specific value set
+          vs_vsac_options = nil
 
-          query_version = ""
-          if includeDraft
-            query_version = "Draft-#{measure_id}"
-          elsif value_set[:profile]
-            query_version = value_set_profile
+          # If we are using measure_defined value sets, determine vsac_options for this value set based on elm info.
+          if vsac_options[:measure_defined] == true
+            if !value_set[:profile].nil?
+              vs_vsac_options = { profile: value_set[:profile] }
+            elsif !value_set[:version].nil?
+              vs_vsac_options = { version: value_set[:version] }
+            else
+              # TODO: find out if we have to default to something
+              vs_vsac_options = { } # parameterless query if neither provided
+            end
+
+          # not using measure_defined. use options passed in from measures controller
           else
-            query_version = value_set_version
+            vs_vsac_options = vsac_options
           end
+
+          # Determine version to store value sets as after parsing. left nil if this is not needed
+          query_version = ""
+          if vs_vsac_options[:include_draft] == true
+            query_version = "Draft-#{measure_id}" # Unique draft version based on measure id
+          elsif vs_vsac_options[:profile]
+            query_version = "Profile:#{vs_vsac_options[:profile]}" # Profile calls return 'N/A' so note profile use.
+          elsif vs_vsac_options[:version]
+            query_version = vs_vsac_options[:version]
+          elsif vs_vsac_options[:release]
+            query_version = vs_vsac_options[:release]
+          end
+
           # only access the database if we don't intend on using cached values
           set = HealthDataStandards::SVS::ValueSet.where({user_id: user.id, oid: value_set[:oid], version: query_version}).first() unless use_cache
-          if (includeDraft && set)
+          if (vs_vsac_options[:include_draft] && set)
             set.delete
             set = nil
           end
+          # TODO: figure out if this is still a good idea
           if (set)
             existing_value_set_map[set.oid] = set
           else
@@ -80,17 +90,9 @@ module Measures
             if (cached_service_result && File.exists?(cached_service_result))
               vs_data = File.read cached_service_result
             else
-              # If includeDraft is true the latest vs are required, so the latest profile should be used.
-              if includeDraft
-                vs_data = api.get_valueset(value_set[:oid], include_draft: includeDraft, profile: APP_CONFIG['vsac']['default_profile'])
-              elsif value_set[:version]
-                vs_data = api.get_valueset(value_set[:oid], version: value_set[:version])
-              else
-                # If no version, call with profile.
-                # If a profile is specified, use it.  Otherwise, use default.
-                profile = value_set[:profile] ? value_set[:profile] : APP_CONFIG['vsac']['default_profile']
-                vs_data = api.get_valueset(value_set[:oid], profile: profile)
-              end
+              # TODO: old code used APP_CONFIG['vsac']['default_profile'] if no version was supplied. i.e. nothing specified
+              # in the elm for the version if doing measure_defined. figure out if that functionality is still applicable.
+              vs_data = api.get_valueset(value_set[:oid], vs_vsac_options)
             end
             vs_data.force_encoding("utf-8") # there are some funky unicodes coming out of the vs response that are not in ASCII as the string reports to be
             from_vsac += 1

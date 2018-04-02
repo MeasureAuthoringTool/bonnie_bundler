@@ -10,7 +10,7 @@ class MeasureDiffTest < ActiveSupport::TestCase
       user = User.new
       user.save
       measure_details = { 'episode_of_care'=> false }
-      Measures::CqlLoader.load(@previous_measure, user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD']).save
+      Measures::CqlLoader.load(@previous_measure, user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket).save
     end
     assert_equal 1, CqlMeasure.all.count
     measure = CqlMeasure.all.first
@@ -27,7 +27,7 @@ class MeasureDiffTest < ActiveSupport::TestCase
       user = User.new
       user.save
       measure_details = { 'episode_of_care'=> false }
-      Measures::CqlLoader.load(@updated_measure, user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD']).save
+      Measures::CqlLoader.load(@updated_measure, user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket).save
     end
     assert_equal 1, CqlMeasure.all.count
     measure = CqlMeasure.all.first
@@ -44,7 +44,7 @@ class MeasureDiffTest < ActiveSupport::TestCase
       user = User.new
       user.save
       measure_details = { 'episode_of_care'=> false }
-      Measures::CqlLoader.load(@previous_measure, user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD']).save
+      Measures::CqlLoader.load(@previous_measure, user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket).save
     end
     assert_equal 1, CqlMeasure.all.count
     assert_equal 1, CqlMeasurePackage.all.count
@@ -55,7 +55,7 @@ class MeasureDiffTest < ActiveSupport::TestCase
       user = User.new
       user.save
       measure_details = { 'episode_of_care'=> false }
-      Measures::CqlLoader.load(@updated_measure, user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD']).save
+      Measures::CqlLoader.load(@updated_measure, user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket).save
     end
     assert_equal 2, CqlMeasure.all.count
     assert_equal 2, CqlMeasurePackage.all.count
