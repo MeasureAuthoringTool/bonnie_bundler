@@ -125,7 +125,8 @@ module Measures
       end
       # Get Value Sets
       value_set_models = []
-      if vsac_ticket_granting_ticket
+      # Only load value sets from VSAC if there is a ticket_granting_ticket.
+      if !vsac_ticket_granting_ticket.nil?
         begin
           value_set_models =  Measures::ValueSetLoader.load_value_sets_from_vsac(elm_value_sets, vsac_options, vsac_ticket_granting_ticket, user, overwrite_valuesets, cache, measure_id)
         rescue Exception => e

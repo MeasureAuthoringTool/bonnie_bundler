@@ -52,8 +52,12 @@ module Measures
             elsif !value_set[:version].nil?
               vs_vsac_options = { version: value_set[:version] }
             else
-              # TODO: find out if we have to default to something
-              vs_vsac_options = { } # parameterless query if neither provided
+              # TODO: find out if we have to default to something will use a backup_profile if provided
+              if !vsac_options[:backup_profile].nil?
+                vs_vsac_options = { profile: vsac_options[:backup_profile] }
+              else
+                vs_vsac_options = { } # parameterless query if no backup profile provided
+              end
             end
 
           # not using measure_defined. use options passed in from measures controller
