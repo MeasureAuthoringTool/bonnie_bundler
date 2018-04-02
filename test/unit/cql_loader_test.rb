@@ -68,7 +68,7 @@ class CQLLoaderTest < ActiveSupport::TestCase
       user.save
 
       measure_details = { 'episode_of_care' => false }
-      Measures::CqlLoader.load(unused_library_mat_export, user, measure_details, ENV['VSAC_USERNAME'], ENV['VSAC_PASSWORD'], false, false, true, nil).save
+      Measures::CqlLoader.load(unused_library_mat_export, user, measure_details, { include_draft: true, profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket).save
       assert_equal 1, CqlMeasure.all.count
       measure = CqlMeasure.all.first
 
