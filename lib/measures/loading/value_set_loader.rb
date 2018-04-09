@@ -34,19 +34,15 @@ module Measures
           # The vsac_options that will be used for this specific value set
           vs_vsac_options = nil
 
-          # If we are using measure_defined value sets, determine vsac_options for this value set based on elm info.
+          # If we are allowing measure_defined value sets, determine vsac_options for this value set based on elm info.
           if vsac_options[:measure_defined] == true
             if !value_set[:profile].nil?
               vs_vsac_options = { profile: value_set[:profile] }
             elsif !value_set[:version].nil?
               vs_vsac_options = { version: value_set[:version] }
             else
-              # TODO: find out if we have to default to something will use a backup_profile if provided
-              if !vsac_options[:backup_profile].nil?
-                vs_vsac_options = { profile: vsac_options[:backup_profile] }
-              else
-                vs_vsac_options = { } # parameterless query if no backup profile provided
-              end
+              # since no parseable options in the ELM were found, use options passed in from measures controller
+              vs_vsac_options = vsac_options
             end
 
           # not using measure_defined. use options passed in from measures controller
@@ -78,8 +74,6 @@ module Measures
           else
             vs_data = nil
 
-            # TODO: old code used APP_CONFIG['vsac']['default_profile'] if no version was supplied. i.e. nothing specified
-            # in the elm for the version if doing measure_defined. figure out if that functionality is still applicable.
             vs_data = api.get_valueset(value_set[:oid], vs_vsac_options)
 
             vs_data.force_encoding("utf-8") # there are some funky unicodes coming out of the vs response that are not in ASCII as the string reports to be
