@@ -16,13 +16,8 @@ class LoadMATExportTest < ActiveSupport::TestCase
       user = User.new
       user.save
       measure_details = { 'episode_of_care'=> false }
-      overwrite_valuesets=false
-      cache=false
 
-      api = Util::VSAC::VSACAPI.new(config: APP_CONFIG['vsac'], username: ENV['VSAC_USERNAME'], password: ENV['VSAC_PASSWORD'])
-      vsac_ticket_granting_ticket = api.ticket_granting_ticket
-
-      Measures::CqlLoader.load(@cql_draft_measure_mat_export, user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'], include_draft: true }, vsac_ticket_granting_ticket, overwrite_valuesets, cache).save
+      Measures::CqlLoader.load(@cql_draft_measure_mat_export, user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'], include_draft: true }, get_ticket_granting_ticket).save
       assert_equal 1, CqlMeasure.all.count
       measure = CqlMeasure.all.first
       assert_equal "Screening for Depression", measure.title

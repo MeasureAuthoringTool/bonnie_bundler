@@ -19,26 +19,15 @@ module Measures
       HealthDataStandards::SVS::ValueSet.by_user(user).in(oid: value_set_oids)
     end
 
-    def self.load_value_sets_from_vsac(value_sets, vsac_options, vsac_ticket_granting_ticket, user=nil, overwrite=false, use_cache=false, measure_id=nil)
+    def self.load_value_sets_from_vsac(value_sets, vsac_options, vsac_ticket_granting_ticket, user=nil, measure_id=nil)
       # Get a list of just the oids
       value_set_oids = value_sets.map {|value_set| value_set[:oid]}
       value_set_models = []
       from_vsac = 0
       existing_value_set_map = {}
       begin
-        backup_vs = []
-        if overwrite
-          backup_vs = get_existing_vs(user, value_set_oids).to_a
-          delete_existing_vs(user, value_set_oids)
-        end
-
         errors = {}
         api = Util::VSAC::VSACAPI.new(config: APP_CONFIG['vsac'], ticket_granting_ticket: vsac_ticket_granting_ticket)
-
-        if use_cache
-          codeset_base_dir = Measures::Loader::VALUE_SET_PATH
-          FileUtils.mkdir_p(codeset_base_dir)
-        end
 
         RestClient.proxy = ENV["http_proxy"]
         value_sets.each do |value_set|
@@ -78,7 +67,7 @@ module Measures
           end
 
           # only access the database if we don't intend on using cached values
-          set = HealthDataStandards::SVS::ValueSet.where({user_id: user.id, oid: value_set[:oid], version: query_version}).first() unless use_cache
+          set = HealthDataStandards::SVS::ValueSet.where({user_id: user.id, oid: value_set[:oid], version: query_version}).first()
           if (vs_vsac_options[:include_draft] && set)
             set.delete
             set = nil
@@ -89,19 +78,12 @@ module Measures
           else
             vs_data = nil
 
-            # try to access the cached result for the value set if it exists.
-            cached_service_result = File.join(codeset_base_dir,"#{value_set[:oid]}.xml") if use_cache
-            if (cached_service_result && File.exists?(cached_service_result))
-              vs_data = File.read cached_service_result
-            else
-              # TODO: old code used APP_CONFIG['vsac']['default_profile'] if no version was supplied. i.e. nothing specified
-              # in the elm for the version if doing measure_defined. figure out if that functionality is still applicable.
-              vs_data = api.get_valueset(value_set[:oid], vs_vsac_options)
-            end
+            # TODO: old code used APP_CONFIG['vsac']['default_profile'] if no version was supplied. i.e. nothing specified
+            # in the elm for the version if doing measure_defined. figure out if that functionality is still applicable.
+            vs_data = api.get_valueset(value_set[:oid], vs_vsac_options)
+
             vs_data.force_encoding("utf-8") # there are some funky unicodes coming out of the vs response that are not in ASCII as the string reports to be
             from_vsac += 1
-            # write all valueset data retrieved if using a cache
-            File.open(cached_service_result, 'w') {|f| f.write(vs_data) } if use_cache
 
             doc = Nokogiri::XML(vs_data)
 
@@ -127,23 +109,11 @@ module Measures
           end
         end
       rescue Exception => e
-        if (overwrite)
-          delete_existing_vs(user, value_set_oids)
-          backup_vs.each {|vs| HealthDataStandards::SVS::ValueSet.new(vs.attributes).save }
-        end
         raise VSACException.new "#{e.message}"
       end
 
       puts "\tloaded #{from_vsac} value sets from vsac" if from_vsac > 0
       existing_value_set_map.values
     end
-
-    def self.get_existing_vs(user, value_set_oids)
-      HealthDataStandards::SVS::ValueSet.by_user(user).where(oid: {'$in'=>value_set_oids})
-    end
-    def self.delete_existing_vs(user, value_set_oids)
-      get_existing_vs(user, value_set_oids).delete_all()
-    end
-
   end
 end
