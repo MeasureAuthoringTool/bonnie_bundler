@@ -127,11 +127,7 @@ module Measures
       value_set_models = []
       # Only load value sets from VSAC if there is a ticket_granting_ticket.
       if !vsac_ticket_granting_ticket.nil?
-        begin
-          value_set_models =  Measures::ValueSetLoader.load_value_sets_from_vsac(elm_value_sets, vsac_options, vsac_ticket_granting_ticket, user, measure_id)
-        rescue Exception => e
-          raise VSACException.new "Error Loading Value Sets from VSAC: #{e.message}"
-        end
+        value_set_models =  Measures::ValueSetLoader.load_value_sets_from_vsac(elm_value_sets, vsac_options, vsac_ticket_granting_ticket, user, measure_id)
       else
         # No vsac credentials were provided grab the valueset and valueset versions from the 'value_set_oid_version_object' on the existing measure
         db_measure = CqlMeasure.by_user(user).where(hqmf_set_id: measure_id).first

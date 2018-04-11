@@ -228,6 +228,8 @@ module Util
           return RestClient.get("#{@config[:content_url]}/RetrieveMultipleValueSets", params: params)
         rescue RestClient::ResourceNotFound
           raise VSNotFoundError.new(oid)
+        rescue RestClient::InternalServerError
+          raise VSACError.new("Server error response from VSAC for (#{oid}).")
         end
       end
 
