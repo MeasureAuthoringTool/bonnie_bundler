@@ -29,8 +29,8 @@ module Measures
 
       RestClient.proxy = ENV["http_proxy"]
       value_sets.each do |value_set|
-        # The vsac_options that will be used for this specific value set
-        vs_vsac_options = nil
+        # The vsac_options that will be used for this specific value set. Default to using passed in options from measures controller
+        vs_vsac_options = vsac_options
 
         # If we are allowing measure_defined value sets, determine vsac_options for this value set based on elm info.
         if vsac_options[:measure_defined] == true
@@ -38,17 +38,11 @@ module Measures
             vs_vsac_options = { profile: value_set[:profile] }
           elsif !value_set[:version].nil?
             vs_vsac_options = { version: value_set[:version] }
-          else
-            # since no parseable options in the ELM were found, use options passed in from measures controller
-            vs_vsac_options = vsac_options
           end
-
-        # not using measure_defined. use options passed in from measures controller
-        else
-          vs_vsac_options = vsac_options
+          # if no parseable options in the ELM were found, we stick with the passed in options from measures controller
         end
 
-        # Determine version to store value sets as after parsing. left nil if this is not needed
+        # Determine version to store value sets as after parsing.
         query_version = ""
         if vs_vsac_options[:include_draft] == true
           query_version = "Draft-#{measure_id}" # Unique draft version based on measure id
@@ -60,21 +54,27 @@ module Measures
           query_version = vs_vsac_options[:release]
         end
 
-        # only access the database if we don't intend on using cached values
+        # check if we already have this valuset loaded for this user
         set = HealthDataStandards::SVS::ValueSet.where({user_id: user.id, oid: value_set[:oid], version: query_version}).first()
+
+        # delete existing if we are doing include_draft option sinc the existing may be stale. note that this may delete 
+        # and effectively replace value sets for a measure load that may fail. Unintentionally updating the value sets.
         if (vs_vsac_options[:include_draft] && set)
           set.delete
           set = nil
         end
-        # TODO: figure out if this is still a good idea
+
+        # TODO: figure out if this is still a good idea to use existing value sets or not.
+        # if we already have this value set loaded we can skip loading it.
         if (set)
           existing_value_set_map[set.oid] = set
-        else
-          vs_data = nil
 
+        # load this value set from VSAC
+        else
           vs_data = api.get_valueset(value_set[:oid], vs_vsac_options)
 
-          vs_data.force_encoding("utf-8") # there are some funky unicodes coming out of the vs response that are not in ASCII as the string reports to be
+          # there are some funky unicodes coming out of the vs response that are not in ASCII as the string reports to be
+          vs_data.force_encoding("utf-8")
           from_vsac += 1
 
           doc = Nokogiri::XML(vs_data)
@@ -92,10 +92,12 @@ module Measures
               raise Util::VSAC::VSEmptyError.new(value_set[:oid])
             end
             set.user = user
-            #bundle id for user should always be the same 1 user to 1 bundle
-            #using this to allow cat I generation without extensive modification to HDS
+
+            # bundle id for user should always be the same 1 user to 1 bundle
+            # using this to allow cat I generation without extensive modification to HDS
             set.bundle = user.bundle if (user && user.respond_to?(:bundle))
-            # As of t9/7/2017, when valuesets are retrieved from VSAC via profile, their version defaults to N/A
+
+            # As of 9/7/2017, when valuesets are retrieved from VSAC via profile, their version defaults to N/A
             # As such, we set the version to the profile with an indicator.
             set.version = query_version
             set.save!
