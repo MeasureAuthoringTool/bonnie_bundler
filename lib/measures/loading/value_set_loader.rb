@@ -42,7 +42,7 @@ module Measures
           # if no parseable options in the ELM were found, we stick with the passed in options from measures controller
         end
 
-        # Determine version to store value sets as after parsing.
+        # Determine version to store value sets as after parsing and to use to looking for existing set.
         query_version = ""
         if vs_vsac_options[:include_draft] == true
           query_version = "Draft-#{measure_id}" # Unique draft version based on measure id
@@ -51,8 +51,11 @@ module Measures
         elsif vs_vsac_options[:version]
           query_version = vs_vsac_options[:version]
         elsif vs_vsac_options[:release]
-          query_version = vs_vsac_options[:release]
+          query_version = "Release:#{vs_vsac_options[:release]}"
         end
+
+        # TODO: remove the usage of existing value sets. future work will be always fetching value sets from VSAC and
+        # associating them with the new measure.
 
         # check if we already have this valuset loaded for this user
         set = HealthDataStandards::SVS::ValueSet.where({user_id: user.id, oid: value_set[:oid], version: query_version}).first()
@@ -64,8 +67,7 @@ module Measures
           set = nil
         end
 
-        # TODO: figure out if this is still a good idea to use existing value sets or not.
-        # if we already have this value set loaded we can skip loading it.
+        # use the existing value set if it exists
         if (set)
           existing_value_set_map[set.oid] = set
 
