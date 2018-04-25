@@ -1,9 +1,29 @@
+GIT
+  remote: https://github.com/projectcypress/health-data-standards.git
+  revision: 32dd47c4a34237826854d2809d8a9fcae25990c8
+  branch: bonnie-v2.1
+  specs:
+    health-data-standards (4.0.3)
+      activesupport (~> 4.2.0)
+      builder (~> 3.1)
+      erubis (~> 2.7.0)
+      highline (~> 1.7.0)
+      log4r (~> 1.1.10)
+      memoist (~> 0.9.1)
+      mongoid (~> 5.0.0)
+      mongoid-tree (~> 2.0.0)
+      nokogiri (~> 1.8.2)
+      protected_attributes (~> 1.0.5)
+      rest-client (~> 1.8.0)
+      rubyzip (~> 1.2.1)
+      uuid (~> 2.3.7)
+      zip-zip (~> 0.3)
+
 PATH
   remote: .
   specs:
     bonnie_bundler (2.0.3)
       diffy (~> 3.0.0)
-      health-data-standards (~> 4.0)
       hqmf2js (~> 1.4)
       hquery-patient-api (~> 1.1)
       mongoid (~> 5.0)
@@ -84,21 +104,6 @@ GEM
     globalid (0.4.1)
       activesupport (>= 4.2.0)
     hashdiff (0.3.6)
-    health-data-standards (4.0.3)
-      activesupport (~> 4.2.0)
-      builder (~> 3.1)
-      erubis (~> 2.7.0)
-      highline (~> 1.7.0)
-      log4r (~> 1.1.10)
-      memoist (~> 0.9.1)
-      mongoid (~> 5.0.0)
-      mongoid-tree (~> 2.0.0)
-      nokogiri (~> 1.8.2)
-      protected_attributes (~> 1.0.5)
-      rest-client (~> 1.8.0)
-      rubyzip (~> 1.2.1)
-      uuid (~> 2.3.7)
-      zip-zip (~> 0.3)
     highline (1.7.8)
     hike (1.2.3)
     hqmf2js (1.4.0)
@@ -255,6 +260,7 @@ DEPENDENCIES
   awesome_print
   bonnie_bundler!
   bundler-audit
+  health-data-standards!
   minitest (~> 5.0)
   pry
   pry-nav
@@ -264,4 +270,4 @@ DEPENDENCIES
   webmock
 
 BUNDLED WITH
-   1.15.4
+   1.16.1
