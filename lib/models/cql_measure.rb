@@ -20,7 +20,7 @@ class CqlMeasure
 
   field :episode_of_care, type: Boolean
   field :continuous_variable, type: Boolean
-  field :hybrid, type: Boolean
+  field :calculate_sdes, type: Boolean
   field :episode_ids, type: Array
 
   field :needs_finalize, type: Boolean, default: false
