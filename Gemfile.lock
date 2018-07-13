@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    bonnie_bundler (2.1.2)
+    bonnie_bundler (2.2.0)
       diffy (~> 3.0.0)
       health-data-standards (~> 4.0)
       hqmf2js (~> 1.4)
@@ -84,7 +84,7 @@ GEM
     globalid (0.4.1)
       activesupport (>= 4.2.0)
     hashdiff (0.3.6)
-    health-data-standards (4.0.6)
+    health-data-standards (4.1.0)
       activesupport (~> 4.2.0)
       builder (~> 3.1)
       erubis (~> 2.7.0)

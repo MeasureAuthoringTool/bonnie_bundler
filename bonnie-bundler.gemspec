@@ -7,7 +7,7 @@ Gem::Specification.new do |s|
   s.email = "pophealth-talk@googlegroups.com"
   s.homepage = "http://github.com/projecttacoma/bonnie_bundler"
   s.authors = ["The MITRE Corporation"]
-  s.version = '2.1.2'
+  s.version = '2.2.0'
   s.license = 'Apache-2.0'
 
   s.add_dependency 'health-data-standards', '~> 4.0'
