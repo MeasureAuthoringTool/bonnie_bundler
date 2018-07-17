@@ -72,6 +72,23 @@ class CqlMeasure
     @value_sets
   end
 
+  #note, this method could be duplicate onto the measure model as well
+  def value_sets_by_oid
+    @value_sets_by_oid = {}
+    value_sets.each do |vs|
+      if @value_sets_by_oid[vs.oid]
+        # if there are multiple value sets with the same oid for this user, then keep the one with
+        # the version corresponding to this measure for the fixture.
+        if vs.version.include?(hqmf_set_id)
+          @value_sets_by_oid[vs.oid] = { vs.version => vs }
+        end
+      else
+        @value_sets_by_oid[vs.oid] = { vs.version => vs }
+      end
+    end
+    @value_sets_by_oid
+  end
+
   # Returns the hqmf-parser's ruby implementation of an HQMF document.
   # Rebuild from population_criteria, data_criteria, and measure_period JSON
   def as_hqmf_model
