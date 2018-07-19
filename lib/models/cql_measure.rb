@@ -72,7 +72,6 @@ class CqlMeasure
     @value_sets
   end
 
-  #note, this method could be duplicate onto the measure model as well
   def value_sets_by_oid
     @value_sets_by_oid = {}
     value_sets.each do |vs|

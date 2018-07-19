@@ -14,18 +14,21 @@ class GetValueSetsFromMeasureModelTest < ActiveSupport::TestCase
       Measures::CqlLoader.load(direct_reference_mat_export, user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket).save
     end
 
-    # add a duplicate value set with a different version
-    a = Mongoid.default_client["health_data_standards_svs_value_sets"].find().first.except('_id')
-    duplicated_oid = a[:oid]
-    a[:version] = "duplicate vs"
-    Mongoid.default_client["health_data_standards_svs_value_sets"].insert_one(a)
-
     measure = CqlMeasure.all.first
 
-    assert_equal 10, measure.value_sets.count
-    assert_equal 9, measure.value_sets_by_oid.count
+    # add a duplicate value set with a different version, and also with a matching version
+    expected_version = "DRAFT: " + measure.hqmf_set_id
+    a = Mongoid.default_client["health_data_standards_svs_value_sets"].find().first.except('_id')
+    b = Mongoid.default_client["health_data_standards_svs_value_sets"].find().first.except('_id')
+    a[:version] = "duplicate vs"
+    b[:version] = expected_version
+    Mongoid.default_client["health_data_standards_svs_value_sets"].insert_one(a)
+    Mongoid.default_client["health_data_standards_svs_value_sets"].insert_one(b)
+    Mongoid.default_client["health_data_standards_svs_value_sets"].insert_one(b)
 
+    assert_equal 12, measure.value_sets.count
+    assert_equal 9, measure.value_sets_by_oid.count
     some_vs = measure.value_sets[0]
-    assert_equal some_vs[:display_name], measure.value_sets_by_oid[some_vs[:oid]][some_vs[:version]][:display_name]
+    assert_equal some_vs[:display_name], measure.value_sets_by_oid[some_vs[:oid]][expected_version][:display_name]
   end
 end
