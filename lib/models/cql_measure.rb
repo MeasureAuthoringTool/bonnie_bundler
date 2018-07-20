@@ -76,8 +76,8 @@ class CqlMeasure
     @value_sets_by_oid = {}
     value_sets.each do |vs|
       if @value_sets_by_oid[vs.oid]
-        # if there are multiple value sets with the same oid for this user, then keep the one with
-        # the version corresponding to this measure for the fixture.
+        # If there are multiple value sets with the same oid for the user, then keep the one with
+        # the version corresponding to this measure.
         if vs.version.include?(hqmf_set_id)
           @value_sets_by_oid[vs.oid] = { vs.version => vs }
         end
