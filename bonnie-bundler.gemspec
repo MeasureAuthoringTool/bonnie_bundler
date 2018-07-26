@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
   s.version = '2.2.0'
   s.license = 'Apache-2.0'
 
-  s.add_dependency 'health-data-standards', '~> 4.0'
+  # s.add_dependency 'health-data-standards', '~> 4.0'
   s.add_dependency 'quality-measure-engine', '~> 3.2'
   s.add_dependency 'hquery-patient-api', '~> 1.1'
   s.add_dependency 'simplexml_parser', '~> 1.0'
