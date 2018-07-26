@@ -13,7 +13,6 @@ Gem::Specification.new do |s|
   # s.add_dependency 'quality-measure-engine', '~>3'
   
   s.files = s.files = `git ls-files`.split("\n")
-  # s.add_dependency 'health-data-standards', '~> 3.4.4'
 end
 
 
