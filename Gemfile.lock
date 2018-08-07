@@ -33,10 +33,11 @@ GIT
 
 GIT
   remote: https://github.com/projecttacoma/hqmf2js.git
-  revision: d5bfea9d638c3790f89ee101d36d6aae1f321002
-  branch: nokogiri_update_bonnie_prior
+  revision: 56392bbe59e4e51f140c90271dd76797c122198c
+  branch: bonnie-prior
   specs:
     hqmf2js (1.3.0)
+      health-data-standards (~> 3.7)
       hquery-patient-api (~> 1.0.4)
       rails (~> 4.2.7)
 
