@@ -79,6 +79,27 @@ class CQLLoaderTest < ActiveSupport::TestCase
     end
   end
 
+  test 'Loading measure with unique characters such as &amp; which should be displayed and stored as "&"' do
+    measure_export = File.new File.join('test', 'fixtures', 'TOB2_v5_5_Artifacts.zip')
+    VCR.use_cassette('valid_vsac_response_special_characters') do
+      dump_db
+      user = User.new
+      user.save
+
+      measure_details = {'episode_of_care' => false }
+      Measures::CqlLoader.load(measure_export, user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'], include_draft: true }, get_ticket_granting_ticket).save
+      assert_equal 1, CqlMeasure.all.count
+      measure = CqlMeasure.all.first
+      define_name = measure.elm_annotations['TobaccoUseTreatmentProvidedorOfferedTOB2TobaccoUseTreatmentTOB2a']['statements'][36]['define_name']
+      clause_text = measure.elm_annotations['TobaccoUseTreatmentProvidedorOfferedTOB2TobaccoUseTreatmentTOB2a']['statements'][36]['children'][0]['children'][0]['children'][0]['text']
+
+      assert_not_equal 'Type of Tobacco Used - Cigar &amp; Pipe', define_name
+      assert_equal 'Type of Tobacco Used - Cigar & Pipe', define_name
+      assert !clause_text.include?('define "Type of Tobacco Used - Cigar &amp; Pipe"')
+      assert clause_text.include?('define "Type of Tobacco Used - Cigar & Pipe"')
+    end
+  end
+
   test 'Re-loading a measure with no VSAC credentials' do
     direct_reference_mat_export = File.new File.join('test', 'fixtures', 'CMS158_v5_4_Artifacts_Update.zip')
     VCR.use_cassette('valid_vsac_response_158_update') do

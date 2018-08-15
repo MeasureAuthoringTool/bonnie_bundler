@@ -2,6 +2,7 @@ module CqlElm
   class Parser
     #Fields are combined with the refId to find elm node that corrosponds to the current annotation node.
     @fields = ['expression', 'operand', 'suchThat']
+    @html_hash = {"&amp;": '&', "&quot;": '"', "&lt;": '<', "&gt;": '>', "&apos;": "'"}
     @previousNoTrailingSpaceNotPeriod = false
     
     def self.parse(elm_xml)
@@ -47,9 +48,14 @@ module CqlElm
         else
           if (/^define/ =~ child.to_html)
             define_name = child.to_html.split("\"")[1]
+            # Modify special characters back in the the define_name
+            @html_hash.each { |k,v| define_name.gsub!(k.to_s, v) }
           end
+          clause_text = child.to_html.gsub(/\t/, "  ")
+          # Modify special characters back in the clause text
+          @html_hash.each { |k,v| clause_text.gsub!(k.to_s, v) }
           clause = {
-            text: child.to_html.gsub(/\t/, "  ")
+            text: clause_text
           }
           clause[:ref_id] = child['r'] unless child['r'].nil?
           ret[:children] << clause
