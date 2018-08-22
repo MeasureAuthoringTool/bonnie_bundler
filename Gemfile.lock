@@ -1,31 +1,9 @@
-GIT
-  remote: https://github.com/projectcypress/health-data-standards.git
-  revision: 4cad4fdc164731df6058dfcdfe0c3980aee2a4e6
-  branch: master_bonnie
-  specs:
-    health-data-standards (4.1.0)
-      activesupport (~> 4.2.0)
-      builder (~> 3.1)
-      erubis (~> 2.7.0)
-      highline (~> 1.7.0)
-      log4r (~> 1.1.10)
-      memoist (~> 0.9.1)
-      mongo (~> 2.4.3)
-      mongoid (~> 5.0.0)
-      mongoid-tree (~> 2.0.0)
-      nokogiri (~> 1.8.3)
-      protected_attributes (~> 1.0.5)
-      rest-client (~> 1.8.0)
-      rubyzip (~> 1.2.1)
-      uuid (~> 2.3.7)
-      zip-zip (~> 0.3)
-
 PATH
   remote: .
   specs:
-    bonnie_bundler (2.2.0)
+    bonnie_bundler (2.2.1)
       diffy (~> 3.0.0)
-      health-data-standards (~> 4.0)
+      health-data-standards (~> 4.2)
       hqmf2js (~> 1.4)
       hquery-patient-api (~> 1.1)
       mongoid (~> 5.0)
@@ -106,6 +84,22 @@ GEM
     globalid (0.4.1)
       activesupport (>= 4.2.0)
     hashdiff (0.3.6)
+    health-data-standards (4.2.0)
+      activesupport (~> 4.2.0)
+      builder (~> 3.1)
+      erubis (~> 2.7.0)
+      highline (~> 1.7.0)
+      log4r (~> 1.1.10)
+      memoist (~> 0.9.1)
+      mongo (~> 2.4.3)
+      mongoid (~> 5.0.0)
+      mongoid-tree (~> 2.0.0)
+      nokogiri (~> 1.8.3)
+      protected_attributes (~> 1.0.5)
+      rest-client (~> 1.8.0)
+      rubyzip (~> 1.2.1)
+      uuid (~> 2.3.7)
+      zip-zip (~> 0.3)
     highline (1.7.10)
     hike (1.2.3)
     hqmf2js (1.4.0)
@@ -136,7 +130,7 @@ GEM
     memoist (0.9.3)
     method_source (0.8.2)
     mime-types (2.99.3)
-    mini_mime (1.0.0)
+    mini_mime (1.0.1)
     mini_portile2 (2.3.0)
     minitest (5.10.2)
     mongo (2.4.3)
@@ -219,7 +213,7 @@ GEM
       health-data-standards (~> 4.0)
       tilt (~> 1.4)
     slop (3.5.0)
-    spreadsheet (1.1.7)
+    spreadsheet (1.1.8)
       ruby-ole (>= 1.0)
     sprockets (2.12.5)
       hike (~> 1.2)
@@ -262,7 +256,6 @@ DEPENDENCIES
   awesome_print
   bonnie_bundler!
   bundler-audit
-  health-data-standards!
   minitest (~> 5.0)
   pry
   pry-nav
