@@ -207,7 +207,7 @@ GEM
       rubyzip
       spreadsheet (> 0.6.4)
     ruby-ole (1.2.11.7)
-    rubyzip (1.2.1)
+    rubyzip (1.2.2)
     simplecov (0.8.2)
       docile (~> 1.1.0)
       multi_json
