@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/projectcypress/health-data-standards.git
-  revision: 525e2e494939fe13893386310d906713470a1bd3
+  revision: 4f802877b8c69b19f616f47fb5f1d74dbfb7bdbc
   branch: mongoid5
   specs:
     health-data-standards (3.7.0)
