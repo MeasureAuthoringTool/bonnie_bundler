@@ -1,3 +1,25 @@
+GIT
+  remote: https://github.com/projectcypress/health-data-standards.git
+  revision: 20b6f4376cfe10b887e4e410e66fb51373347d42
+  branch: master_bonnie
+  specs:
+    health-data-standards (4.2.0)
+      activesupport (~> 4.2.0)
+      builder (~> 3.1)
+      erubis (~> 2.7.0)
+      highline (~> 1.7.0)
+      log4r (~> 1.1.10)
+      memoist (~> 0.9.1)
+      mongo (~> 2.4.3)
+      mongoid (~> 5.0.0)
+      mongoid-tree (~> 2.0.0)
+      nokogiri (~> 1.8.3)
+      protected_attributes (~> 1.0.5)
+      rest-client (~> 1.8.0)
+      rubyzip (~> 1.2.1)
+      uuid (~> 2.3.7)
+      zip-zip (~> 0.3)
+
 PATH
   remote: .
   specs:
@@ -84,22 +106,6 @@ GEM
     globalid (0.4.1)
       activesupport (>= 4.2.0)
     hashdiff (0.3.6)
-    health-data-standards (4.2.0)
-      activesupport (~> 4.2.0)
-      builder (~> 3.1)
-      erubis (~> 2.7.0)
-      highline (~> 1.7.0)
-      log4r (~> 1.1.10)
-      memoist (~> 0.9.1)
-      mongo (~> 2.4.3)
-      mongoid (~> 5.0.0)
-      mongoid-tree (~> 2.0.0)
-      nokogiri (~> 1.8.3)
-      protected_attributes (~> 1.0.5)
-      rest-client (~> 1.8.0)
-      rubyzip (~> 1.2.1)
-      uuid (~> 2.3.7)
-      zip-zip (~> 0.3)
     highline (1.7.10)
     hike (1.2.3)
     hqmf2js (1.4.0)
@@ -256,6 +262,7 @@ DEPENDENCIES
   awesome_print
   bonnie_bundler!
   bundler-audit
+  health-data-standards!
   minitest (~> 5.0)
   pry
   pry-nav
