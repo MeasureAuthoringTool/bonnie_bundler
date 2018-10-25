@@ -160,7 +160,7 @@ module Measures
         # If it is a composite measure, load in each of the components
         # Components must be loaded first so their elms can be passed onto the composite
         if composite_measure?(current_directory)
-          create_component_measures(component_measures, current_directory, current_user, measure_details, vsac_options, vsac_ticket_granting_ticket)
+          component_measures = create_component_measures(current_directory, current_user, measure_details, vsac_options, vsac_ticket_granting_ticket)
           component_measures.each do |component_measure|
             component_elms[:ELM_JSON].push(*component_measure.elm) 
             if (component_elms[:ELM_XML].keys & component_measure.elm_annotations.keys).count > 0 
@@ -193,11 +193,11 @@ module Measures
     end
 
     # Creates a composite's component measures 
-    def self.create_component_measures(component_measures, current_directory, current_user, measure_details, vsac_options, vsac_ticket_granting_ticket)
-      Dir.glob("#{current_directory}/*").sort().each do |file|
+    def self.create_component_measures(current_directory, current_user, measure_details, vsac_options, vsac_ticket_granting_ticket)
+      component_measures = []
+      Dir.glob("#{current_directory}/*").sort.each do |file|
         if File.directory?(file)
-          component_measure = create_measure(file, current_user, measure_details, vsac_options, vsac_ticket_granting_ticket)
-          component_measures << component_measure
+          component_measures << create_measure(file, current_user, measure_details, vsac_options, vsac_ticket_granting_ticket)
         end
       end
       component_measures
