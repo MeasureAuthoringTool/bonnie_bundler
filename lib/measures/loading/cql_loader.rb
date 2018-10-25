@@ -194,7 +194,7 @@ module Measures
 
     # Creates a composite's component measures 
     def self.create_component_measures(component_measures, current_directory, current_user, measure_details, vsac_options, vsac_ticket_granting_ticket)
-      Dir.glob("#{current_directory}/*").each do |file|
+      Dir.glob("#{current_directory}/*").sort().each do |file|
         if File.directory?(file)
           component_measure = create_measure(file, current_user, measure_details, vsac_options, vsac_ticket_granting_ticket)
           component_measures << component_measure
