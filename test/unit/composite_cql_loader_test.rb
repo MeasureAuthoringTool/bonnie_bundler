@@ -106,4 +106,6 @@ class CompositeCQLLoaderTest < ActiveSupport::TestCase
       assert_equal 0, CqlMeasure.all.count
     end
   end
+
+  
 end

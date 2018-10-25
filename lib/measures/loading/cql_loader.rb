@@ -68,13 +68,14 @@ module Measures
 
     # Verifies contents of the given measure are valid (works for regular, composite and component measures)
     def self.valid_measure_contents?(measure_dir)
+      require 'pry'; binding.pry
       # Grab all cql, elm & human readable docs from measure
-      cql_entry = Dir.glob(File.join(measure_dir,'**.cql')).select 
-      elm_json = Dir.glob(File.join(measure_dir,'**.json')).select 
-      human_readable_entry = Dir.glob(File.join(measure_dir,'**.html')).select 
+      cql_entry = Dir.glob(File.join(measure_dir,'**.cql')).select {|x| !File.basename(x).starts_with?('__MACOSX') }.first
+      elm_json = Dir.glob(File.join(measure_dir,'**.json')).select {|x| !File.basename(x).starts_with?('__MACOSX') }.first
+      human_readable_entry = Dir.glob(File.join(measure_dir,'**.html')).select {|x| !File.basename(x).starts_with?('__MACOSX') }.first
 
       # Grab all xml files in the measure.
-      xml_files = Dir.glob(File.join(measure_dir,'**.xml')).select 
+      xml_files = Dir.glob(File.join(measure_dir,'**.xml')).select {|x| !File.basename(x).starts_with?('__MACOSX') }.first
 
       # Find key value pair for HQMF and ELM xml files.
       if xml_files.count > 0

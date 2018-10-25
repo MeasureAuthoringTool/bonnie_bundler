@@ -5,6 +5,17 @@ class CQLLoaderTest < ActiveSupport::TestCase
   
   setup do
     @cql_mat_export = File.new File.join('test', 'fixtures', 'CMS134v6.zip')
+    @invalid_cql_mat_export = File.new File.join('test', 'fixtures', 'not_mat_export.zip')
+  end
+
+  test "Verify the composite measure to be uploaded is valid" do
+    is_valid = Measures::CqlLoader.mat_cql_export?(@cql_mat_export)
+    assert_equal true, is_valid
+  end
+
+  test "Flag when an invalid composite measure is provided" do
+    is_valid = Measures::CqlLoader.mat_cql_export?(@invalid_cql_mat_export)
+    assert_equal false, is_valid
   end
 
   test 'Loading a measure that has a definition with the same name as a library definition' do
