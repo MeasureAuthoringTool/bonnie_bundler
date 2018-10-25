@@ -61,10 +61,7 @@ class CompositeCQLLoaderTest < ActiveSupport::TestCase
 
       measure_details = { 'episode_of_care'=> false }
 
-      # Catch a TypeError because in loader.rb in parse_hqmf_model, there is no hqmf file to parse
-      # A TypeError is thrown because it tries to convert a nil to a String
-      # This error is handled in measures_controller.rb create
-      assert_raise TypeError do
+      assert_raise Measures::MeasureLoadingException do
         Measures::CqlLoader.extract_measures(@missing_file_composite_cql_mat_export, user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket).each {|measure| measure.save}
       end
       assert_equal 0, CqlMeasure.all.count
@@ -79,10 +76,7 @@ class CompositeCQLLoaderTest < ActiveSupport::TestCase
 
       measure_details = { 'episode_of_care'=> false }
 
-      # Catch a NoMethodError because inside of cql_loader.rb in find_definition_in_elm
-      # The missing component path does not exist
-      # This error is handled in measures_controller.rb create
-      assert_raise NoMethodError do
+      assert_raise Measures::MeasureLoadingException do
         Measures::CqlLoader.extract_measures(@missing_component_composite_cql_mat_export, user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket).each {|measure| measure.save}
       end
       assert_equal 0, CqlMeasure.all.count
@@ -97,10 +91,7 @@ class CompositeCQLLoaderTest < ActiveSupport::TestCase
 
       measure_details = { 'episode_of_care'=> false }
 
-      # Catch a TypeError because of the parse_hqmf_model() method called from extract_measures()
-      # Invalid conversion of nil to string 
-      # This error is handled in measures_controller.rb create
-      assert_raise TypeError do
+      assert_raise Measures::MeasureLoadingException do
         Measures::CqlLoader.extract_measures(@missing_composite_files, user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket).each {|measure| measure.save}
       end
       assert_equal 0, CqlMeasure.all.count

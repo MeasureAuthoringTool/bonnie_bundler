@@ -30,32 +30,41 @@ module Measures
     def self.mat_cql_export?(zip_file)
       # Extract contents of zip file while retaining the directory structure
       original = Dir.pwd
-      Dir.mktmpdir do |dir|
-        Zip::ZipFile.open(zip_file.path) do |zip_file|
-          zip_file.each do |f|  
-            f_path = File.join(dir, f.name)
-            FileUtils.mkdir_p(File.dirname(f_path))
-            f.extract(f_path)            
-          end
-        end
-        current_directory = dir
-        # Detect if the zip file contents were stored into a single directory
-        if Dir.glob("#{current_directory}/*").count < 3
-          # If there is a single folder containing the zip file contents, step into it (ignore __MACOSX file if it exists)
-          Dir.glob("#{current_directory}/*").select.each do |file| 
-            if !file.end_with?('__MACOSX') && File.directory?(file)
-              current_directory = file
-              break
-            end
-          end
-        end
+      Dir.mktmpdir do |tmp_dir|
+        current_directory = unzip_measure_contents(zip_file, tmp_dir)
         # Check if measure contents are valid
-        if !valid_measure_contents?(current_directory)
-          return false
+        return valid_measure_contents?(current_directory, true)
+      end
+    end
+
+    # Returns the base directory of the measure
+    def self.unzip_measure_contents(zip_file, tmp_dir)
+      Zip::ZipFile.open(zip_file.path) do |zip_file|
+        zip_file.each do |f|
+          f_path = File.join(tmp_dir, f.name)
+          FileUtils.mkdir_p(File.dirname(f_path))
+          f.extract(f_path)
         end
-        # If it's a composite measure, verify that each of the components are valid
-        # !TODO: Need to generate error message specifying which if any of the component verifications failed
-        Dir.glob("#{current_directory}/*").each do |file|
+      end
+      current_directory = tmp_dir
+      # Detect if the zip file contents were stored into a single directory
+      if Dir.glob("#{current_directory}/*").count < 3
+        # If there is a single folder containing the zip file contents, step into it (ignore __MACOSX file if it exists)
+        Dir.glob("#{current_directory}/*").select.each do |file|
+          if !file.end_with?('__MACOSX') && File.directory?(file)
+            current_directory = file
+            break
+          end
+        end
+      end
+      return current_directory
+    end
+
+    # Verifies contents of the given measure are valid (works for regular, composite and component measures)
+    def self.valid_measure_contents?(measure_dir, check_components = false)
+      # If composite measure given, check components
+      if check_components
+        Dir.glob("#{measure_dir}/*").each do |file|
           if File.directory?(file)
             if !valid_measure_contents?(file)
               return false
@@ -63,19 +72,14 @@ module Measures
           end
         end
       end
-      true  
-    end
 
-    # Verifies contents of the given measure are valid (works for regular, composite and component measures)
-    def self.valid_measure_contents?(measure_dir)
-      require 'pry'; binding.pry
       # Grab all cql, elm & human readable docs from measure
       cql_entry = Dir.glob(File.join(measure_dir,'**.cql')).select {|x| !File.basename(x).starts_with?('__MACOSX') }.first
       elm_json = Dir.glob(File.join(measure_dir,'**.json')).select {|x| !File.basename(x).starts_with?('__MACOSX') }.first
       human_readable_entry = Dir.glob(File.join(measure_dir,'**.html')).select {|x| !File.basename(x).starts_with?('__MACOSX') }.first
 
       # Grab all xml files in the measure.
-      xml_files = Dir.glob(File.join(measure_dir,'**.xml')).select {|x| !File.basename(x).starts_with?('__MACOSX') }.first
+      xml_files = Dir.glob(File.join(measure_dir,'**.xml')).select {|x| !File.basename(x).starts_with?('__MACOSX') }
 
       # Find key value pair for HQMF and ELM xml files.
       if xml_files.count > 0
@@ -136,23 +140,9 @@ module Measures
       component_measures = []
       # Unzip measure contents while retaining the directory structure
       Dir.mktmpdir do |tmp_dir|
-        Zip::ZipFile.open(measure_zip.path) do |zip_file|
-          zip_file.each do |f|  
-            f_path = File.join(tmp_dir, f.name)
-            FileUtils.mkdir_p(File.dirname(f_path))
-            f.extract(f_path)            
-          end
-        end
-        current_directory = tmp_dir
-        # Detect if the zip file contents were stored into a single directory
-        if Dir.glob("#{current_directory}/*").count < 3
-          # If there is a single folder containing the zip file contents, step into it (ignore __MACOSX file if it exists)
-          Dir.glob("#{current_directory}/*").select.each do |file| 
-            if !file.end_with?('__MACOSX') && File.directory?(file)
-              current_directory = file
-              break
-            end
-          end
+        current_directory = unzip_measure_contents(measure_zip, tmp_dir)
+        if !valid_measure_contents?(current_directory, true)
+          raise MeasureLoadingException.new("Zip file was not a MAT package.")
         end
         component_elms = {}
         component_elms[:ELM_JSON] = []
@@ -172,7 +162,12 @@ module Measures
         end
 
         # Load in regular/composite measure measure
-        measure = create_measure(current_directory, current_user, measure_details, vsac_options, vsac_ticket_granting_ticket, component_elms)
+        begin
+          measure = create_measure(current_directory, current_user, measure_details, vsac_options, vsac_ticket_granting_ticket, component_elms)
+        rescue => e
+          component_measures.each { |component| component.delete }
+          raise e
+        end
 
         # Create, associate and save the measure package.
         measure_package = CqlMeasurePackage.new(file: BSON::Binary.new(measure_zip.read()))
@@ -304,10 +299,14 @@ module Measures
       end
       # Hash of define statements to which define statements they use.
       cql_definition_dependency_structure = populate_cql_definition_dependency_structure(main_cql_library, elms)
-      # Go back for the library statements
-      cql_definition_dependency_structure = populate_used_library_dependencies(cql_definition_dependency_structure, main_cql_library, elms)
-      # Add unused libraries to structure and set the value to empty hash
-      cql_definition_dependency_structure = populate_unused_included_libraries(cql_definition_dependency_structure, elms)
+      begin
+        # Go back for the library statements
+        cql_definition_dependency_structure = populate_used_library_dependencies(cql_definition_dependency_structure, main_cql_library, elms)
+        # Add unused libraries to structure and set the value to empty hash
+        cql_definition_dependency_structure = populate_unused_included_libraries(cql_definition_dependency_structure, elms)
+      rescue => e
+        raise MeasureLoadingException.new("Measure package missing a library or component.")
+      end
 
       # fix up statement names in cql_statement_dependencies to not use periods <<WRAP 1>>
       # this is matched with an UNWRAP in MeasuresController in the bonnie project
