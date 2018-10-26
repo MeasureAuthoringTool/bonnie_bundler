@@ -46,10 +46,10 @@ class CompositeCQLLoaderTest < ActiveSupport::TestCase
         # Verify each composite measure has a unique hqmf_set_id
         assert_equal 1, CqlMeasure.all.where(hqmf_set_id: measure.hqmf_set_id).count
         # Verify the composite's array of components is correct
-        assert composite_measure.components.include?(measure.hqmf_set_id)
+        assert composite_measure.component_hqmf_set_ids.include?(measure.hqmf_set_id)
       end
       # Verify the composite is associated with each of the components
-      assert_equal 7, composite_measure.components.count
+      assert_equal 7, composite_measure.component_hqmf_set_ids.count
     end
   end
 

@@ -178,8 +178,9 @@ module Measures
           # Update the components' hqmf_set_id, formatted as follows:
           #   <composite_hqmf_set_id>&<component_hqmf_set_id>
           component_measure.hqmf_set_id = measure.hqmf_set_id + '&' + component_measure.hqmf_set_id
+          component_measure.component = true;
           # Associate the component with the composite
-          measure.components.push(component_measure.hqmf_set_id)
+          measure.component_hqmf_set_ids.push(component_measure.hqmf_set_id)
         end
       end # End of temporary directory usage 
 
