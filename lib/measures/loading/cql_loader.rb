@@ -146,18 +146,13 @@ module Measures
         end
         component_elms = {}
         component_elms[:ELM_JSON] = []
-        component_elms[:ELM_XML] = {}
 
         # If it is a composite measure, load in each of the components
         # Components must be loaded first so their elms can be passed onto the composite
         if composite_measure?(current_directory)
           component_measures = create_component_measures(current_directory, current_user, measure_details, vsac_options, vsac_ticket_granting_ticket)
           component_measures.each do |component_measure|
-            component_elms[:ELM_JSON].push(*component_measure.elm) 
-            if (component_elms[:ELM_XML].keys & component_measure.elm_annotations.keys).count > 0 
-                puts "WARNING: Component measures share libraries. Version may or may not be the same."
-            end
-            component_elms[:ELM_XML] = component_measure.elm_annotations.merge(component_elms[:ELM_XML])
+            component_elms[:ELM_JSON].push(*component_measure.elm)
           end
         end
 
@@ -296,7 +291,6 @@ module Measures
 
       if (!component_elms.nil?)
         elms.push(*component_elms[:ELM_JSON]) 
-        elm_annotations = component_elms[:ELM_XML].merge(elm_annotations)
       end
       # Hash of define statements to which define statements they use.
       cql_definition_dependency_structure = populate_cql_definition_dependency_structure(main_cql_library, elms)
