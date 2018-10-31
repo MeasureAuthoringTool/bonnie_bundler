@@ -83,25 +83,7 @@ module Measures
 
       # Find key value pair for HQMF and ELM xml files.
       if xml_files.count > 0
-        xml_files_hash = {}
-        xml_files_hash[:ELM_XML] = []
-        begin
-          # Find HQMF and ELM xml files
-          xml_files.each do |xml_file|
-            if xml_file && xml_file.size > 0
-              # Open up xml file and read contents.
-              doc = Nokogiri::XML.parse(File.read(xml_file))
-              # Check if root node in xml file matches either the HQMF file or ELM file.
-              if doc.root.name == 'QualityMeasureDocument' # Root node for HQMF XML
-                xml_files_hash[:HQMF_XML] = xml_file
-              elsif doc.root.name == 'library' # Root node for ELM XML
-                xml_files_hash[:ELM_XML] << xml_file
-              end
-            end
-          end     
-        rescue Exception => e
-          raise MeasureLoadingException.new "Error Checking MAT Export: #{e.message}"
-        end
+        xml_files_hash = retrieve_elm_and_hqmf(xml_files)
         !cql_entry.nil? && !elm_json.nil? && !human_readable_entry.nil? && !xml_files_hash[:HQMF_XML].nil? && !xml_files_hash[:ELM_XML].nil?
       else
         false
