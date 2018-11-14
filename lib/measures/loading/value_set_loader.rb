@@ -141,6 +141,19 @@ module Measures
         FileUtils.mkdir_p(codeset_base_dir) unless overwrite
 
         RestClient.proxy = ENV["http_proxy"]
+
+        # parse json response and return it
+        parsedResponse = JSON.parse(RestClient.get(nlm_config["latest_profile_url"]))
+
+        # As of 5/17/18 VSAC does not return 404 when an invalid profile is provided. It just doesnt fill the name
+        # attribute in the 200 response. We need to check this.
+        profile = nil
+        if !parsedResponse['name'].nil?
+          profile = parsedResponse['name']
+        else
+          raise MeasureLoadingException.new("Failed to retrieve latest VSAC profile.")
+        end
+
         value_set_oids.each_with_index do |oid,index| 
 
           set = existing_value_set_map[oid]
@@ -153,7 +166,7 @@ module Measures
             if (cached_service_result && File.exists?(cached_service_result))
               vs_data = File.read cached_service_result
             else
-              vs_data = api.get_valueset(oid, effective_date: effectiveDate, include_draft: includeDraft, profile: nlm_config["profile"])
+              vs_data = api.get_valueset(oid, effective_date: effectiveDate, include_draft: includeDraft, profile: profile)
               vs_data.force_encoding("utf-8") # there are some funky unicodes coming out of the vs response that are not in ASCII as the string reports to be
               from_vsac += 1
               File.open(cached_service_result, 'w') {|f| f.write(vs_data) } unless overwrite

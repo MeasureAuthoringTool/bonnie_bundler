@@ -5,7 +5,7 @@ require 'rails'
 require 'rails/test_help'
 require 'hquery-patient-api'
 require 'diffy'
-APP_CONFIG = {'nlm'=>{'ticket_url'=>'foo', 'api_url'=>'bar'}}
+APP_CONFIG = {'nlm'=>{'ticket_url'=>'foo', 'api_url'=>'bar', 'latest_profile_url'=>'https://vsac.nlm.nih.gov/vsac/program/CMS%20eCQM/latest%20profile'}}
 
 PROJECT_ROOT = File.expand_path("../../", __FILE__)
 require File.join(PROJECT_ROOT, 'lib', 'bonnie_bundler')
