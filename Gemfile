@@ -13,7 +13,7 @@ gem 'simplexml_parser', :git => 'https://github.com/projecttacoma/simplexml_pars
 # gem 'hquery-patient-api', :path => '../patientapi'
 # gem 'simplexml_parser', :path => '../simplexml_parser'
 
-gem 'rails', '~> 4.2.7'
+gem 'rails', '~> 4.2.11'
 gem 'rake'
 gem 'pry'
 gem 'pry-nav'
