@@ -16,7 +16,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'simplexml_parser', '~> 1.0'
   s.add_dependency 'hqmf2js', '~> 1.4'
 
-  s.add_dependency 'rails', '~> 4.2'
+  s.add_dependency 'rails', '>= 4.2', '< 6.0'
   s.add_dependency 'mongoid', '~> 5.0'
   s.add_dependency 'rubyzip', '~> 1.2', '>= 1.2.1'
   s.add_dependency 'zip-zip', '~> 0.3'
