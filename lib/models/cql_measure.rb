@@ -22,6 +22,9 @@ class CqlMeasure
   field :continuous_variable, type: Boolean
   field :calculate_sdes, type: Boolean
   field :episode_ids, type: Array
+  field :composite, type: Boolean, default: false
+  field :component, type: Boolean, default: false
+  field :component_hqmf_set_ids, type: Array, default: []
 
   field :needs_finalize, type: Boolean, default: false
 
@@ -166,6 +169,12 @@ class CqlMeasure
     self.complexity
   end
 
+  # Returns the composite measure's hqmf_set_id for this component
+  # Component measure hqmf_set_id is formatted as follows:
+  #   <composite_hqmf_set_id>&<component_hqmf_set_id>
+  def composite_hqmf_set_id
+    self.hqmf_set_id.split("&")[0]
+  end
 end
 
 class CqlMeasurePackage

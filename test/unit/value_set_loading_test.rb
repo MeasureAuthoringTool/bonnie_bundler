@@ -15,8 +15,8 @@ class ValueSetLoadingTest < ActiveSupport::TestCase
     VCR.use_cassette("vs_loading_draft_no_profile_version") do
       mat_file = File.new File.join("test", "fixtures", "vs_loading", "DocofMeds_v5_1_Artifacts.zip")
       measure_details = {}
-      measure = Measures::CqlLoader.load(mat_file, @user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'], include_draft: true }, get_ticket_granting_ticket)
-      measure.value_sets.each do |vs|
+      measures = Measures::CqlLoader.extract_measures(mat_file, @user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'], include_draft: true }, get_ticket_granting_ticket)
+      measures[0].value_sets.each do |vs|
         if vs.oid == "2.16.840.1.113883.3.600.1.1834"
           assert_equal 154, vs.concepts.count
         end
@@ -29,8 +29,8 @@ class ValueSetLoadingTest < ActiveSupport::TestCase
     VCR.use_cassette("vs_loading_draft_profile") do
       mat_file = File.new File.join("test", "fixtures", "vs_loading", "DocofMeds_v5_1_Artifacts_With_Profiles.zip")
       measure_details = {}
-      measure = Measures::CqlLoader.load(mat_file, @user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'], include_draft: true }, get_ticket_granting_ticket)
-      measure.value_sets.each do |vs|
+      measures = Measures::CqlLoader.extract_measures(mat_file, @user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'], include_draft: true }, get_ticket_granting_ticket)
+      measures[0].value_sets.each do |vs|
         if vs.oid == "2.16.840.1.113883.3.600.1.1834"
           assert_equal 154, vs.concepts.count
         end
@@ -44,8 +44,8 @@ class ValueSetLoadingTest < ActiveSupport::TestCase
     VCR.use_cassette("vs_loading_draft_verion") do
       mat_file = File.new File.join("test", "fixtures", "vs_loading", "DocofMeds_v5_1_Artifacts_Version.zip")
       measure_details = {}
-      measure = Measures::CqlLoader.load(mat_file, @user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'], include_draft: true }, get_ticket_granting_ticket)
-      measure.value_sets.each do |vs|
+      measures = Measures::CqlLoader.extract_measures(mat_file, @user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'], include_draft: true }, get_ticket_granting_ticket)
+      measures[0].value_sets.each do |vs|
         if vs.oid == "2.16.840.1.113883.3.600.1.1834"
           assert_equal 154, vs.concepts.count
         end
@@ -58,8 +58,8 @@ class ValueSetLoadingTest < ActiveSupport::TestCase
     VCR.use_cassette("vs_loading_no_profile_version") do
       mat_file = File.new File.join("test", "fixtures", "vs_loading", "DocofMeds_v5_1_Artifacts.zip")
       measure_details = {}
-      measure = Measures::CqlLoader.load(mat_file, @user, measure_details, { measure_defined: true, profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket)
-      measure.value_sets.each do |vs|
+      measures = Measures::CqlLoader.extract_measures(mat_file, @user, measure_details, { measure_defined: true, profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket)
+      measures[0].value_sets.each do |vs|
         if vs.oid == "2.16.840.1.113883.3.600.1.1834"
           assert_equal 154, vs.concepts.count
         end
@@ -72,8 +72,8 @@ class ValueSetLoadingTest < ActiveSupport::TestCase
     VCR.use_cassette("vs_loading_meausre_defined_no_backup_profile") do
       mat_file = File.new File.join("test", "fixtures", "vs_loading", "DocofMeds_v5_1_Artifacts.zip")
       measure_details = {}
-      measure = Measures::CqlLoader.load(mat_file, @user, measure_details, { measure_defined: true }, get_ticket_granting_ticket)
-      measure.value_sets.each do |vs|
+      measures = Measures::CqlLoader.extract_measures(mat_file, @user, measure_details, { measure_defined: true }, get_ticket_granting_ticket)
+      measures[0].value_sets.each do |vs|
         if vs.oid == "2.16.840.1.113883.3.600.1.1834"
           assert_equal 175, vs.concepts.count
         end
@@ -86,8 +86,8 @@ class ValueSetLoadingTest < ActiveSupport::TestCase
     VCR.use_cassette("vs_loading_release") do
       mat_file = File.new File.join("test", "fixtures", "vs_loading", "DocofMeds_v5_1_Artifacts.zip")
       measure_details = {}
-      measure = Measures::CqlLoader.load(mat_file, @user, measure_details, { release: 'eCQM Update 2018 EP-EC and EH' }, get_ticket_granting_ticket)
-      measure.value_sets.each do |vs|
+      measures = Measures::CqlLoader.extract_measures(mat_file, @user, measure_details, { release: 'eCQM Update 2018 EP-EC and EH' }, get_ticket_granting_ticket)
+      measures[0].value_sets.each do |vs|
         if vs.oid == "2.16.840.1.113883.3.600.1.1834"
           assert_equal 162, vs.concepts.count
         end
@@ -100,8 +100,8 @@ class ValueSetLoadingTest < ActiveSupport::TestCase
     VCR.use_cassette("vs_loading_profile") do
       mat_file = File.new File.join("test", "fixtures", "vs_loading", "DocofMeds_v5_1_Artifacts_With_Profiles.zip")
       measure_details = {}
-      measure = Measures::CqlLoader.load(mat_file, @user, measure_details, { measure_defined: true }, get_ticket_granting_ticket)
-      measure.value_sets.each do |vs|
+      measures = Measures::CqlLoader.extract_measures(mat_file, @user, measure_details, { measure_defined: true }, get_ticket_granting_ticket)
+      measures[0].value_sets.each do |vs|
         if vs.oid == "2.16.840.1.113883.3.600.1.1834"
           assert_equal 152, vs.concepts.count
         end
@@ -114,8 +114,8 @@ class ValueSetLoadingTest < ActiveSupport::TestCase
     VCR.use_cassette("vs_loading_version") do
       mat_file = File.new File.join("test", "fixtures", "vs_loading", "DocofMeds_v5_1_Artifacts_Version.zip")
       measure_details = {}
-      measure = Measures::CqlLoader.load(mat_file, @user, measure_details, { measure_defined: true }, get_ticket_granting_ticket)
-      measure.value_sets.each do |vs|
+      measures = Measures::CqlLoader.extract_measures(mat_file, @user, measure_details, { measure_defined: true }, get_ticket_granting_ticket)
+      measures[0].value_sets.each do |vs|
         if vs.oid == "2.16.840.1.113883.3.600.1.1834"
           assert_equal 148, vs.concepts.count
         end

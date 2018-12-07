@@ -11,7 +11,7 @@ class GetValueSetsFromMeasureModelTest < ActiveSupport::TestCase
     user.save
     measure_details = { 'episode_of_care'=> false }
     VCR.use_cassette('valid_vsac_response_158_update') do
-      Measures::CqlLoader.load(direct_reference_mat_export, user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket).save
+      Measures::CqlLoader.extract_measures(direct_reference_mat_export, user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket).each {|measure| measure.save}
     end
 
     measure = CqlMeasure.all.first

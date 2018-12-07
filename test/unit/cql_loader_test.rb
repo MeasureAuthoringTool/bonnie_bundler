@@ -5,6 +5,17 @@ class CQLLoaderTest < ActiveSupport::TestCase
   
   setup do
     @cql_mat_export = File.new File.join('test', 'fixtures', 'CMS134v6.zip')
+    @invalid_cql_mat_export = File.new File.join('test', 'fixtures', 'not_mat_export.zip')
+  end
+
+  test "Verify the composite measure to be uploaded is valid" do
+    is_valid = Measures::CqlLoader.mat_cql_export?(@cql_mat_export)
+    assert_equal true, is_valid
+  end
+
+  test "Flag when an invalid composite measure is provided" do
+    is_valid = Measures::CqlLoader.mat_cql_export?(@invalid_cql_mat_export)
+    assert_equal false, is_valid
   end
 
   test 'Loading a measure that has a definition with the same name as a library definition' do
@@ -14,7 +25,7 @@ class CQLLoaderTest < ActiveSupport::TestCase
       user.save
 
       measure_details = { 'episode_of_care'=> false }
-      Measures::CqlLoader.load(@cql_mat_export, user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket).save
+      Measures::CqlLoader.extract_measures(@cql_mat_export, user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket).each {|measure| measure.save}
       assert_equal 1, CqlMeasure.all.count
       measure = CqlMeasure.all.first
       assert_equal 'Diabetes: Medical Attention for Nephropathy', measure.title
@@ -37,7 +48,7 @@ class CQLLoaderTest < ActiveSupport::TestCase
 
     # do first load
     VCR.use_cassette('valid_vsac_response_158_update') do
-      Measures::CqlLoader.load(direct_reference_mat_export, user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket).save
+      Measures::CqlLoader.extract_measures(direct_reference_mat_export, user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket).each {|measure| measure.save}
     end
     assert_equal 1, CqlMeasure.all.count
     measure = CqlMeasure.all.first
@@ -48,7 +59,7 @@ class CQLLoaderTest < ActiveSupport::TestCase
 
     # Re-load the Measure
     VCR.use_cassette('valid_vsac_response_158_update') do
-      Measures::CqlLoader.load(direct_reference_mat_export, user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket).save
+      Measures::CqlLoader.extract_measures(direct_reference_mat_export, user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket).each {|measure| measure.save}
     end
 
     assert_equal 2, CqlMeasure.all.count
@@ -68,7 +79,7 @@ class CQLLoaderTest < ActiveSupport::TestCase
       user.save
 
       measure_details = { 'episode_of_care' => false }
-      Measures::CqlLoader.load(unused_library_mat_export, user, measure_details, { include_draft: true, profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket).save
+      Measures::CqlLoader.extract_measures(unused_library_mat_export, user, measure_details, { include_draft: true, profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket).each {|measure| measure.save}
       assert_equal 1, CqlMeasure.all.count
       measure = CqlMeasure.all.first
 
@@ -87,7 +98,7 @@ class CQLLoaderTest < ActiveSupport::TestCase
       user.save
 
       measure_details = {'episode_of_care' => false }
-      Measures::CqlLoader.load(measure_export, user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'], include_draft: true }, get_ticket_granting_ticket).save
+      Measures::CqlLoader.extract_measures(measure_export, user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'], include_draft: true }, get_ticket_granting_ticket).each {|measure| measure.save}
       assert_equal 1, CqlMeasure.all.count
       measure = CqlMeasure.all.first
       define_name = measure.elm_annotations['TobaccoUseTreatmentProvidedorOfferedTOB2TobaccoUseTreatmentTOB2a']['statements'][36]['define_name']
@@ -108,7 +119,7 @@ class CQLLoaderTest < ActiveSupport::TestCase
       user.save
 
       measure_details = { 'episode_of_care'=> false }
-      Measures::CqlLoader.load(direct_reference_mat_export, user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket).save
+      Measures::CqlLoader.extract_measures(direct_reference_mat_export, user, measure_details, { profile: APP_CONFIG['vsac']['default_profile'] }, get_ticket_granting_ticket).each {|measure| measure.save}
       assert_equal 1, CqlMeasure.all.count
       measure = CqlMeasure.all.first
       before_value_sets = measure.value_set_oids
@@ -117,7 +128,7 @@ class CQLLoaderTest < ActiveSupport::TestCase
       before_source_data_criteria = measure.source_data_criteria
 
       # Re-load the Measure without VSAC Credentials
-      Measures::CqlLoader.load(direct_reference_mat_export, user, measure_details, nil, nil).save
+      Measures::CqlLoader.extract_measures(direct_reference_mat_export, user, measure_details, nil, nil).each {|measure| measure.save}
       assert_equal 2, CqlMeasure.all.count
       measures = CqlMeasure.all
 
