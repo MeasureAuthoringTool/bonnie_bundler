@@ -23,7 +23,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'diffy', '~> 3.0.0'
 
   # needed for parsing value sets (we need to use roo rather than rubyxl because the value sets are in xls rather than xlsx)
-  s.add_dependency 'roo', '~> 1.13'
+  s.add_dependency 'roo', '~> 2.7'
 
   s.files = s.files = `git ls-files`.split("\n")
 end
