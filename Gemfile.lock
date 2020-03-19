@@ -123,7 +123,7 @@ GEM
       domain_name (~> 0.5)
     i18n (0.9.5)
       concurrent-ruby (~> 1.0)
-    json (2.1.0)
+    json (2.3.0)
     libv8 (3.16.14.19)
     log4r (1.1.10)
     loofah (2.2.3)
