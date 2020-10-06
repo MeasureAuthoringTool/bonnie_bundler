@@ -4,10 +4,10 @@ require 'vcr_setup.rb'
 # Tests that ensure VSAC authentication related situations are handled
 class VSACAPIAuthTest < ActiveSupport::TestCase
 
-  test 'valid username and password provided' do
+  test 'valid api_key provided' do
     VCR.use_cassette("vsac_auth_good_credentials") do
       assert_nothing_raised do
-        api = Util::VSAC::VSACAPI.new(config: APP_CONFIG['vsac'], username: ENV['VSAC_USERNAME'], password: ENV['VSAC_PASSWORD'])
+        api = Util::VSAC::VSACAPI.new(config: APP_CONFIG['vsac'], api_key: ENV['VSAC_API_KEY'])
         assert_not_nil api.ticket_granting_ticket
         assert_not_nil api.ticket_granting_ticket[:ticket]
         assert_not_nil api.ticket_granting_ticket[:expires]
@@ -15,42 +15,18 @@ class VSACAPIAuthTest < ActiveSupport::TestCase
     end
   end
 
-  test 'invalid username and password provided' do
+  test 'invalid api_key provided' do
     VCR.use_cassette("vsac_auth_bad_credentials") do
       assert_raise Util::VSAC::VSACInvalidCredentialsError do
-        api = Util::VSAC::VSACAPI.new(config: APP_CONFIG['vsac'], username: 'baduser', password: 'badpass')
+        api = Util::VSAC::VSACAPI.new(config: APP_CONFIG['vsac'], api_key: 'badapikey')
       end
     end
   end
 
-  test 'empty username and password provided' do
+  test 'empty api_key provided' do
     api = nil
     assert_nothing_raised do
-      api = Util::VSAC::VSACAPI.new(config: APP_CONFIG['vsac'], username: nil, password: nil)
-    end
-
-    # now attempt to get a valueset
-    assert_raise Util::VSAC::VSACNoCredentialsError do
-      api.get_valueset('2.16.840.1.113762.1.4.1')
-    end
-  end
-
-  test 'provided username but no password' do
-    api = nil
-    assert_nothing_raised do
-      api = Util::VSAC::VSACAPI.new(config: APP_CONFIG['vsac'], username: "vsacuser")
-    end
-
-    # now attempt to get a valueset
-    assert_raise Util::VSAC::VSACNoCredentialsError do
-      api.get_valueset('2.16.840.1.113762.1.4.1')
-    end
-  end
-
-  test 'provided password but no username' do
-    api = nil
-    assert_nothing_raised do
-      api = Util::VSAC::VSACAPI.new(config: APP_CONFIG['vsac'], username: "vsacuser")
+      api = Util::VSAC::VSACAPI.new(config: APP_CONFIG['vsac'], api_key: nil)
     end
 
     # now attempt to get a valueset
@@ -62,7 +38,7 @@ class VSACAPIAuthTest < ActiveSupport::TestCase
   test 'valid ticket_granting_ticket provided and used' do
     VCR.use_cassette("vsac_auth_good_credentials_and_simple_call") do
       # first get a ticket_granting_ticket
-      api = Util::VSAC::VSACAPI.new(config: APP_CONFIG['vsac'], username: ENV['VSAC_USERNAME'], password: ENV['VSAC_PASSWORD'])
+      api = Util::VSAC::VSACAPI.new(config: APP_CONFIG['vsac'], api_key: ENV['VSAC_API_KEY'])
       assert_not_nil api.ticket_granting_ticket
 
       reused_ticket_granting_ticket = {

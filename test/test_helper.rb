@@ -23,7 +23,7 @@ def dump_db
 end
 
 def get_ticket_granting_ticket
-  api = Util::VSAC::VSACAPI.new(config: APP_CONFIG['vsac'], username: ENV['VSAC_USERNAME'], password: ENV['VSAC_PASSWORD'])
+  api = Util::VSAC::VSACAPI.new(config: APP_CONFIG['vsac'], api_key: ENV['VSAC_API_KEY'])
   return api.ticket_granting_ticket
 end
 
