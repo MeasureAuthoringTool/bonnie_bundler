@@ -10,7 +10,7 @@ jobs:
     env:
       REPO: https://github.com/MeasureAuthoringTool/bonnie_bundler
       REMOTE_EXCLUDES_URL: https://raw.githubusercontent.com/semanticbits/bmat-gitleaks-automation/master/bonnie_bundler/gitleaks.toml
-      GITLEAKS_VERSION: v4.3.1
+      GITLEAKS_VERSION: v4.3.0
     steps:
     - name: Execute Gitleaks
       run: |
