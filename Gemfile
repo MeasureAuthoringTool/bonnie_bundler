@@ -14,7 +14,7 @@ gemspec
 # gem 'simplexml_parser', :path => '../simplexml_parser'
 
 group :development do
-  gem 'rake'
+  gem 'rake', '>= 12.3.3'
   gem 'pry'
   gem 'pry-nav'
 end
