@@ -14,7 +14,7 @@ gemspec
 # gem 'simplexml_parser', :path => '../simplexml_parser'
 
 group :development do
-  gem 'rake'
+  gem 'rake', '>= 12.3.3'
   gem 'pry'
   gem 'pry-nav'
 end
@@ -24,6 +24,6 @@ group :test do
   gem 'minitest', "~> 5.0"
   gem 'awesome_print', :require => 'ap'
   gem 'vcr'
-  gem 'webmock'
+  gem 'webmock', '>= 3.0.1'
   gem 'bundler-audit'
 end
